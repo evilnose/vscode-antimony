@@ -3,6 +3,10 @@
 	"description": "Language extension for Antimony",
 	"author": "Gary Geng",
 	"publisher": "sauro-lab",
+	"repository": {
+		"type": "git",
+		"url": "TBD"
+	},
 	"version": "0.0.1",
 	"categories": [],
 	"engines": {
@@ -11,7 +15,7 @@
 	"activationEvents": [
 		"onLanguage:plaintext"
 	],
-	"main": "./client/out/extension",
+	"main": "./dist/extension",
 	"contributes": {
 		"configuration": {
 			"type": "object",
@@ -20,11 +24,12 @@
 		}
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile": "npx tsc -b",
-		"watch": "npx tsc -b -w",
+		"vscode:prepublish": "webpack --mode production",
+		"webpack": "webpack --mode development",
+		"webpack-dev": "webpack --mode development --watch",
+		"test-compile": "npx tsc -b",
 		"postinstall": "cd client && npm install && cd .. && sh ./scripts/installPythonReqs.sh",
-		"pretest": "npm run compile",
+		"pretest": "webpack",
 		"test": "scripts\\runTestsDriver.bat"
 	},
 	"devDependencies": {
@@ -34,6 +39,9 @@
 		"@typescript-eslint/parser": "^2.3.0",
 		"eslint": "^6.4.0",
 		"mocha": "^8.1.1",
-		"typescript": "^4.0.2"
+		"ts-loader": "^8.0.17",
+		"typescript": "^4.0.2",
+		"webpack": "^5.23.0",
+		"webpack-cli": "^4.5.0"
 	}
 }

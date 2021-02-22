@@ -1,7 +1,17 @@
 .vscode/**
 .vscode-test
 **/*.ts
+**/*.map
+**/*.pyc
 .gitignore
 **/tsconfig.json
 **/tsconfig.base.json
 .travis.yml
+node_modules
+client/
+py36
+scripts/**
+**/*.log
+requirements.txt
+webpack.config.js
+*.vsix

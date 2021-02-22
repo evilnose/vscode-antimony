@@ -1,9 +1,12 @@
 .vscode
 .vscode-test
+**/*.vsix
 
 py36
 pythonFiles/lib/python/**
 
 node_modules
 client/out
+dist
+**/*.log
 

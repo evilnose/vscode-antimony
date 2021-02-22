@@ -1,0 +1,17 @@
+{
+	"name": "bio-idek-client",
+	"description": "VSCode Client of BioIDEK",
+	"author": "Gary Geng",
+	"version": "0.0.1",
+	"publisher": "vscode",
+	"engines": {
+		"vscode": "^1.52.0"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^7.0.0"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.52.0",
+		"vscode-test": "^1.5.1"
+	}
+}

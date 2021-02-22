@@ -1,0 +1,7 @@
+.vscode/**
+.vscode-test
+**/*.ts
+.gitignore
+**/tsconfig.json
+**/tsconfig.base.json
+.travis.yml

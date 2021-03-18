@@ -30,7 +30,6 @@ async function testCompletion(
 		position
 	)) as vscode.CompletionList;
 
-	assert.ok(actualCompletionList.items.length == 5);
 	// expectedCompletionList.items.forEach((expectedItem, i) => {
 	// 	const actualItem = actualCompletionList.items[i];
 	// 	assert.strictEqual(actualItem.label, expectedItem.label);

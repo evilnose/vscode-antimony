@@ -33,23 +33,29 @@ import sys
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
+
 import logging
-
-from pygls.features import COMPLETION, TEXT_DOCUMENT_DID_CHANGE, TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE
-from pygls.server import LanguageServer
-from pygls.types import CompletionItem, CompletionList, CompletionParams, DidChangeTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, TextDocumentContentChangeEvent
-
 from dataclasses import dataclass
-from typing import List
+from functools import lru_cache
 from itertools import chain
-from lark.exceptions import LexError, ParseError, UnexpectedCharacters, UnexpectedInput
-from lark import Lark, Token
-from lark.tree import Tree
+from typing import List
 
+from lark import Lark, Token
+from lark.exceptions import (LexError, ParseError, UnexpectedCharacters,
+                             UnexpectedInput, UnexpectedToken)
+from lark.tree import Tree
+from pygls.features import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
+                            TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE)
+from pygls.server import LanguageServer
+from pygls.types import (CompletionItem, CompletionList, CompletionParams,
+                         DidChangeTextDocumentParams,
+                         DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+                         TextDocumentContentChangeEvent)
 
 logging.basicConfig(filename='pygls.log', filemode='w', level=logging.DEBUG)
 RECURSION_LIMIT = 5  # Limit for flexible parsing
 DUMMY_VALUE = '@@DUMMY@@'
+LINE_CACHE_SIZE = 2048
 
 
 '''=====Parsing-related Code===='''
@@ -218,6 +224,12 @@ def flexible_parse(e, level):
         return min(results, key=lambda r: r.level)
 
 
+@lru_cache(maxsize=LINE_CACHE_SIZE)
+def cached_line_parse(line: str):
+    '''Basic cached parsing; likely useful for huge documents with quick inline modifications.'''
+    return line_parser.parse(line)
+
+
 # Holds information pertaining to one Antimony document
 class Document:
     def __init__(self):
@@ -235,7 +247,7 @@ class Document:
             if len(line) == 0:
                 continue
             try:
-                tree = line_parser.parse(line)
+                tree = cached_line_parse(line)
             except UnexpectedCharacters as e:
                 resolve_unexpected_chars(e)
                 # dynamic property; do this to avoid upsetting the IDE
@@ -243,9 +255,6 @@ class Document:
                 result = try_parse(puppet, 0)
                 if result is None: continue  # failed to parse
                 tree = result.tree
-            except UnexpectedInput as e:
-                server.show_message('Error UnexpectedInput: {}'.format(e))
-                continue
             except ParseError as e:
                 result = flexible_parse(e, 0)
                 if result is None: continue  # failed to parse
@@ -253,6 +262,10 @@ class Document:
                 # TODO depend on the level and the number of original tokens, may choose to
                 # discard tree after all, if too many tokens were extrapolated.
                 tree = result.tree
+            except UnexpectedToken as e:
+                e.line = row + 1
+                server.show_message('Error: {}'.format(e))
+                continue
 
             if tree.data == 'reaction':
                 reactants_index = 0

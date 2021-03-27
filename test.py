@@ -1,9 +1,9 @@
 """Temporary test file"""
 
+from dataclasses import dataclass
 from lark import Token
 from lark.tree import Tree
 from server.main import Document, line_parser
-from dataclasses import dataclass
 from typing import List
 from itertools import chain
 

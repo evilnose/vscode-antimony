@@ -10,8 +10,10 @@
 node_modules
 client/
 py36
+py37
 scripts/**
 **/*.log
 requirements.txt
 webpack.config.js
 *.vsix
+temp

@@ -1,5 +1,8 @@
+import { privateEncrypt } from 'crypto';
 import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import { workspace, ExtensionContext, commands, InputBoxOptions, window, QuickInputButtons,
+	QuickPickItem
+ } from 'vscode';
 
 import {
 	LanguageClient,
@@ -35,6 +38,9 @@ export function activate(context: ExtensionContext) {
 		serverOptions,
 		clientOptions
 	);
+	
+	context.subscriptions.push(
+		commands.registerCommand('antimony.createAnnotationDialog', createAnnotationDialog));
 
 	// Start the client. This will also launch the server
 	client.start();
@@ -45,4 +51,46 @@ export function deactivate(): Thenable<void> | undefined {
 		return undefined;
 	}
 	return client.stop();
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function createAnnotationDialog() {
+	/* */
+	let latestChangeIndex = 0;
+	let quickPick = window.createQuickPick();
+	quickPick.canSelectMany = false;
+	quickPick.onDidChangeValue(async (newValue: string) => {
+		// TODO ask extension for a list of items
+		latestChangeIndex++;
+		let myIndex = latestChangeIndex;
+
+		// Our SOAP client is blocking, so we want to avoid sending too many unnecessary requests
+		// in a row. Therefore we wait half a sec here to see if the user types more. If they do,
+		// then we don't do anything in this handler.
+		// It isn't trivial to do non-blocking requests with our existing libraries (suds),
+		// especially with the deployment constraints of the VSCode extension. But for now this is
+		// fast enough. If we decide to implement non-blocking SOAP requests, see:
+		// https://stackoverflow.com/questions/19569701/benefits-of-twisted-suds-async-way-of-using-python-suds-soap-lib
+		// Additionally an async HTTP requests library needs to be installed (vanilla requests
+		// does not support this), and code in bioservices needs to be rewritten.
+		await sleep(500);
+		if (latestChangeIndex != myIndex) return;
+
+		let results: Array<unknown> = await commands.executeCommand('antimony.querySpecies', newValue);
+
+		if (latestChangeIndex != myIndex) return;
+
+		// update items
+		quickPick.items = results.map((item) => {
+			return {
+				label: item['name'],
+				alwaysShow: true,
+			};
+		});
+	});
+	// TODO create handler for selecting an item
+	quickPick.show();
 }

@@ -26,32 +26,40 @@ Idea: first try to correct the line. If that is not possible, ignore it. if it i
 to do with brackets, e.g. start_model start_model, then do something intelligent like add end_model
 before the second start_model.
 Also: look at Jedi docs for inspiration
+
+TODO URGENT: Either Monkey-patch Parser or modify the grammar to do things line by line. If
+monkey-patch and can't parse something, advance the lexer to a newline and keep going.
+
 """
 
 import os
 import sys
+import logging
+from functools import lru_cache
+from itertools import chain
+from typing import List
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
 
-import logging
 from dataclasses import dataclass
-from functools import lru_cache
-from itertools import chain
-from typing import List
 
 from lark import Lark, Token
 from lark.exceptions import (LexError, ParseError, UnexpectedCharacters,
                              UnexpectedInput, UnexpectedToken)
 from lark.tree import Tree
 from pygls.features import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
-                            TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE)
+                            TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE, WORKSPACE_EXECUTE_COMMAND)
 from pygls.server import LanguageServer
 from pygls.types import (CompletionItem, CompletionList, CompletionParams,
                          DidChangeTextDocumentParams,
-                         DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+                         DidOpenTextDocumentParams, DidSaveTextDocumentParams, ExecuteCommandParams,
                          TextDocumentContentChangeEvent)
+from annotation import chebi_search
+import json
 
+
+# TODO remove this for production
 logging.basicConfig(filename='pygls.log', filemode='w', level=logging.DEBUG)
 RECURSION_LIMIT = 5  # Limit for flexible parsing
 DUMMY_VALUE = '@@DUMMY@@'
@@ -69,6 +77,15 @@ PARSER_STR = r'''
 
     assignment_list : assignment*
     assignment : NAME "=" value
+
+    declaration : [var_modifier] [var_type] NAME ("," NAME)* [";"]
+
+    var_modifier : "var"            -> var
+        | "const"                   -> const
+    
+    var_type : "species"            -> species
+        | "compartment"             -> compartment
+        | "formula"                 -> formula
 
     ?value : NUMBER
 
@@ -343,10 +360,23 @@ async def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
         change: TextDocumentContentChangeEvent
         doc.changed(change, text_doc.source)
 
+
 @server.feature(TEXT_DOCUMENT_DID_SAVE)
 async def did_save(ls, params: DidSaveTextDocumentParams):
     """Text document did open notification."""
     pass
+
+
+@server.command('antimony.querySpecies')
+def create_annotation(ls: LanguageServer, args):
+    query = args[0]
+    entities = chebi_search(query)
+    results = [ {
+        'id': entity.chebiId,
+        'name': entity.chebiAsciiName,
+    } for entity in entities]
+    return results
+
 
 if __name__ == '__main__':
     server.start_io()

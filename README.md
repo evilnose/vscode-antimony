@@ -1,5 +1,15 @@
 # BioIDEK README WIP
 
+## Current Features
+* Basic autocompletion of species names
+* Recovery from syntax error
+
+## Planned Features
+* Syntax highlighting
+* Annotations
+* Parse more complex syntaxes, including compartments, events, and models
+* Autocompletion based on cursor position (context)
+* Better optimization and caching (if required)
 
 ## How to Run Tests
 Run `npm test` directly. However, if you are using VSCode for development this wouldn't work (see

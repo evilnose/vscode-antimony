@@ -9,20 +9,49 @@
 	},
 	"version": "0.0.1",
 	"categories": [],
+	"contributes": {
+		"commands": [
+			{
+				"command": "antimony.createAnnotationDialog",
+				"title": "Create Annotation"
+			},
+			{
+				"command": "antimony.querySpecies",
+				"title": "Search for Species Matching Query"
+			}
+		],
+		"languages": [
+			{
+				"id": "antimony",
+				"extensions": [
+					".ant"
+				],
+				"aliases": [
+					"Antimony",
+					"ant"
+				],
+				"filenames": []
+			}
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "antimony.createAnnotationDialog",
+					"title": "Create Annotation",
+					"group": "1_modification",
+					"when": "editorHasSelection && editorLangId == antimony"
+				}
+			]
+		}
+	},
 	"engines": {
 		"vscode": "^1.52.0"
 	},
 	"activationEvents": [
-		"onLanguage:plaintext"
+		"onLanguage:plaintext",
+		"onCommand:antimony.createAnnotation"
 	],
 	"main": "./dist/extension",
-	"contributes": {
-		"configuration": {
-			"type": "object",
-			"title": "Temporary Configurations",
-			"properties": {}
-		}
-	},
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
 		"webpack": "webpack --mode development",

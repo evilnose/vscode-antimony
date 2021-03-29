@@ -368,7 +368,7 @@ async def did_save(ls, params: DidSaveTextDocumentParams):
 
 
 @server.command('antimony.querySpecies')
-def create_annotation(ls: LanguageServer, args):
+def query_species(ls: LanguageServer, args):
     query = args[0]
     entities = chebi_search(query)
     results = [ {

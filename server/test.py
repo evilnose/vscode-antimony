@@ -3,18 +3,16 @@
 from dataclasses import dataclass
 from lark import Token
 from lark.tree import Tree
-from server.main import Document, line_parser
+from main import Document
 from typing import List
 from itertools import chain
 
 FILE = '''
 EEEA + B -> 6Ceek; (AEEEEE + 5) / 777 + 1 + 3
 2EEEA + 3B -> 2.5Deee; v
-
-AEEEE = 55
 '''
 
-FILE = '''
+FILE1 = '''
 J0: SA -> SB +??; E10
 A == 2
 J0: S48 + S17 -> S46; E0*(k0*S48*S17 - k0r*S46);

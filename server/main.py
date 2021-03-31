@@ -30,6 +30,9 @@ Also: look at Jedi docs for inspiration
 TODO URGENT: Either Monkey-patch Parser or modify the grammar to do things line by line. If
 monkey-patch and can't parse something, advance the lexer to a newline and keep going.
 
+NOTE: idea for optimization: for whatever change made in a range, only re-parse items in that range.
+But if the change crosses model boundaries, need to extend the changed range to encompass the model
+as well. Should be a good enough optimization for now.
 """
 
 import os
@@ -38,6 +41,8 @@ import logging
 from functools import lru_cache
 from itertools import chain
 from typing import List
+
+from lark.visitors import Transformer, Transformer_InPlace
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
@@ -56,7 +61,11 @@ from pygls.types import (CompletionItem, CompletionList, CompletionParams,
                          DidOpenTextDocumentParams, DidSaveTextDocumentParams, ExecuteCommandParams,
                          TextDocumentContentChangeEvent)
 from annotation import chebi_search
-import json
+from lark_patch import BreakRecursion, patch_parser
+
+
+# HACK patch the parser to product event hook
+patch_parser()
 
 
 # TODO remove this for production
@@ -89,7 +98,7 @@ PARSER_STR = r'''
 
     ?value : NUMBER
 
-    ?line: reaction
+    ?statement: reaction
         | assignment
 
     ?sum : product
@@ -108,7 +117,7 @@ PARSER_STR = r'''
         | "-" atom                  -> neg
         | "(" sum ")"
 
-    root : (line _NL)*
+    root : ([statement] _NL)*
 
     _NL: NEWLINE
 
@@ -116,6 +125,7 @@ PARSER_STR = r'''
     %import common.NUMBER
     %import common.DIGIT
     %import common.LETTER
+    %import common.WS
     %import common.WS_INLINE
     %import common.NEWLINE
     %ignore WS_INLINE
@@ -126,6 +136,11 @@ PARSER_STR = r'''
 class Species:
     stoich: str
     name: str
+
+
+# TODO use transformer to keep state of whether a new "complete statement" was encountered
+# remember to reset transformer every new call (or something)
+# TODO add a TODO about writing own parser and custom recrusion loop
 
 
 @dataclass
@@ -164,7 +179,7 @@ def walk_species_list(tree):
 
 # parses the whole file
 whole_parser = Lark(PARSER_STR, start='root', parser='lalr')
-line_parser = Lark(PARSER_STR, start='line', parser='lalr')
+# line_parser = Lark(PARSER_STR, start='line', parser='lalr')
 
 
 @dataclass
@@ -190,7 +205,15 @@ def resolve_unexpected_chars(e):
     s.line_ctr.feed(s.text[p])
 
 
-def try_parse(puppet, level):
+def try_parse(puppet):
+    while True:
+        try:
+            return try_parse_helper(puppet, 0)
+        except BreakRecursion as e:
+            puppet = e.puppet
+
+
+def try_parse_helper(puppet, level):
     while True:
         try:
             tree = puppet.resume_parse()
@@ -215,7 +238,7 @@ def flexible_parse(e, level):
 
     # try directly ignoring this token
     if e.token.type != '$END':
-        results.append(try_parse(e.puppet.copy(), level))
+        results.append(try_parse_helper(e.puppet.copy(), level))
 
     # print(e.puppet.pretty())
     # TODO implement early stopping, i.e. stop early if the search depth exceeds the current
@@ -228,7 +251,7 @@ def flexible_parse(e, level):
 
             if e.token in puppet.choices():
                 puppet.feed_token(e.token)
-                results.append(try_parse(puppet, level))
+                results.append(try_parse_helper(puppet, level))
 
     # filter out failed parses
     results = [r for r in results if r is not None]
@@ -241,10 +264,10 @@ def flexible_parse(e, level):
         return min(results, key=lambda r: r.level)
 
 
-@lru_cache(maxsize=LINE_CACHE_SIZE)
-def cached_line_parse(line: str):
-    '''Basic cached parsing; likely useful for huge documents with quick inline modifications.'''
-    return line_parser.parse(line)
+# @lru_cache(maxsize=LINE_CACHE_SIZE)
+# def cached_line_parse(line: str):
+#     '''Basic cached parsing; likely useful for huge documents with quick inline modifications.'''
+#     return line_parser.parse(line)
 
 
 # Holds information pertaining to one Antimony document
@@ -258,63 +281,64 @@ class Document:
 
     def reparse(self, text: str):
         self.species_names = set()
-        lines = text.splitlines()
-        for row, line in enumerate(lines):
-            line = line.strip()
-            if len(line) == 0:
-                continue
-            try:
-                tree = cached_line_parse(line)
-            except UnexpectedCharacters as e:
-                resolve_unexpected_chars(e)
-                # dynamic property; do this to avoid upsetting the IDE
-                puppet = getattr(e, 'puppet')
-                result = try_parse(puppet, 0)
-                if result is None: continue  # failed to parse
-                tree = result.tree
-            except ParseError as e:
-                result = flexible_parse(e, 0)
-                if result is None: continue  # failed to parse
+        try:
+            tree = whole_parser.parse(text)
+        except (BreakRecursion, UnexpectedCharacters, ParseError) as e:
+            puppet = getattr(e, 'puppet')
+            result = try_parse(puppet)
+            if result is None:
+                # TODO skip this line
+                assert False, 'shoot'
+            # TODO depend on the level and the number of original tokens, may choose to
+            # discard tree after all, if too many tokens were extrapolated.
+            tree = result.tree
+        except UnexpectedToken as e:
+            server.show_message('Unexpected error while parsing: {}'.format(e))
+            # TODO do something more here
+            return
 
-                # TODO depend on the level and the number of original tokens, may choose to
-                # discard tree after all, if too many tokens were extrapolated.
-                tree = result.tree
-            except UnexpectedToken as e:
-                e.line = row + 1
-                server.show_message('Error: {}'.format(e))
-                continue
+        self.handle_parse_tree(tree)
 
-            if tree.data == 'reaction':
-                reactants_index = 0
-                reaction_name = None
+    def handle_parse_tree(self, tree):
+        for child in tree.children:
+            if child.data == 'reaction':
+                self.handle_reaction_node(child)
 
-                if isinstance(tree.children[0], Token):
-                    reaction_name = str(tree.children[0])
-                    reactants_index = 1
-
-                reactants = walk_species_list(tree.children[reactants_index])
-                products = walk_species_list(tree.children[reactants_index + 1])
-                rate_law = tree.children[reactants_index + 2]  # this is a mathematical expresion
-                assert isinstance(rate_law, Tree)
-
-                for species in chain(reactants, products):
-                    self.species_names.add(species.name)
-
-                # Add the names of all the variables
-                for species in rate_law.find_data('var'):
-                    # TODO better way to do this: first add species names etc. from reactions and
-                    # assignments. After that, add unknown variables from these equations that
-                    # are not species or parameters or what not, and label them as unknown.
-                    self.species_names.add(str(species.children[0]))
-
-            elif tree.data == 'assignment':
-                assert isinstance(tree.children[0], Token)
-                assert isinstance(tree.children[1], Token)
-                name = str(tree.children[0])
-                value = str(tree.children[1])
-                self.species_names.add(name)
+            elif child.data == 'assignment':
+                self.handle_assignment_node(child)
             
             self.species_names.discard(DUMMY_VALUE)
+
+    def handle_reaction_node(self, tree):
+        reactants_index = 0
+        reaction_name = None
+
+        if isinstance(tree.children[0], Token):
+            reaction_name = str(tree.children[0])
+            reactants_index = 1
+
+        reactants = walk_species_list(tree.children[reactants_index])
+        products = walk_species_list(tree.children[reactants_index + 1])
+        rate_law = tree.children[reactants_index + 2]  # this is a mathematical expresion
+        assert isinstance(rate_law, Tree)
+
+        for species in chain(reactants, products):
+            self.species_names.add(species.name)
+
+        # Add the names of all the variables
+        for species in rate_law.find_data('var'):
+            # TODO better way to do this: first add species names etc. from reactions and
+            # assignments. After that, add unknown variables from these equations that
+            # are not species or parameters or what not, and label them as unknown.
+            self.species_names.add(str(species.children[0]))
+
+    def handle_assignment_node(self, tree):
+        assert isinstance(tree.children[0], Token)
+        assert isinstance(tree.children[1], Token)
+        name = str(tree.children[0])
+        value = str(tree.children[1])
+        self.species_names.add(name)
+
 
     def changed(self, change: TextDocumentContentChangeEvent, text: str):
         self.dirty = True

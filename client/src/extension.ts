@@ -107,7 +107,7 @@ async function createAnnotationDialog() {
 			};
 		});
 	});
-	// TODO create handler for selecting an item
+
 	quickPick.onDidChangeSelection(async (items: QuickPickItem[]) => {
 		const selectedItem = items[0];
 		const chebiId = selectedItem['chebiId'];

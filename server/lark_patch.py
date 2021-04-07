@@ -1,11 +1,13 @@
 '''Monkey-patch Lark's implementation of the LALR Parser, as we need an "event hook" when reduce
 is called.
 '''
+from lark.lark import Lark
 from lark.lexer import Token
 from lark.tree import Tree
-from lark.parsers.lalr_parser import ParserState, _Parser
+from lark.parsers.lalr_parser import ParserState, _Parser, ParseConf
 from lark.parsers.lalr_puppet import ParserPuppet
 from lark.parsers.lalr_analysis import Shift
+from lark.lexer import LexerThread
 from lark.exceptions import UnexpectedToken, UnexpectedInput
 
 
@@ -21,55 +23,10 @@ def break_recursion(tree):
     '''Did finish reducing a rule. This raises an exception for certain rules, so that we can
     break out of the recursive search outside.
     '''
-    if tree.data == 'reaction':
+    if tree.data in ('reaction', 'assignment'):
         return True
 
     return False
-
-
-def new_feed_token(self, token, is_end=False):
-    state_stack = self.state_stack
-    value_stack = self.value_stack
-    states = self.parse_conf.states
-    end_state = self.parse_conf.end_state
-    callbacks = self.parse_conf.callbacks
-
-    while True:
-        state = state_stack[-1]
-        try:
-            action, arg = states[state][token.type]
-        except KeyError:
-            expected = {s for s in states[state].keys() if s.isupper()}
-            raise UnexpectedToken(token, expected, state=self, puppet=None)
-
-        assert arg != end_state
-
-        if action is Shift:
-            # shift once and return
-            assert not is_end
-            state_stack.append(arg)
-            value_stack.append(token if token.type not in callbacks else callbacks[token.type](token))
-            return
-        else:
-            # reduce+shift as many times as necessary
-            rule = arg
-            size = len(rule.expansion)
-            if size:
-                s = value_stack[-size:]
-                del state_stack[-size:]
-                del value_stack[-size:]
-            else:
-                s = []
-
-            value = callbacks[rule](s)
-
-            _action, new_state = states[state_stack[-1]][rule.origin.name]
-            assert _action is Shift
-            state_stack.append(new_state)
-            value_stack.append(value)
-
-            if is_end and state_stack[-1] == end_state:
-                return value_stack[-1]
 
 
 def new_parse_from_state(self, state):
@@ -106,5 +63,15 @@ def new_parse_from_state(self, state):
 
 def patch_parser():
     '''HACK Monkey-patch the Lark parser.'''
-    ParserState.feed_token = new_feed_token
     _Parser.parse_from_state = new_parse_from_state
+
+
+def get_puppet(lark_inst: Lark, start: str, text: str):
+    '''HACK Generate a ParserPuppet without having encountered bugs.'''
+    lalr_parser = lark_inst.parser.parser
+    internal_parser = lalr_parser.parser
+    lexer = lark_inst.parser.lexer
+    lexer_thread = LexerThread(lexer, text)
+    parse_conf = ParseConf(internal_parser.parse_table, internal_parser.callbacks, start)
+    parser_state = ParserState(parse_conf, lexer_thread, None, None)
+    return ParserPuppet(internal_parser, parser_state, parser_state.lexer)

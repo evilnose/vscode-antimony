@@ -48,7 +48,7 @@
 		"vscode": "^1.52.0"
 	},
 	"activationEvents": [
-		"onLanguage:plaintext",
+		"onLanguage:antimony",
 		"onCommand:antimony.createAnnotation"
 	],
 	"main": "./dist/extension",

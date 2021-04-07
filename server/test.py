@@ -7,10 +7,8 @@ from main import Document
 from typing import List
 from itertools import chain
 
-FILE = '''
-EEEA + B -> 6Ceek; (AEEEEE + 5) / 777 + 1 + 3
-2EEEA + 3B -> 2.5Deee; v
-'''
+FILE = '''a =5;
+a'''
 
 FILE1 = '''
 J0: SA -> SB +??; E10

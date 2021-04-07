@@ -38,11 +38,10 @@ as well. Should be a good enough optimization for now.
 import os
 import sys
 import logging
+import copy
 from functools import lru_cache
 from itertools import chain
 from typing import List
-
-from lark.visitors import Transformer, Transformer_InPlace
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
@@ -61,7 +60,7 @@ from pygls.types import (CompletionItem, CompletionList, CompletionParams,
                          DidOpenTextDocumentParams, DidSaveTextDocumentParams, ExecuteCommandParams,
                          TextDocumentContentChangeEvent)
 from annotation import chebi_search
-from lark_patch import BreakRecursion, patch_parser
+from lark_patch import BreakRecursion, get_puppet, patch_parser
 
 
 # HACK patch the parser to product event hook
@@ -76,60 +75,9 @@ LINE_CACHE_SIZE = 2048
 
 
 '''=====Parsing-related Code===='''
-PARSER_STR = r'''
-    reaction_list : reaction*
-    reaction : [NAME ":"] reactants "->" products ";" rate_law [";"]
-    reactants : species ("+" species)*
-    products : species ("+" species)*
-    species : [NUMBER] NAME
-    ?rate_law : sum
-
-    assignment_list : assignment*
-    assignment : NAME "=" value
-
-    declaration : [var_modifier] [var_type] NAME ("," NAME)* [";"]
-
-    var_modifier : "var"            -> var
-        | "const"                   -> const
-    
-    var_type : "species"            -> species
-        | "compartment"             -> compartment
-        | "formula"                 -> formula
-
-    ?value : NUMBER
-
-    ?statement: reaction
-        | assignment
-
-    ?sum : product
-        | sum "+" product           -> add
-        | sum "-" product           -> sub
-
-    ?product : exponential
-        | product "*" exponential   -> mul
-        | product "/" exponential   -> div
-
-    ?exponential: atom
-        | exponential "^" atom      -> exp
-    
-    ?atom : NUMBER                  -> number
-        | NAME                      -> var
-        | "-" atom                  -> neg
-        | "(" sum ")"
-
-    root : ([statement] _NL)*
-
-    _NL: NEWLINE
-
-    %import common.CNAME -> NAME
-    %import common.NUMBER
-    %import common.DIGIT
-    %import common.LETTER
-    %import common.WS
-    %import common.WS_INLINE
-    %import common.NEWLINE
-    %ignore WS_INLINE
-'''
+dirname = os.path.dirname(__file__)
+with open(os.path.join(dirname, 'antimony.lark')) as r:
+    parser_str = r.read()
 
 
 @dataclass
@@ -178,9 +126,8 @@ def walk_species_list(tree):
 
 
 # parses the whole file
-whole_parser = Lark(PARSER_STR, start='root', parser='lalr')
-# line_parser = Lark(PARSER_STR, start='line', parser='lalr')
-
+whole_parser = Lark(parser_str, start='root', parser='lalr')
+# line_parser = Lark(parser_str, start='line', parser='lalr')
 
 @dataclass
 class ParseResult:
@@ -189,7 +136,7 @@ class ParseResult:
 
 
 def resolve_unexpected_chars(e):
-    '''Resolve an UnexpectedCharacters exception, so that parsing can resuming
+    '''Resolve an UnexpectedCharacters exception, so that parsing can resume
 
     In the case where the lexer encounters an unexpected character, i.e. one that is not defined by
     the grammar, we need to manually advance the pointer so that it is skipped.
@@ -207,9 +154,29 @@ def resolve_unexpected_chars(e):
 
 def try_parse(puppet):
     while True:
+        puppet_copy = puppet.copy()
         try:
-            return try_parse_helper(puppet, 0)
+            s = puppet.lexer_state.state
+            # HACK The latest release of lark has a bug that does not copy LineCounter
+            lc = copy.copy(s.line_ctr)
+
+            # Try parsing from this state
+            result = try_parse_helper(puppet_copy, 0)
+            if result is not None:
+                return result
+
+            # Parsing failed. Restore last valid parser state, skip this line, and keep trying.
+            
+            # Restore LineCounter copy
+            puppet.lexer_state.state.line_ctr = lc
+            
+            # Skip this line. We can always find a newline because we manually append a newline
+            # at the end of every text to be parsed.
+            s = puppet.lexer_state.state
+            nl_index = s.text.index(s.line_ctr.newline_char, s.line_ctr.char_pos)
+            s.line_ctr.feed(s.text[s.line_ctr.char_pos : nl_index + 1])
         except BreakRecursion as e:
+            # Update last valid state of puppet, and keep parsing from 0th-level recursion
             puppet = e.puppet
 
 
@@ -281,22 +248,31 @@ class Document:
 
     def reparse(self, text: str):
         self.species_names = set()
-        try:
-            tree = whole_parser.parse(text)
-        except (BreakRecursion, UnexpectedCharacters, ParseError) as e:
-            puppet = getattr(e, 'puppet')
-            result = try_parse(puppet)
-            if result is None:
-                # TODO skip this line
-                assert False, 'shoot'
-            # TODO depend on the level and the number of original tokens, may choose to
-            # discard tree after all, if too many tokens were extrapolated.
-            tree = result.tree
-        except UnexpectedToken as e:
-            server.show_message('Unexpected error while parsing: {}'.format(e))
-            # TODO do something more here
+        text += '\n'
+        root_puppet = get_puppet(whole_parser, 'root', text)
+        result = try_parse(root_puppet)
+        if result is None:
+            print('shoot')
             return
+        tree = result.tree
+        # try:
+        #     tree = whole_parser.parse(text + '\n')
+        # except (BreakRecursion, UnexpectedCharacters, ParseError) as e:
+        #     puppet = getattr(e, 'puppet')
+        #     result = try_parse(puppet)
+        #     if result is None:
+        #         # TODO skip this line
+        #         print('shoot')
+        #         return
+        #     # TODO depend on the level and the number of original tokens, may choose to
+        #     # discard tree after all, if too many tokens were extrapolated.
+        #     tree = result.tree
+        # except UnexpectedToken as e:
+        #     server.show_message('Unexpected error while parsing: {}'.format(e))
+        #     # TODO do something more here
+        #     return
 
+        print(tree)
         self.handle_parse_tree(tree)
 
     def handle_parse_tree(self, tree):
@@ -339,7 +315,6 @@ class Document:
         value = str(tree.children[1])
         self.species_names.add(name)
 
-
     def changed(self, change: TextDocumentContentChangeEvent, text: str):
         self.dirty = True
         self.source = text
@@ -360,6 +335,7 @@ class Document:
 '''=====Server-related Code===='''
 server = LanguageServer()
 doc = Document()
+
 
 @server.feature(TEXT_DOCUMENT_DID_OPEN)
 async def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):

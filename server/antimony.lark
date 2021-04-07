@@ -1,0 +1,57 @@
+reaction_list : reaction*
+reaction : [NAME ":"] reactants "->" products ";" rate_law [";"]
+reactants : species ("+" species)*
+products : species ("+" species)*
+species : [NUMBER] NAME
+?rate_law : sum
+
+assignment_list : assignment*
+assignment : NAME "=" value
+
+annotation : NAME annot_keyword
+annot_keyword : "identity"      -> identity
+    | "hasPart"                 -> has_part
+
+declaration : [var_modifier] [var_type] NAME ("," NAME)* [";"]
+
+var_modifier : "var"            -> var
+    | "const"                   -> const
+
+var_type : "species"            -> species
+    | "compartment"             -> compartment
+    | "formula"                 -> formula
+
+?value : NUMBER
+
+?statement: reaction
+    | assignment
+    | annotation
+
+?sum : product
+    | sum "+" product           -> add
+    | sum "-" product           -> sub
+
+?product : exponential
+    | product "*" exponential   -> mul
+    | product "/" exponential   -> div
+
+?exponential: atom
+    | exponential "^" atom      -> exp
+
+?atom : NUMBER                  -> number
+    | NAME                      -> var
+    | "-" atom                  -> neg
+    | "(" sum ")"
+
+root : ([statement] _NL)*
+
+_NL: NEWLINE
+
+%import common.CNAME -> NAME
+%import common.NUMBER
+%import common.DIGIT
+%import common.LETTER
+%import common.WS
+%import common.WS_INLINE
+%import common.NEWLINE
+%ignore WS_INLINE

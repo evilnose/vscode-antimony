@@ -7,6 +7,9 @@ chebi = ChEBI()
 
 def chebi_search(query: str):
     # TODO do we want to change searchCategory and maybe THREE STARS?
+    if query.strip() == '':
+        return
+
     results = chebi.getLiteEntity(query, maximumResults=100)
     # no result
     if isinstance(results, str):

@@ -1,31 +1,38 @@
-reaction_list : reaction*
-reaction : [NAME ":"] reactants "->" products ";" rate_law [";"]
+
+var_name : NAME
+name_in_comp : var_name "in" var_name
+
+
+reaction : [name_in_comp ":"] reactants ARROW products ";" rate_law [";"]
 reactants : species ("+" species)*
 products : species ("+" species)*
-species : [NUMBER] NAME
+species : [NUMBER] var_name
 ?rate_law : sum
+ARROW : "->"
+    | "=>"
 
-assignment_list : assignment*
-assignment : NAME "=" value
 
-annotation : NAME annot_keyword
+assignment : name_in_comp "=" sum
+
+
+annotation : var_name annot_keyword ESCAPED_STRING
 annot_keyword : "identity"      -> identity
     | "hasPart"                 -> has_part
+cvterm
 
-declaration : [var_modifier] [var_type] NAME ("," NAME)* [";"]
+
+declaration : declaration_modifier declaration_unit ("," declaration_unit)*
+declaration_modifier = var_modifier
+    | var_type
+    | var_modifier var_type
+declaration_unit : name_in_comp ["=" sum]
 
 var_modifier : "var"            -> var
     | "const"                   -> const
-
 var_type : "species"            -> species
     | "compartment"             -> compartment
     | "formula"                 -> formula
 
-?value : NUMBER
-
-?statement: reaction
-    | assignment
-    | annotation
 
 ?sum : product
     | sum "+" product           -> add
@@ -43,9 +50,26 @@ var_type : "species"            -> species
     | "-" atom                  -> neg
     | "(" sum ")"
 
-root : ([statement] _NL)*
+
+full_statement : [statement] STATEMENT_SEP
+?statement : reaction
+    | assignment
+    | declaration
+    | annotation
+STATEMENT_SEP : _NL
+    | ";"
+
+
+// For some reason we need to have at least one full_statement in the model, even if it is just
+// a newline or a semicolon
+model : ("model" | "module") NAME full_statement+ "end"
+
+
+root : (full_statement | model)*
+
 
 _NL: NEWLINE
+
 
 %import common.CNAME -> NAME
 %import common.NUMBER
@@ -54,4 +78,5 @@ _NL: NEWLINE
 %import common.WS
 %import common.WS_INLINE
 %import common.NEWLINE
+%import common.ESCAPED_STRING
 %ignore WS_INLINE

@@ -9,6 +9,7 @@
 * Annotations
 * Parse more complex syntaxes, including compartments, events, and models
 * Autocompletion based on cursor position (context)
+* Tests for the parser and the extension
 * Better optimization and caching (if required)
 
 ## How to Run Tests

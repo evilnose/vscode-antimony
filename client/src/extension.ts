@@ -1,9 +1,10 @@
 import { privateEncrypt } from 'crypto';
 import * as path from 'path';
-import { workspace, ExtensionContext, commands, InputBoxOptions, window, QuickInputButtons,
+import {
+	workspace, ExtensionContext, commands, InputBoxOptions, window, QuickInputButtons,
 	QuickPickItem,
 	Position
- } from 'vscode';
+} from 'vscode';
 
 import {
 	LanguageClient,
@@ -29,7 +30,9 @@ export function activate(context: ExtensionContext) {
 	const serverOptions: ServerOptions = { command: pythonInterp, args };
 
 	const clientOptions: LanguageClientOptions = {
-		documentSelector: [{ scheme: 'file', language: 'plaintext' }],
+		documentSelector: [
+			{ scheme: "file", language: "antimony" },
+		],
 	};
 
 	// Create the language client and start the client.
@@ -39,7 +42,7 @@ export function activate(context: ExtensionContext) {
 		serverOptions,
 		clientOptions
 	);
-	
+
 	context.subscriptions.push(
 		commands.registerCommand('antimony.createAnnotationDialog', createAnnotationDialog));
 
@@ -55,7 +58,7 @@ export function deactivate(): Thenable<void> | undefined {
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function createAnnotationDialog() {

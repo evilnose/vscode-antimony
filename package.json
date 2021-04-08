@@ -29,8 +29,7 @@
 				"aliases": [
 					"Antimony",
 					"ant"
-				],
-				"filenames": []
+				]
 			}
 		],
 		"menus": {
@@ -49,7 +48,8 @@
 	},
 	"activationEvents": [
 		"onLanguage:antimony",
-		"onCommand:antimony.createAnnotation"
+		"onCommand:querySpecies",
+		"onCommand:createAnnotationDialog"
 	],
 	"main": "./dist/extension",
 	"scripts": {

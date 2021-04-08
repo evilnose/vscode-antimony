@@ -30,6 +30,8 @@ Also: look at Jedi docs for inspiration
 TODO URGENT: Either Monkey-patch Parser or modify the grammar to do things line by line. If
 monkey-patch and can't parse something, advance the lexer to a newline and keep going.
 
+TODO new approach to error tolerance: chill out
+
 NOTE: idea for optimization: for whatever change made in a range, only re-parse items in that range.
 But if the change crosses model boundaries, need to extend the changed range to encompass the model
 as well. Should be a good enough optimization for now.
@@ -245,6 +247,7 @@ class Document:
         self.compartments = dict()
         self.species_names = set()
         self.source = ''
+        self.dirty = False
 
     def reparse(self, text: str):
         self.species_names = set()
@@ -272,7 +275,6 @@ class Document:
         #     # TODO do something more here
         #     return
 
-        print(tree)
         self.handle_parse_tree(tree)
 
     def handle_parse_tree(self, tree):

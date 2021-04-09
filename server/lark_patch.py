@@ -1,69 +1,34 @@
 '''Monkey-patch Lark's implementation of the LALR Parser, as we need an "event hook" when reduce
 is called.
 '''
+from copy import copy
+
 from lark.lark import Lark
 from lark.lexer import Token
 from lark.tree import Tree
-from lark.parsers.lalr_parser import ParserState, _Parser, ParseConf
+from lark.parsers.lalr_parser import ParserState, ParseConf
 from lark.parsers.lalr_puppet import ParserPuppet
-from lark.parsers.lalr_analysis import Shift
 from lark.lexer import LexerThread
 from lark.exceptions import UnexpectedToken, UnexpectedInput
 
 
-class BreakRecursion(Exception):
-    '''An exception to tell our code to break the search recursion.
-    '''
-    def __init__(self, puppet):
-        super().__init__()
-        self.puppet = puppet
-
-
-def break_recursion(tree):
-    '''Did finish reducing a rule. This raises an exception for certain rules, so that we can
-    break out of the recursive search outside.
-    '''
-    if tree.data in ('reaction', 'assignment'):
-        return True
-
-    return False
-
-
-def new_parse_from_state(self, state):
-    # Main LALR-parser loop
-    try:
-        token = None
-        for token in state.lexer.lex(state):
-            state.feed_token(token)
-            if (len(state.value_stack) > 1
-                and isinstance(state.value_stack[-2], Tree)):
-                if break_recursion(state.value_stack[-2]):
-                    puppet = ParserPuppet(self, state, state.lexer)
-                    raise BreakRecursion(puppet)
-
-        token = Token.new_borrow_pos('$END', '', token) if token else Token('$END', '', 0, 1, 1)
-        return state.feed_token(token, True)
-    except UnexpectedInput as e:
-        try:
-            e.puppet = ParserPuppet(self, state, state.lexer)
-        except NameError:
-            pass
-        raise e
-    except Exception as e:
-        if self.debug:
-            print("")
-            print("STATE STACK DUMP")
-            print("----------------")
-            for i, s in enumerate(state.state_stack):
-                print('%d)' % i , s)
-            print("")
-
-        raise
+def new_copy(self):
+    """Create a new puppet with a separate state.
+    Calls to feed_token() won't affect the old puppet, and vice-versa.
+    """
+    lex_thread_copy = copy(self.lexer_state)
+    lex_thread_copy.state.line_ctr = copy(lex_thread_copy.state.line_ctr)
+    return type(self)(
+        self.parser,
+        copy(self.parser_state),
+        lex_thread_copy,
+    )
 
 
 def patch_parser():
     '''HACK Monkey-patch the Lark parser.'''
-    _Parser.parse_from_state = new_parse_from_state
+    # _Parser.parse_from_state = new_parse_from_state
+    ParserPuppet.__copy__ = new_copy
 
 
 def get_puppet(lark_inst: Lark, start: str, text: str):

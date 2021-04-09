@@ -1,9 +1,10 @@
 
 var_name : NAME
-name_in_comp : var_name "in" var_name
+in_comp : "in" var_name
+name_maybe_in : var_name [in_comp]
 
 
-reaction : [name_in_comp ":"] reactants ARROW products ";" rate_law [";"]
+reaction : [name_maybe_in ":"] reactants ARROW products ";" rate_law [in_comp]
 reactants : species ("+" species)*
 products : species ("+" species)*
 species : [NUMBER] var_name
@@ -12,20 +13,19 @@ ARROW : "->"
     | "=>"
 
 
-assignment : name_in_comp "=" sum
+assignment : name_maybe_in "=" sum
 
 
 annotation : var_name annot_keyword ESCAPED_STRING
 annot_keyword : "identity"      -> identity
     | "hasPart"                 -> has_part
-cvterm
 
 
 declaration : declaration_modifier declaration_unit ("," declaration_unit)*
-declaration_modifier = var_modifier
+declaration_modifier : var_modifier
     | var_type
     | var_modifier var_type
-declaration_unit : name_in_comp ["=" sum]
+declaration_unit : name_maybe_in ["=" sum]
 
 var_modifier : "var"            -> var
     | "const"                   -> const

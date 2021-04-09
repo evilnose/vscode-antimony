@@ -7,7 +7,7 @@ from main import Document
 from typing import List
 from itertools import chain
 
-FILE = '''a =5;
+FILE = '''a = 5;
 a'''
 
 FILE1 = '''

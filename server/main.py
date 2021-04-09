@@ -30,7 +30,15 @@ Also: look at Jedi docs for inspiration
 TODO URGENT: Either Monkey-patch Parser or modify the grammar to do things line by line. If
 monkey-patch and can't parse something, advance the lexer to a newline and keep going.
 
-TODO new approach to error tolerance: chill out
+TODO new approach to error tolerance: chill out. If an error is encountered, then stop, restore
+the last valid state (i.e. at the end of a statement), find the next newline or semicolon, skip
+to there, and parse. (be careful here. what about models?)
+NOTE: still probably need dummy tokens, and a way to preserve the context
+short-term TODO list
+* definition
+* display syntax error
+* uniprot
+* syntax highlighting?
 
 NOTE: idea for optimization: for whatever change made in a range, only re-parse items in that range.
 But if the change crosses model boundaries, need to extend the changed range to encompass the model
@@ -62,7 +70,8 @@ from pygls.types import (CompletionItem, CompletionList, CompletionParams,
                          DidOpenTextDocumentParams, DidSaveTextDocumentParams, ExecuteCommandParams,
                          TextDocumentContentChangeEvent)
 from annotation import chebi_search
-from lark_patch import BreakRecursion, get_puppet, patch_parser
+from lark_patch import get_puppet, patch_parser
+from lark.parsers.lalr_puppet import ParserPuppet
 
 
 # HACK patch the parser to product event hook
@@ -137,108 +146,6 @@ class ParseResult:
     level: int
 
 
-def resolve_unexpected_chars(e):
-    '''Resolve an UnexpectedCharacters exception, so that parsing can resume
-
-    In the case where the lexer encounters an unexpected character, i.e. one that is not defined by
-    the grammar, we need to manually advance the pointer so that it is skipped.
-
-    This needs to be done manually because we cannot afford the luxury of the `on_error` feature of
-    `LALR_Parser`, which would have been able to handle this by itself:
-    https://github.com/lark-parser/lark/blob/7ce0f7015fa24e83162afbdd129323f196273b97/lark/parsers/lalr_parser.py#L51
-    
-    '''
-    s = e.puppet.lexer_state.state
-    p = s.line_ctr.char_pos
-    # feed the current token. Doesn't actually do anything but advance LineCounter.
-    s.line_ctr.feed(s.text[p])
-
-
-def try_parse(puppet):
-    while True:
-        puppet_copy = puppet.copy()
-        try:
-            s = puppet.lexer_state.state
-            # HACK The latest release of lark has a bug that does not copy LineCounter
-            lc = copy.copy(s.line_ctr)
-
-            # Try parsing from this state
-            result = try_parse_helper(puppet_copy, 0)
-            if result is not None:
-                return result
-
-            # Parsing failed. Restore last valid parser state, skip this line, and keep trying.
-            
-            # Restore LineCounter copy
-            puppet.lexer_state.state.line_ctr = lc
-            
-            # Skip this line. We can always find a newline because we manually append a newline
-            # at the end of every text to be parsed.
-            s = puppet.lexer_state.state
-            nl_index = s.text.index(s.line_ctr.newline_char, s.line_ctr.char_pos)
-            s.line_ctr.feed(s.text[s.line_ctr.char_pos : nl_index + 1])
-        except BreakRecursion as e:
-            # Update last valid state of puppet, and keep parsing from 0th-level recursion
-            puppet = e.puppet
-
-
-def try_parse_helper(puppet, level):
-    while True:
-        try:
-            tree = puppet.resume_parse()
-            return ParseResult(tree, level)
-        except ParseError as e:
-            # encountered parse error. Hand to next level
-            return flexible_parse(e, level + 1)
-        except UnexpectedCharacters as e:
-            # resolve error and keep trying to parse
-            resolve_unexpected_chars(e)
-
-
-def flexible_parse(e, level):
-    '''Try to parse even when there is an error'''
-    if level > RECURSION_LIMIT:
-        return None
-
-    FAKE_TOKENS = { 'SEMICOLON', 'NAME', 'NUMBER', 'PLUS', 'RPAR' }
-
-    # list of alternative possible parse results
-    results = list()
-
-    # try directly ignoring this token
-    if e.token.type != '$END':
-        results.append(try_parse_helper(e.puppet.copy(), level))
-
-    # print(e.puppet.pretty())
-    # TODO implement early stopping, i.e. stop early if the search depth exceeds the current
-    # lowest depth
-    # Also TODO determine a way to optimize the order of exploring choices.
-    for choice, details in e.puppet.choices().items():
-        if choice in FAKE_TOKENS:
-            puppet = e.puppet.copy()
-            puppet.feed_token(Token(choice, DUMMY_VALUE))
-
-            if e.token in puppet.choices():
-                puppet.feed_token(e.token)
-                results.append(try_parse_helper(puppet, level))
-
-    # filter out failed parses
-    results = [r for r in results if r is not None]
-
-    if len(results) == 0:
-        # no successful parse under the recursion limit
-        return None
-    else:
-        # return the result with the lowest level of recursion
-        return min(results, key=lambda r: r.level)
-
-
-# @lru_cache(maxsize=LINE_CACHE_SIZE)
-# def cached_line_parse(line: str):
-#     '''Basic cached parsing; likely useful for huge documents with quick inline modifications.'''
-#     return line_parser.parse(line)
-
-
 # Holds information pertaining to one Antimony document
 class Document:
     def __init__(self):
@@ -250,32 +157,73 @@ class Document:
         self.dirty = False
 
     def reparse(self, text: str):
-        self.species_names = set()
         text += '\n'
+        # TODO more re-initializations
+        self.species_names = set()
+
         root_puppet = get_puppet(whole_parser, 'root', text)
-        result = try_parse(root_puppet)
-        if result is None:
-            print('shoot')
-            return
-        tree = result.tree
-        # try:
-        #     tree = whole_parser.parse(text + '\n')
-        # except (BreakRecursion, UnexpectedCharacters, ParseError) as e:
-        #     puppet = getattr(e, 'puppet')
-        #     result = try_parse(puppet)
-        #     if result is None:
-        #         # TODO skip this line
-        #         print('shoot')
-        #         return
-        #     # TODO depend on the level and the number of original tokens, may choose to
-        #     # discard tree after all, if too many tokens were extrapolated.
-        #     tree = result.tree
-        # except UnexpectedToken as e:
-        #     server.show_message('Unexpected error while parsing: {}'.format(e))
-        #     # TODO do something more here
-        #     return
+            # result = root_puppet.
+        tree = self.recoverable_parse(root_puppet)
+        assert tree is not None
 
         self.handle_parse_tree(tree)
+
+    def find_separator(self, puppet):
+        '''Given a puppet, return a copy of it with the lexer located at the next statement separator.
+
+        All tokens between the current lexer position and the next statement separator are skipped.
+        '''
+        puppet = puppet.copy()
+        while True:
+            try:
+                state = puppet.parser_state
+                for token in state.lexer.lex(state):
+                    if token.type == 'STATEMENT_SEP':
+                        return puppet
+                return puppet
+            except UnexpectedCharacters:
+                pass
+
+    def save_checkpoint(self, tree) -> bool:
+        '''Returns whether we should save the state of the parser (i.e. in a ParserPuppet).
+
+        Basically returns whether the rule that was just parsed is a complete rule, i.e. a statement
+        or a model-end. This way, if we encounter an error later, we can restore the puppet to
+        this complete state, find the next newline or semicolon, and continue parsing (having
+        skipped the errored part).
+        '''
+        if tree.data in ('reaction', 'assignment', 'declaration', 'annotation', 'model'):
+            return True
+
+        return False
+
+    def recoverable_parse(self, puppet):
+        last_puppet = puppet.copy()
+        while True:
+            state = puppet.parser_state
+            try:
+                token = None
+                for token in state.lexer.lex(state):
+                    state.feed_token(token)
+                    if (len(state.value_stack) > 1 and isinstance(state.value_stack[-2], Tree)):
+                        if self.save_checkpoint(state.value_stack[-2]):
+                            last_puppet = puppet.copy()
+
+                token = Token.new_borrow_pos('$END', '', token) if token else Token('$END', '', 0, 1, 1)
+                return state.feed_token(token, True)
+            except (UnexpectedInput, UnexpectedCharacters) as e:
+                # Encountered error; skip parsing to next semicolon or newline
+                puppet = self.find_separator(last_puppet)
+            except Exception as e:
+                # if self.debug:
+                #     print("")
+                #     print("STATE STACK DUMP")
+                #     print("----------------")
+                #     for i, s in enumerate(state.state_stack):
+                #         print('%d)' % i , s)
+                #     print("")
+
+                raise
 
     def handle_parse_tree(self, tree):
         for child in tree.children:

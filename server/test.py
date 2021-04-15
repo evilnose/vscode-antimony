@@ -7,8 +7,14 @@ from main import Document
 from typing import List
 from itertools import chain
 
-FILE = '''a = 5;
-a'''
+FILE = '''2J0 + 3B -> 2.5Deee; v
+J0: EEEA + B -> 6Ceek; Something * 2
+AEEEE == 5
+BIA ????fef&&&&= 1
+gluc = 7.41
+
+EEEE identity "http://identifiers.org/chebi/CHEBI:17234"
+'''
 
 FILE1 = '''
 J0: SA -> SB +??; E10
@@ -759,5 +765,4 @@ def walk_species_list(tree):
 
     return ret
 
-doc = Document()
-doc.reparse(FILE)
+doc = Document(FILE)

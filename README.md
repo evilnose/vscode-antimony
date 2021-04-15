@@ -12,6 +12,10 @@
 * Tests for the parser and the extension
 * Better optimization and caching (if required)
 
+## TODOs
+* Handle dummy tokens
+* Multithreading for pygls (especially for querying)
+
 ## How to Run Tests
 Run `npm test` directly. However, if you are using VSCode for development this wouldn't work (see
 [this](https://code.visualstudio.com/api/working-with-extensions/testing-extension#using-insiders-version-for-extension-development)).

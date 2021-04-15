@@ -8,27 +8,14 @@ from lark.lexer import Token
 from lark.tree import Tree
 from lark.parsers.lalr_parser import ParserState, ParseConf
 from lark.parsers.lalr_puppet import ParserPuppet
-from lark.lexer import LexerThread
+from lark.lexer import LexerThread, LineCounter
 from lark.exceptions import UnexpectedToken, UnexpectedInput
-
-
-def new_copy(self):
-    """Create a new puppet with a separate state.
-    Calls to feed_token() won't affect the old puppet, and vice-versa.
-    """
-    lex_thread_copy = copy(self.lexer_state)
-    lex_thread_copy.state.line_ctr = copy(lex_thread_copy.state.line_ctr)
-    return type(self)(
-        self.parser,
-        copy(self.parser_state),
-        lex_thread_copy,
-    )
 
 
 def patch_parser():
     '''HACK Monkey-patch the Lark parser.'''
     # _Parser.parse_from_state = new_parse_from_state
-    ParserPuppet.__copy__ = new_copy
+    pass
 
 
 def get_puppet(lark_inst: Lark, start: str, text: str):

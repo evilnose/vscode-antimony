@@ -1,15 +1,15 @@
 
 var_name : NAME
-in_comp : "in" var_name
+?in_comp : "in" var_name
 name_maybe_in : var_name [in_comp]
 
 
-reaction : [name_maybe_in ":"] reactants ARROW products ";" rate_law [in_comp]
+reaction : [name_maybe_in ":"] reactants _ARROW products ";" rate_law [in_comp]
 reactants : species ("+" species)*
 products : species ("+" species)*
 species : [NUMBER] var_name
 ?rate_law : sum
-ARROW : "->"
+_ARROW : "->"
     | "=>"
 
 
@@ -21,11 +21,11 @@ annot_keyword : "identity"      -> identity
     | "hasPart"                 -> has_part
 
 
-declaration : declaration_modifier declaration_unit ("," declaration_unit)*
-declaration_modifier : var_modifier
+declaration : declaration_modifiers declaration_item ("," declaration_item)*
+declaration_modifiers : var_modifier
     | var_type
     | var_modifier var_type
-declaration_unit : name_maybe_in ["=" sum]
+declaration_item : name_maybe_in ["=" sum]
 
 var_modifier : "var"            -> var
     | "const"                   -> const
@@ -51,12 +51,12 @@ var_type : "species"            -> species
     | "(" sum ")"
 
 
-full_statement : [statement] STATEMENT_SEP
+?full_statement : [statement] _STATEMENT_SEP
 ?statement : reaction
     | assignment
     | declaration
     | annotation
-STATEMENT_SEP : _NL
+_STATEMENT_SEP : _NL
     | ";"
 
 

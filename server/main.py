@@ -76,7 +76,6 @@ patch_parser()
 # TODO remove this for production
 logging.basicConfig(filename='pygls.log', filemode='w', level=logging.DEBUG)
 RECURSION_LIMIT = 5  # Limit for flexible parsing
-DUMMY_VALUE = '@DUMMY@'
 LINE_CACHE_SIZE = 2048
 N_MAX_RECOVERY = 20
 
@@ -149,7 +148,11 @@ class TypeError(SemanticError):
 
 
 # parses the whole file
-whole_parser = Lark(parser_str, start='root', parser='lalr')
+main_parser = Lark(parser_str, start='root', parser='lalr',
+    propagate_positions=True,
+    keep_all_tokens=True,
+    maybe_placeholders=True)
+# all_parser = Lark(parser_str, start='root', parser='lalr', keep_all_tokens=True)
 
 
 class SymbolType(Enum):
@@ -290,55 +293,76 @@ class Document:
         # TODO more re-initializations
         self.species_names = set()
 
-        root_puppet = get_puppet(whole_parser, 'root', text)
-        # result = root_puppet.
+        root_puppet = get_puppet(main_parser, 'root', text)
         tree = self.recoverable_parse(root_puppet)
+
         assert tree is not None
+        print(self.format(tree))
 
         self.handle_parse_tree(tree)
 
-    def recover_from_error(self, last_puppet, err_puppet):
+    def format(self, tree):
+        if tree is None:
+            return ''
+
+        if isinstance(tree, Token):
+            text = tree.value
+            if tree.type == 'error_token':
+                return text
+
+            if tree.type in ('NAME', 'NUMBER') or tree.value == '$':
+                return text
+            elif tree.value in (',', ';', ':', 'const', 'var'):
+                return text + ' '
+
+            return ' ' + text + ' '
+
+        text = ''
+        for child in tree.children:
+            text += self.format(child)
+
+        return text
+
+    def recover_from_error(self, err_puppet, token=None):
         '''Given a puppet, return a copy of it with the lexer located at the next statement separator.
 
         All tokens between the current lexer position and the next statement separator are skipped.
         '''
-        RECOVERY_TOKENS = ['SEMICOLON', '_ARROW', 'RPAR', 'NAME']
-        old_lc = copy(last_puppet.lexer_state.state.line_ctr)
-
-        # Try recovering
-        # TODO have more criteria for skipping, e.g. if there is only one token and we have no
-        # idea what it means
-        # TODO probably want to copy line counter
-        for i in range(N_MAX_RECOVERY):
-            accepts = err_puppet.accepts()
-            if '_STATEMENT_SEP' in accepts:
-                err_puppet.feed_token(Token('_STATEMENT_SEP', DUMMY_VALUE))
-                break
-
-            for try_choice in RECOVERY_TOKENS:
-                if try_choice in accepts:
-                    err_puppet.feed_token(Token(try_choice, DUMMY_VALUE))
+        def last_suite(state_stack, states):
+            until_index = None
+            # For now just discard everything that is not a suite or
+            # file_input, if we detect an error.
+            for until_index, state_arg in reversed(list(enumerate(state_stack))):
+                # `suite` can sometimes be only simple_stmt, not stmt.
+                if 'full_statement' in states[state_arg]:
                     break
-            else:
-                # No choices
-                err_puppet = copy(last_puppet)
-                break
-        else:
-            # Could not recover error; give up parsing this line.
-            err_puppet = copy(last_puppet)
+            return until_index
 
-        text = last_puppet.lexer_state.state.text
-        try:
-            next_pos = text.index(old_lc.newline_char, old_lc.char_pos) + 1
-        except ValueError:
-            try:
-                next_pos = text.index(';', old_lc.char_pos) + 1
-            except ValueError:
-                next_pos = len(text)
-        old_lc.feed(text[old_lc.char_pos: next_pos])
-        # TODO update lexer_state.state.last_token
-        err_puppet.lexer_state.state.line_ctr = old_lc
-        return err_puppet
+        def update_stacks(value_stack, state_stack, start_index):
+            all_nodes = value_stack[start_index-1:]
+
+            if all_nodes:
+                node = Tree('error_node', all_nodes)
+                value_stack[start_index - 2].children.append(node)
+                del state_stack[start_index:]
+                del value_stack[start_index-1:]
+            return bool(all_nodes)
+        
+        pstate = err_puppet.parser_state
+        until_index = last_suite(pstate.state_stack, pstate.parse_conf.states)
+
+        if not update_stacks(pstate.value_stack, pstate.state_stack, until_index + 1):
+            # No error node created; create token instead
+            if token:
+                token.type = 'error_token'
+                pstate.value_stack[-1].children.append(token)
+                return
+
+            s = err_puppet.lexer_state.state
+            p = s.line_ctr.char_pos
+            tok = Token('error_token', s.text[p], p, s.line_ctr.line, s.line_ctr.column)
+            pstate.value_stack[-1].children.append(tok)
+            s.line_ctr.feed('?')
 
     def save_checkpoint(self, tree) -> bool:
         '''Returns whether we should save the state of the parser (i.e. in a ParserPuppet).
@@ -354,7 +378,6 @@ class Document:
         return False
 
     def recoverable_parse(self, puppet):
-        last_puppet = puppet.copy()
         while True:
             state = puppet.parser_state
             try:
@@ -363,15 +386,17 @@ class Document:
                     state.feed_token(token)
                     if (len(state.value_stack) > 1 and isinstance(state.value_stack[-2], Tree)):
                         if self.save_checkpoint(state.value_stack[-2]):
+                            # TODO remove me
                             last_puppet = puppet.copy()
 
                 token = Token.new_borrow_pos(
                     '$END', '', token) if token else Token('$END', '', 0, 1, 1)
                 return state.feed_token(token, True)
-            except (UnexpectedInput, UnexpectedCharacters) as e:
+            except UnexpectedCharacters:
+                self.recover_from_error(puppet)
+            except UnexpectedInput as e:
                 # Encountered error; try to recover
-                puppet = self.recover_from_error(last_puppet, puppet)
-                last_puppet = puppet.copy()
+                self.recover_from_error(puppet, e.token)
             except Exception as e:
                 # if self.debug:
                 #     print("")
@@ -385,11 +410,6 @@ class Document:
     def qname(self, scope, name):
         return scope + '/' + name
 
-    def contains_dummy(self, tree):
-        if isinstance(tree, Token):
-            return tree.value == DUMMY_VALUE
-        return self.contains_dummy(tree.children[-1])
-
     def get_range(self, left_token, right_token=None):
         assert isinstance(left_token, Token)
         assert right_token is None or isinstance(right_token, Token)
@@ -401,48 +421,65 @@ class Document:
         return Range(Position(left_token.line - 1, left_token.column - 1),
                      Position(right_token.end_line - 1, right_token.end_column - 1))
 
-    def get_tree_range(self, tree):
+    def leftmost_token(self, tree: Tree):
         left = tree
         while not isinstance(left, Token):
             left = left.children[0]
+        
+        return left
 
+    def rightmost_token(self, tree: Tree):
         right = tree
         while not isinstance(right, Token):
             right = right.children[-1]
 
-        return self.get_range(left, right)
+        return right
+
+    def get_tree_range(self, tree):
+        return Range(Position(tree.line - 1, tree.column - 1),
+                     Position(tree.end_line - 1, tree.end_column - 1))
 
     def handle_parse_tree(self, tree):
         scope = '_main'
-        for child in tree.children:
-            if child.data == 'reaction':
-                self.handle_reaction(scope, child)
-            elif child.data == 'assignment':
-                self.handle_assignment(scope, child)
-            elif child.data == 'declaration':
-                self.handle_declaration(scope, child)
+        for suite in tree.children:
+            if isinstance(suite, Token):
+                assert suite.type == 'error_token'
+                continue
+            if suite.data == 'error_node':
+                continue
 
-            self.species_names.discard(DUMMY_VALUE)
+            if suite.data == 'full_statement':
+                child = suite.children[0]
+                if child is None:  # empty statement
+                    continue
+
+                if child.data == 'reaction':
+                    self.handle_reaction(scope, child)
+                elif child.data == 'assignment':
+                    self.handle_assignment(scope, child)
+                elif child.data == 'declaration':
+                    self.handle_declaration(scope, child)
 
     def resolve_var_name(self, tree) -> NameItem:
         '''Resolve a var_name tree, i.e. one parsed from $A or A.
         '''
+        assert len(tree.children) == 2
         name_token = tree.children[-1]
-        if len(tree.children) == 1:
-            return NameItem(str(name_token), self.get_range(name_token), False, None)
+        if tree.children[0] is not None:
+            assert tree.children[0].value == '$'
+            var_range = self.get_range(tree.children[0])
+            return NameItem(str(name_token), self.get_range(name_token), True, var_range)
 
-        var_range = self.get_range(tree.children[0])
-        return NameItem(str(name_token), self.get_range(name_token), True, var_range)
+        return NameItem(str(name_token), self.get_range(name_token), False, None)
 
     def resolve_name_maybe_in(self, tree) -> NameMaybeIn:
-        assert len(tree.children) in (1, 2)
+        assert len(tree.children) == 2
 
         name_item = self.resolve_var_name(tree.children[0])
-        if len(tree.children) == 2:
-            # TODO deal with comp variability
-            comp_item = self.resolve_var_name(tree.children[1])
+        if tree.children[1] is not None:
+            # skip "in"
+            comp_item = self.resolve_var_name(tree.children[1].children[1])
         else:
-            assert len(tree.children) == 1
             comp_item = None
 
         return NameMaybeIn(name_item, comp_item)
@@ -473,7 +510,7 @@ class Document:
     def handle_formula(self, scope: str, tree: Tree):
         # TODO handle dummy tokens
         def pred(t):
-            return isinstance(t, Token) and t.type == 'NAME' and t.value != DUMMY_VALUE
+            return isinstance(t, Token) and t.type == 'NAME'
         for parameter in tree.scan_values(pred):
             name = str(parameter)
             range_ = self.get_range(parameter)
@@ -482,14 +519,10 @@ class Document:
             )
 
     def handle_reaction(self, scope, tree):
-        if self.contains_dummy(tree):
-            return
-
-        reactants_index = 0
         reaction_name = None
         reaction_range = None
 
-        if tree.children[0].data != 'reactants':
+        if tree.children[0] is not None:
             name_mi = self.resolve_name_maybe_in(tree.children[0])
             reaction_name = name_mi.name_item.name
             reactants_index = 1
@@ -507,9 +540,12 @@ class Document:
             reaction_range = self.get_tree_range(tree)
 
         assert reaction_name is not None
-        self.handle_species_list(scope, tree.children[reactants_index])
-        self.handle_species_list(scope, tree.children[reactants_index + 1])
-        self.handle_formula(scope, tree.children[reactants_index + 2])
+        # Skip ";"
+        self.handle_species_list(scope, tree.children[2])
+        # Skip "->"
+        self.handle_species_list(scope, tree.children[4])
+        # Skip ";"
+        self.handle_formula(scope, tree.children[6])
 
         # TODO get formatted reaction string and rate law string, and store them along with the
         # reaction
@@ -520,7 +556,7 @@ class Document:
 
     def handle_assignment(self, scope, tree):
         name = tree.children[0]
-        value = tree.children[1]
+        value = tree.children[2]
         name_mi = self.resolve_name_maybe_in(name)
         self.record_issues(
             self.table.update_type(self.qname(scope, name_mi.name_item.name), SymbolType.PARAMETER,
@@ -556,15 +592,18 @@ class Document:
             variab = self.resolve_variab(modifiers.children[0])
             stype = self.resolve_var_type(modifiers.children[1])
 
-        for item in tree.children[1:]:
+        # Skip comma separators
+        for item in tree.children[1::2]:
+            assert len(item.children) == 2
             name_mi = self.resolve_name_maybe_in(item.children[0])
             # TODO update variability
             self.record_issues(
                 self.table.update_type(name_mi.name_item.name, stype, name_mi.name_item.name_range)
             )
-            if len(item.children) == 2:
-                # TODO add value in table
-                value = item.children[1]
+            # TODO add value in table
+            if item.children[1] is not None:
+                # TODO record value
+                pass
 
     def changed(self, change: TextDocumentContentChangeEvent, text: str):
         self.source = text

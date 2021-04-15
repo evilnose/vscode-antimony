@@ -6,6 +6,7 @@
 
 ## Planned Features
 * Syntax highlighting
+* Parser Caching
 * Annotations
 * Parse more complex syntaxes, including compartments, events, and models
 * Autocompletion based on cursor position (context)

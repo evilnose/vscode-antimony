@@ -1,6 +1,6 @@
 
-var_name : NAME
-?in_comp : "in" var_name
+var_name : ["$"] NAME
+in_comp : "in" var_name
 name_maybe_in : var_name [in_comp]
 
 
@@ -25,7 +25,8 @@ declaration : declaration_modifiers declaration_item ("," declaration_item)*
 declaration_modifiers : var_modifier
     | var_type
     | var_modifier var_type
-declaration_item : name_maybe_in ["=" sum]
+declaration_item : name_maybe_in [decl_assignment]
+decl_assignment : "=" sum
 
 var_modifier : "var"            -> var
     | "const"                   -> const

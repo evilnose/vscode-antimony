@@ -7,13 +7,9 @@ from main import Document
 from typing import List
 from itertools import chain
 
-FILE = '''2J0 + 3B -> 2.5Deee; v
-J0: EEEA + B -> 6Ceek; Something * 2
-AEEEE == 5
-BIA ????fef&&&&= 1
-gluc = 7.41
-
-EEEE identity "http://identifiers.org/chebi/CHEBI:17234"
+FILE = '''
+J0 : A -> B;0;
+const a, b, c, d = 5 / 10
 '''
 
 FILE1 = '''
@@ -722,6 +718,7 @@ S99 = 3
 
 '''
 
+
 @dataclass
 class Species:
     stoich: str
@@ -733,7 +730,6 @@ class Reaction:
     reactants: List[Species]
     products: List[Species]
     rate_law: str
-
 
 @dataclass
 class Assignment:
@@ -764,5 +760,6 @@ def walk_species_list(tree):
         ret.append(Species(stoich, name))
 
     return ret
+
 
 doc = Document(FILE)

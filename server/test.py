@@ -8,8 +8,7 @@ from typing import List
 from itertools import chain
 
 FILE = '''
-J0 : A -> B;0;
-const a, b, c, d = 5 / 10
+A = 5
 '''
 
 FILE1 = '''

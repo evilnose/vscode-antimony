@@ -296,6 +296,7 @@ class Document:
         root_puppet = get_puppet(main_parser, 'root', text)
         tree = self.recoverable_parse(root_puppet)
 
+        print(tree)
         assert tree is not None
         print(self.format(tree))
 
@@ -346,12 +347,18 @@ class Document:
                 value_stack[start_index - 2].children.append(node)
                 del state_stack[start_index:]
                 del value_stack[start_index-1:]
+
             return bool(all_nodes)
         
         pstate = err_puppet.parser_state
         until_index = last_suite(pstate.state_stack, pstate.parse_conf.states)
 
-        if not update_stacks(pstate.value_stack, pstate.state_stack, until_index + 1):
+        if update_stacks(pstate.value_stack, pstate.state_stack, until_index + 1):
+            # re-feed this token later
+            if token:
+                s = err_puppet.lexer_state.state
+                s.line_ctr.char_pos = token.pos_in_stream
+        else:
             # No error node created; create token instead
             if token:
                 token.type = 'error_token'

@@ -52,12 +52,12 @@ var_type : "species"            -> species
     | "(" sum ")"
 
 
-?full_statement : [statement] _STATEMENT_SEP
+?full_statement : [statement] STATEMENT_SEP
 ?statement : reaction
     | assignment
     | declaration
     | annotation
-_STATEMENT_SEP : _NL
+STATEMENT_SEP : _NL
     | ";"
 
 

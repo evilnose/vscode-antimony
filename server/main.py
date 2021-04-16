@@ -45,28 +45,28 @@ import sys
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
 
+from webservices import NetworkError, WebServices
+from collections import defaultdict
+from enum import Enum, auto
+from typing import Any, DefaultDict, Dict, List, Optional
+from itertools import chain
+from functools import lru_cache
+from copy import copy
+import logging
+from dataclasses import dataclass
+from lark_patch import get_puppet, patch_parser
+from lark.parsers.lalr_puppet import ParserPuppet
+from lark import Lark, Token
+from lark.exceptions import (LexError, ParseError, UnexpectedCharacters,
+                             UnexpectedInput, UnexpectedToken)
+from lark.tree import Tree
+from pygls.features import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
+                            TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE, WORKSPACE_EXECUTE_COMMAND)
+from pygls.server import LanguageServer
 from pygls.types import (CompletionItem, CompletionList, CompletionParams, Diagnostic,
                          DidChangeTextDocumentParams,
                          DidOpenTextDocumentParams, DidSaveTextDocumentParams, Position, Range,
                          TextDocumentContentChangeEvent)
-from pygls.server import LanguageServer
-from pygls.features import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
-                            TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE, WORKSPACE_EXECUTE_COMMAND)
-from lark.tree import Tree
-from lark.exceptions import (LexError, ParseError, UnexpectedCharacters,
-                             UnexpectedInput, UnexpectedToken)
-from lark import Lark, Token
-from lark.parsers.lalr_puppet import ParserPuppet
-from lark_patch import get_puppet, patch_parser
-from dataclasses import dataclass
-import logging
-from copy import copy
-from functools import lru_cache
-from itertools import chain
-from typing import Any, DefaultDict, Dict, List, Optional
-from enum import Enum, auto
-from collections import defaultdict
-from annotation import chebi_search
 
 
 # HACK patch the parser to product event hook
@@ -149,9 +149,9 @@ class TypeError(SemanticError):
 
 # parses the whole file
 main_parser = Lark(parser_str, start='root', parser='lalr',
-    propagate_positions=True,
-    keep_all_tokens=True,
-    maybe_placeholders=True)
+                   propagate_positions=True,
+                   keep_all_tokens=True,
+                   maybe_placeholders=True)
 # all_parser = Lark(parser_str, start='root', parser='lalr', keep_all_tokens=True)
 
 
@@ -185,9 +185,15 @@ class SymbolType(Enum):
         if other == SymbolType.UNKNOWN:
             return True
 
+        derives_from_param = self in (SymbolType.SPECIES, SymbolType.COMPARTMENT,
+                                      SymbolType.REACTION,
+                                      SymbolType.CONSTRAINT)
+
         if other == SymbolType.VARIABLE:
-            return self in (SymbolType.SPECIES, SymbolType.COMPARTMENT, SymbolType.REACTION,
-                            SymbolType.CONSTRAINT, SymbolType.CONSTRAINT)
+            return derives_from_param or self == SymbolType.PARAMETER
+
+        if other == SymbolType.PARAMETER:
+            return derives_from_param
 
         return False
 
@@ -256,8 +262,8 @@ class SymbolTable:
                        "{line}, column {column}").format(
                            stype=stype,
                            old_type=old_type,
-                           line=old_range.start.line,
-                           column=old_range.start.character,
+                           line=old_range.start.line + 1,
+                           column=old_range.start.character + 1,
             )
             error = TypeError(range_, message)
             return [error]
@@ -296,9 +302,8 @@ class Document:
         root_puppet = get_puppet(main_parser, 'root', text)
         tree = self.recoverable_parse(root_puppet)
 
-        print(tree)
         assert tree is not None
-        print(self.format(tree))
+        # print(self.format(tree))
 
         self.handle_parse_tree(tree)
 
@@ -349,7 +354,7 @@ class Document:
                 del value_stack[start_index-1:]
 
             return bool(all_nodes)
-        
+
         pstate = err_puppet.parser_state
         until_index = last_suite(pstate.state_stack, pstate.parse_conf.states)
 
@@ -391,10 +396,6 @@ class Document:
                 token = None
                 for token in state.lexer.lex(state):
                     state.feed_token(token)
-                    if (len(state.value_stack) > 1 and isinstance(state.value_stack[-2], Tree)):
-                        if self.save_checkpoint(state.value_stack[-2]):
-                            # TODO remove me
-                            last_puppet = puppet.copy()
 
                 token = Token.new_borrow_pos(
                     '$END', '', token) if token else Token('$END', '', 0, 1, 1)
@@ -432,7 +433,7 @@ class Document:
         left = tree
         while not isinstance(left, Token):
             left = left.children[0]
-        
+
         return left
 
     def rightmost_token(self, tree: Tree):
@@ -493,6 +494,9 @@ class Document:
 
     def handle_species_list(self, scope, tree):
         for species in tree.children:
+            # A plus sign
+            if isinstance(species, Token):
+                continue
             assert species.data == 'species'
             assert not isinstance(species, str)
             stoich = None
@@ -558,7 +562,7 @@ class Document:
         # reaction
         self.record_issues(
             self.table.update_type(self.qname(scope, reaction_name), SymbolType.REACTION,
-                                            reaction_range)
+                                   reaction_range)
         )
 
     def handle_assignment(self, scope, tree):
@@ -631,7 +635,7 @@ class Document:
 
 '''=====Server-related Code===='''
 server = LanguageServer()
-# doc = Document()
+services = WebServices()
 
 
 def to_diagnostic(error: AntimonyError):
@@ -650,7 +654,7 @@ def publish_diagnostics(uri: str):
 
 
 @server.feature(TEXT_DOCUMENT_DID_OPEN)
-async def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
+def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
     """Text document did open notification."""
     publish_diagnostics(params.textDocument.uri)
 
@@ -666,7 +670,7 @@ def completions(params: CompletionParams):
 
 
 @server.feature(TEXT_DOCUMENT_DID_CHANGE)
-async def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
+def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
     """Text document did open notification."""
     '''
     [Object(range=Object(start=Object(line=2, character=0), end=Object(line=2, character=1)), rangeLength=1, text='')
@@ -676,20 +680,33 @@ async def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
 
 
 @server.feature(TEXT_DOCUMENT_DID_SAVE)
-async def did_save(ls, params: DidSaveTextDocumentParams):
+def did_save(ls, params: DidSaveTextDocumentParams):
     """Text document did open notification."""
     publish_diagnostics(params.textDocument.uri)
 
 
-@server.command('antimony.querySpecies')
+@server.thread()
+@server.command('antimony.sendQuery')
 def query_species(ls: LanguageServer, args):
-    query = args[0]
-    entities = chebi_search(query)
-    results = [{
-        'id': entity.chebiId,
-        'name': entity.chebiAsciiName,
-    } for entity in entities]
-    return results
+    try:
+        database = args[0]
+        query = args[1]
+        if database == 'chebi':
+            results = services.annot_search_chebi(query)
+        elif database == 'uniprot':
+            results = services.annot_search_uniprot(query)
+        else:
+            # This is not supposed to happen
+            assert False, "Unknown database '{}'".format(database)
+
+        return {
+            'query': query,
+            'items': results,
+        }
+    except NetworkError:
+        return {
+            'error': 'Connection Error'
+        }
 
 
 if __name__ == '__main__':

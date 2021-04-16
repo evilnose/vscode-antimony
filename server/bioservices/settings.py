@@ -1,8 +1,22 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Aug  8 15:31:34 2014
-@author: cokelaer
-"""
+# -*- python -*-
+#
+#  This file is part of bioservices software
+#
+#  Copyright (c) 2013-2014 - EBI-EMBL
+#
+#  File author(s):
+#      cokelaer
+# Created on Fri Aug  8 15:31:34 2014
+#
+#  Distributed under the GPLv3 License.
+#  See accompanying file LICENSE.txt or copy at
+#      http://www.gnu.org/licenses/gpl-3.0.html
+#
+#  source: http://github.com/cokelaer/bioservices
+#  documentation: http://packages.python.org/bioservices
+#
+##############################################################################
 import os
 from easydev import DynamicConfigParser, underline
 import copy

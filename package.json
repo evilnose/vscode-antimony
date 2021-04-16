@@ -16,8 +16,8 @@
 				"title": "Create Annotation"
 			},
 			{
-				"command": "antimony.querySpecies",
-				"title": "Search for Species Matching Query"
+				"command": "antimony.sendQuery",
+				"title": "Invoke the web query service"
 			}
 		],
 		"languages": [
@@ -38,7 +38,7 @@
 					"command": "antimony.createAnnotationDialog",
 					"title": "Create Annotation",
 					"group": "1_modification",
-					"when": "editorHasSelection && editorLangId == antimony"
+					"when": "editorLangId == antimony"
 				}
 			]
 		}
@@ -48,7 +48,7 @@
 	},
 	"activationEvents": [
 		"onLanguage:antimony",
-		"onCommand:querySpecies",
+		"onCommand:sendQuery",
 		"onCommand:createAnnotationDialog"
 	],
 	"main": "./dist/extension",

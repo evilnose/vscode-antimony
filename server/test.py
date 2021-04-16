@@ -8,10 +8,10 @@ from typing import List
 from itertools import chain
 
 FILE = '''
-A = 5
+J0: EEEA + B -> 6Ceek; Something * 2
 '''
 
-FILE1 = '''
+FILE = '''
 J0: SA -> SB +??; E10
 A == 2
 J0: S48 + S17 -> S46; E0*(k0*S48*S17 - k0r*S46);

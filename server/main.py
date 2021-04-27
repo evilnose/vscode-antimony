@@ -1,26 +1,5 @@
 """Temporary single-file server implementation.
 
-Current Target Algorithm:
-
-Whenever changes occur:
-    For each line $l deleted:
-        If $l was legal:
-            Delete the state entries related to $l
-        Else:
-            Mark $l as illegal
-    For each line $l added:
-        If $l is legal:
-            Store entry parsed from $l
-        Else:
-            Mark $l as illegal
-    For each line $l edited (probably at most 1):
-        (Delay for a whle before proceeding, in case the user makes changes in quick succession)
-        Update entry related to $l
-        Update legality of $l
-
-If the user hasn't edited for x seconds:
-    Validate the entries for missing references, etc. and display the errors.
-
 NOTE: need to think about way to deal with models in the future.
 Idea: first try to correct the line. If that is not possible, ignore it. if it is has something
 to do with brackets, e.g. start_model start_model, then do something intelligent like add end_model
@@ -41,33 +20,29 @@ as well. Should be a good enough optimization for now.
 """
 import os
 import sys
-from classes import AntimonyError
-from analysis import AntimonyTreeAnalyzer
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
 
+from classes import AntError, AntWarning
+from analysis import AntimonyTreeAnalyzer
 from parse import AntimonyParser
-from utils import get_range
 from webservices import NetworkError, WebServices
-from collections import defaultdict
-from enum import Enum, auto
-from typing import Any, DefaultDict, Dict, List, Optional
+
+from typing import List
 import logging
 from dataclasses import dataclass
-from lark import Token
-from lark.tree import Tree
 from pygls.features import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
                             TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE, WORKSPACE_EXECUTE_COMMAND)
 from pygls.server import LanguageServer
-from pygls.types import (CompletionItem, CompletionList, CompletionParams, Diagnostic,
+from pygls.types import (CompletionItem, CompletionList, CompletionParams, Diagnostic, DiagnosticSeverity,
                          DidChangeTextDocumentParams,
                          DidOpenTextDocumentParams, DidSaveTextDocumentParams, Position, Range,
                          TextDocumentContentChangeEvent)
 
 
 # TODO remove this for production
-logging.basicConfig(filename='pygls.log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(filename='bio-idek.log', filemode='w', level=logging.DEBUG)
 
 
 @dataclass
@@ -94,29 +69,9 @@ class Assignment:
     value: str
 
 
-def walk_species_list(tree):
-    ret = list()
-    for species in tree.children:
-        assert species.data == 'species'
-        assert not isinstance(species, str)
-        stoich = None
-        name = None
-        if len(species.children) == 1:
-            stoich = '1'
-            name = str(species.children[0])
-        else:
-            assert len(species.children) == 2
-            stoich = str(species.children[0])
-            name = str(species.children[1])
-
-        assert name is not None
-        ret.append(Species(stoich, name))
-
-    return ret
-
-
 # Holds information pertaining to one Antimony document
-class Document:
+class AntFile:
+    '''Interface for an Antimony source file and contains useful methods.'''
     def __init__(self, text: str):
         self.source = ''
         self.parser = AntimonyParser()
@@ -125,28 +80,6 @@ class Document:
 
     def get_errors(self):
         return self.analyzer.get_issues()
-
-    def format(self, tree):
-        if tree is None:
-            return ''
-
-        if isinstance(tree, Token):
-            text = tree.value
-            if tree.type == 'error_token':
-                return text
-
-            if tree.type in ('NAME', 'NUMBER') or tree.value == '$':
-                return text
-            elif tree.value in (',', ';', ':', 'const', 'var'):
-                return text + ' '
-
-            return ' ' + text + ' '
-
-        text = ''
-        for child in tree.children:
-            text += self.format(child)
-
-        return text
 
     def save_checkpoint(self, tree) -> bool:
         '''Returns whether we should save the state of the parser (i.e. in a ParserPuppet).
@@ -160,22 +93,6 @@ class Document:
             return True
 
         return False
-
-    def qname(self, scope, name):
-        return scope + '/' + name
-
-    def leftmost_token(self, tree: Tree):
-        left = tree
-        # Token is a subtype of str. Only doing this to appease the IDE.
-        while not isinstance(left, str):
-            left = left.children[0]
-        return left
-
-    def rightmost_token(self, tree: Tree):
-        right = tree
-        while not isinstance(right, str):
-            right = right.children[-1]
-        return right
 
     def changed(self, change: TextDocumentContentChangeEvent, text: str):
         self.source = text
@@ -196,17 +113,22 @@ server = LanguageServer()
 services = WebServices()
 
 
-def to_diagnostic(error: AntimonyError):
+def to_diagnostic(error: AntError):
+    severity = DiagnosticSeverity.Error
+    if isinstance(error, AntWarning):
+        severity = DiagnosticSeverity.Warning
+
     return Diagnostic(
         range=error.range,
         message=error.message,
+        severity=severity
     )
 
 
 def publish_diagnostics(uri: str):
     doc = server.workspace.get_document(uri)
-    ant_doc = Document(doc.source)
-    errors = ant_doc.get_errors()
+    antfile = AntFile(doc.source)
+    errors = antfile.get_errors()
     diagnostics = [to_diagnostic(e) for e in errors]
     server.publish_diagnostics(uri, diagnostics)
 
@@ -223,8 +145,8 @@ count = 0
 @server.feature(COMPLETION)
 def completions(params: CompletionParams):
     text_doc = server.workspace.get_document(params.textDocument.uri)
-    doc = Document(text_doc.source)
-    return doc.completions(params)
+    antfile = AntFile(text_doc.source)
+    return antfile.completions(params)
 
 
 @server.feature(TEXT_DOCUMENT_DID_CHANGE)

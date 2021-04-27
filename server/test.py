@@ -1,17 +1,18 @@
-"""Temporary test file"""
+"""Temporary test file; for convenience.
+
+Definitely need to add a full suite of tests
+"""
 
 from dataclasses import dataclass
-from lark import Token
-from lark.tree import Tree
-from main import Document
+from main import AntFile
 from typing import List
-from itertools import chain
 
 FILE = '''
-J0: EEEA + B -> 6Ceek; Something * 2
+J0: C + B -> 6Ceek; Something * 2
+J0: C + B -> 6Ceek; Something * 2
 '''
 
-FILE = '''
+FILE1 = '''
 J0: SA -> SB +??; E10
 A == 2
 J0: S48 + S17 -> S46; E0*(k0*S48*S17 - k0r*S46);
@@ -740,25 +741,5 @@ def join_tokens(tokens):
     return ''.join(str(tok) for tok in tokens)
 
 
-def walk_species_list(tree):
-    ret = list()
-    for species in tree.children:
-        assert species.data == 'species'
-        # assert not isinstance(species, str)
-        stoich = None
-        name = None
-        if len(species.children) == 1:
-            stoich = '1'
-            name = join_tokens(species.children[0].children)
-        else:
-            assert len(species.children) == 2
-            stoich = str(species.children[0])
-            name = join_tokens(species.children[1].children)
-
-        assert name is not None
-        ret.append(Species(stoich, name))
-
-    return ret
-
-
-doc = Document(FILE)
+doc = AntFile(FILE)
+print(doc.get_errors())

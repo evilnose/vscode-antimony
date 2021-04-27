@@ -5,7 +5,7 @@ from lark.lexer import Token
 from lark.tree import Tree
 from classes import SymbolType, Variability
 
-from symbols import AbstractContext, BaseModelContext, ModelContext, SymbolTable
+from symbols import AbstractContext, BaseContext, ModelContext, SymbolTable
 from utils import get_range
 
 
@@ -41,7 +41,7 @@ class AntimonyTreeAnalyzer:
         return self.issues
 
     def handle_parse_tree(self, tree):
-        context = BaseModelContext()
+        context = BaseContext()
         for suite in tree.children:
             if isinstance(suite, Token):
                 assert suite.type == 'error_token'
@@ -104,7 +104,7 @@ class AntimonyTreeAnalyzer:
             # TODO create a helper function that masks table.update_type and automatically add
             # the errors
             self.record_issues(
-                self.table.insert_var(context, name, SymbolType.SPECIES, name_token, None)
+                self.table.insert(context, name, SymbolType.SPECIES, name_token, None)
             )
 
     def handle_formula(self, context: AbstractContext, tree: Tree):
@@ -116,7 +116,7 @@ class AntimonyTreeAnalyzer:
             assert isinstance(parameter, Token)
             name = str(parameter)
             self.record_issues(
-                self.table.insert_var(context, name, SymbolType.PARAMETER, parameter)
+                self.table.insert(context, name, SymbolType.PARAMETER, parameter)
             )
 
     def handle_reaction(self, context, tree):
@@ -125,7 +125,7 @@ class AntimonyTreeAnalyzer:
             name = str(name_mi.name_item.name_tok)
             token = name_mi.name_item.name_tok
             self.record_issues(
-                self.table.insert_var(context, name, SymbolType.REACTION, token)
+                self.table.insert(context, name, SymbolType.REACTION, token, tree)
             )
         # else:
         #     reaction_name = self.table.get_unique_name(context, '_J')
@@ -144,7 +144,7 @@ class AntimonyTreeAnalyzer:
         value = tree.children[2]
         name_mi = self.resolve_name_maybe_in(name)
         self.record_issues(
-            self.table.insert_var(context, str(name_mi.name_item.name_tok), SymbolType.PARAMETER,
+            self.table.insert(context, str(name_mi.name_item.name_tok), SymbolType.PARAMETER,
                                   name_mi.name_item.name_tok)
         )
         self.handle_formula(context, value)
@@ -183,8 +183,8 @@ class AntimonyTreeAnalyzer:
             name_mi = self.resolve_name_maybe_in(item.children[0])
             # TODO update variability
             self.record_issues(
-                self.table.insert_var(context, str(name_mi.name_item.name_tok), stype,
-                                      name_mi.name_item.name_tok)
+                self.table.insert(context, str(name_mi.name_item.name_tok), stype,
+                                  name_mi.name_item.name_tok, tree)
             )
             # TODO add value in table
             if item.children[1] is not None:

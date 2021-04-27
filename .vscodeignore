@@ -1,19 +1,33 @@
+
+# IDE
 .vscode/**
 .vscode-test
+
+# JS source
+client/
+
+# Development files
+requirements.txt
+all-requirements.txt
+scripts/**
+webpack.config.js
+temp
 **/*.ts
-**/*.map
-**/*.pyc
-.gitignore
 **/tsconfig.json
 **/tsconfig.base.json
 .travis.yml
-node_modules
-client/
+.gitignore
+
+# Venvs
 py36
 py37
-scripts/**
+venv
+
+# Logs
 **/*.log
-requirements.txt
-webpack.config.js
+
+# Build files
 *.vsix
-temp
+**/*.map
+**/*.pyc
+node_modules

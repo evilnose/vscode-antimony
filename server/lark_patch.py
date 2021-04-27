@@ -1,14 +1,11 @@
 '''
 Hacks made on lark, required until lark makes a new release.
 '''
-from copy import copy
 
 from lark.lark import Lark
-from lark.lexer import Token
-from lark.tree import Tree
 from lark.parsers.lalr_parser import ParserState, ParseConf
 from lark.parsers.lalr_puppet import ParserPuppet
-from lark.exceptions import UnexpectedToken, UnexpectedInput
+from lark.lexer import LexerThread
 
 
 

@@ -245,6 +245,8 @@ export class MultiStepInput {
                 if (this.current.value === result.query) {
                     this.current.items = result.items.map((item) => {
                         item['label'] = item['name'];
+                        item['detail'] = 'detail';
+                        item['description'] = 'description';
                         item['alwaysShow'] = true;
                         return item;
                     });

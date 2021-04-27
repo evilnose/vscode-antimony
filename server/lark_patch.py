@@ -1,5 +1,5 @@
-'''Monkey-patch Lark's implementation of the LALR Parser, as we need an "event hook" when reduce
-is called.
+'''
+Hacks made on lark, required until lark makes a new release.
 '''
 from copy import copy
 
@@ -8,14 +8,8 @@ from lark.lexer import Token
 from lark.tree import Tree
 from lark.parsers.lalr_parser import ParserState, ParseConf
 from lark.parsers.lalr_puppet import ParserPuppet
-from lark.lexer import LexerThread, LineCounter
 from lark.exceptions import UnexpectedToken, UnexpectedInput
 
-
-def patch_parser():
-    '''HACK Monkey-patch the Lark parser.'''
-    # _Parser.parse_from_state = new_parse_from_state
-    pass
 
 
 def get_puppet(lark_inst: Lark, start: str, text: str):

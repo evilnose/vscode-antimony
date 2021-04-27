@@ -15,18 +15,9 @@
 * Tests! Need to have em
 * Multithreading for pygls (especially for querying)
 * Figure out the licenses
-* Error handling: what if there is no internet? no python? See message here
-```
-Traceback (most recent call last):
-  File "c:\Users\Gary\.vscode\extensions\sauro-lab.bio-idek-0.0.1\server\main.py", line 48, in <module>
-    from annotation import chebi_search
-  File "c:\Users\Gary\.vscode\extensions\sauro-lab.bio-idek-0.0.1\server\annotation.py", line 5, in <module>
-    chebi = ChEBI()
-  File "c:\Users\Gary\.vscode\extensions\sauro-lab.bio-idek-0.0.1\server\bioservices\chebi.py", line 62, in __init__
-    verbose=verbose)
-  File "c:\Users\Gary\.vscode\extensions\sauro-lab.bio-idek-0.0.1\server\bioservices\services.py", line 268, in __init__
-    raise Exception
-```
+* Handle cases where Python is not found
+* Better annotations UI flow (add "loading" to title when doing requests; more information in
+selection items, maybe even use tabular format.)
 
 ## How to Run Tests
 Run `npm test` directly. However, if you are using VSCode for development this wouldn't work (see

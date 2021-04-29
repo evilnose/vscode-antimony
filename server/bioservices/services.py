@@ -27,7 +27,7 @@ import platform
 import traceback
 import logging
 
-from bioservices.settings import BioServicesConfig
+from .settings import BioServicesConfig
 
 # fixing compatiblity python 2 and 3 related to merging or urllib and urllib2 in python 3
 try:

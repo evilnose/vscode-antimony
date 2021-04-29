@@ -47,7 +47,7 @@ import types
 import io
 import sys
 
-from bioservices.services import REST
+from .services import REST
 # from bioservices import logger
 # logger.name = __name__
 

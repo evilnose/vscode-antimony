@@ -3,13 +3,27 @@
 Definitely need to add a full suite of tests
 """
 
+from .stibium.types import SrcPosition
+from .main import AntFile
+
 from dataclasses import dataclass
-from main import AntFile
 from typing import List
 
 FILE = '''
-J0: C + B -> 6Ceek; Something * 2
-J0: C + B -> 6Ceek; Something * 2
+J0: 2C + 3B -> 2.5Deee; v
+J0: EEEA + B -> 6Ceek; Something * 2
+species AEEEE = 5
+species AEEEE = 5
+ff
+gluc = 7.41
+a= 5
+a = 10
+
+EEEE identity "http://identifiers.org/chebi/CHEBI:17234"
+
+identity identity "http://identifiers.org/chebi/CHEBI:36184"
+
+identity identity "http://identifiers.org/uniprot/Q8W593"
 '''
 
 FILE1 = '''
@@ -741,5 +755,6 @@ def join_tokens(tokens):
     return ''.join(str(tok) for tok in tokens)
 
 
-doc = AntFile(FILE)
+doc = AntFile('', FILE)
 print(doc.get_errors())
+print(doc.symbols_at(SrcPosition(2, 1)))

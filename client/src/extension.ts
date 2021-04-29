@@ -19,13 +19,14 @@ let client: LanguageClient;
 export function activate(context: ExtensionContext) {
 	// TODO allow the user to manually specify an interpreter to use, possibly leveraging the
 	// Python language extension. See https://code.visualstudio.com/api/references/vscode-api#extensions
+	// TODO this might be python3
 	const pythonInterp = 'python';
 
-	const pythonMain = context.asAbsolutePath(
-		path.join('server', 'main.py')
-	);
+	// const pythonMain = context.asAbsolutePath(
+	// 	path.join('server', 'main.py')
+	// );
 
-	const args = [pythonMain];
+	const args = ["-m", "server.main"];
 
 	// Add debug options here if needed
 	const serverOptions: ServerOptions = { command: pythonInterp, args };

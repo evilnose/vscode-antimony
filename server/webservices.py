@@ -1,8 +1,9 @@
 '''Aggregation of webservices required by the extension.'''
 
+from .bioservices.chebi import ChEBI
+from .bioservices.uniprot import UniProt
+
 from io import StringIO
-from bioservices.chebi import ChEBI
-from bioservices.uniprot import UniProt
 from urllib.error import URLError
 
 from typing import Text

@@ -35,7 +35,7 @@
 
 """
 import logging
-from bioservices.services import WSDLService
+from .services import WSDLService
 # from services import logger
 # logger.name = __name__
 

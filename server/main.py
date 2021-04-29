@@ -21,24 +21,25 @@ as well. Should be a good enough optimization for now.
 import os
 import sys
 
+
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
 
-from classes import AntError, AntWarning
-from analysis import AntimonyTreeAnalyzer
-from parse import AntimonyParser
-from webservices import NetworkError, WebServices
+from .stibium.types import AntError, AntWarning
+
+from .utils import AntFile, pygls_range, sb_position, get_antfile
+from .webservices import NetworkError, WebServices
 
 from typing import List
 import logging
 from dataclasses import dataclass
-from pygls.features import (COMPLETION, TEXT_DOCUMENT_DID_CHANGE,
+from pygls.features import (COMPLETION, DEFINITION, HOVER, SIGNATURE_HELP, TEXT_DOCUMENT_DID_CHANGE,
                             TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE, WORKSPACE_EXECUTE_COMMAND)
 from pygls.server import LanguageServer
 from pygls.types import (CompletionItem, CompletionList, CompletionParams, Diagnostic, DiagnosticSeverity,
                          DidChangeTextDocumentParams,
-                         DidOpenTextDocumentParams, DidSaveTextDocumentParams, Position, Range,
-                         TextDocumentContentChangeEvent)
+                         DidOpenTextDocumentParams, DidSaveTextDocumentParams, Hover, Location, MarkupContent, MarkupKind,
+                         TextDocumentContentChangeEvent, TextDocumentPositionParams)
 
 
 # TODO remove this for production
@@ -69,44 +70,6 @@ class Assignment:
     value: str
 
 
-# Holds information pertaining to one Antimony document
-class AntFile:
-    '''Interface for an Antimony source file and contains useful methods.'''
-    def __init__(self, text: str):
-        self.source = ''
-        self.parser = AntimonyParser()
-        self.tree = self.parser.parse(text)
-        self.analyzer = AntimonyTreeAnalyzer(self.tree)
-
-    def get_errors(self):
-        return self.analyzer.get_issues()
-
-    def save_checkpoint(self, tree) -> bool:
-        '''Returns whether we should save the state of the parser (i.e. in a ParserPuppet).
-
-        Basically returns whether the rule that was just parsed is a complete rule, i.e. a statement
-        or a model-end. This way, if we encounter an error later, we can restore the puppet to
-        this complete state, find the next newline or semicolon, and continue parsing (having
-        skipped the errored part).
-        '''
-        if tree.data in ('reaction', 'assignment', 'declaration', 'annotation', 'model'):
-            return True
-
-        return False
-
-    def changed(self, change: TextDocumentContentChangeEvent, text: str):
-        self.source = text
-        # line_start = change.range.start
-        # line_end = change.range.end
-        # for line in range(line_start, line_end + 1):
-        #     pass
-
-    def completions(self, params: CompletionParams) -> CompletionList:
-        # TODO
-        return CompletionList(False, [
-            CompletionItem(name) for name in self.analyzer.get_all_names()
-        ])
-
 
 '''=====Server-related Code===='''
 server = LanguageServer()
@@ -119,7 +82,7 @@ def to_diagnostic(error: AntError):
         severity = DiagnosticSeverity.Warning
 
     return Diagnostic(
-        range=error.range,
+        range=pygls_range(error.range),
         message=error.message,
         severity=severity
     )
@@ -127,7 +90,7 @@ def to_diagnostic(error: AntError):
 
 def publish_diagnostics(uri: str):
     doc = server.workspace.get_document(uri)
-    antfile = AntFile(doc.source)
+    antfile = get_antfile(doc)
     errors = antfile.get_errors()
     diagnostics = [to_diagnostic(e) for e in errors]
     server.publish_diagnostics(uri, diagnostics)
@@ -145,17 +108,46 @@ count = 0
 @server.feature(COMPLETION)
 def completions(params: CompletionParams):
     text_doc = server.workspace.get_document(params.textDocument.uri)
-    antfile = AntFile(text_doc.source)
+    antfile = get_antfile(text_doc)
+    # TODO better isolation; no pygls stuff in antfile
     return antfile.completions(params)
+
+
+@server.feature(HOVER)
+def hover(params: TextDocumentPositionParams):
+    text_doc = server.workspace.get_document(params.textDocument.uri)
+    antfile = get_antfile(text_doc)
+    symbols, range_ = antfile.symbols_at(sb_position(params.position))
+    if not symbols:
+        return None
+
+    assert range_ is not None
+
+    # TODO fix the interface
+    sym = symbols[0]
+    contents = MarkupContent(MarkupKind.PlainText, sym.help_str())
+    return Hover(
+        contents=contents,
+        range=pygls_range(range_),
+    )
+
+
+@server.feature(DEFINITION)
+def definition(params):
+    text_doc = server.workspace.get_document(params.textDocument.uri)
+    antfile = get_antfile(text_doc)
+    srclocations, range_ = antfile.goto(sb_position(params.position))
+
+    definitions = [Location(
+        loc.path,
+        pygls_range(loc.range)) for loc in srclocations]
+    # If no definitions, return None
+    return definitions or None
 
 
 @server.feature(TEXT_DOCUMENT_DID_CHANGE)
 def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
     """Text document did open notification."""
-    '''
-    [Object(range=Object(start=Object(line=2, character=0), end=Object(line=2, character=1)), rangeLength=1, text='')
-    '''
-    # TODO don't need this
     publish_diagnostics(params.textDocument.uri)
 
 

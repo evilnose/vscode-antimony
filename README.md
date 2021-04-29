@@ -12,7 +12,8 @@
 * Autocompletion based on cursor position (context)
 
 ## TODOs
-* Tests! Need to have em
+* Refactor stibium and the server. Move AntFile to stibium. Reorganize requirements
+* Tests! Need to have em. Especially need to test error recovery, before I forget
 * Multithreading for pygls (especially for querying)
 * Figure out the licenses
 * Handle cases where Python is not found

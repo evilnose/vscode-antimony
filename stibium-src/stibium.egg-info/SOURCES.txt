@@ -1,0 +1,12 @@
+setup.py
+stibium/__init__.py
+stibium/ast.py
+stibium/lark_patch.py
+stibium/parse.py
+stibium/symbols.py
+stibium/types.py
+stibium/utils.py
+stibium.egg-info/PKG-INFO
+stibium.egg-info/SOURCES.txt
+stibium.egg-info/dependency_links.txt
+stibium.egg-info/top_level.txt

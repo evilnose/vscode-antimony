@@ -1,12 +1,12 @@
 
+from .types import ASTNode, SymbolType, Variability, SrcPosition
+from .symbols import AbstractContext, BaseContext, FunctionContext, ModelContext, QName, SymbolTable
+from .utils import get_range
+
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 from lark.lexer import Token
 from lark.tree import Tree
-from classes import SymbolType, Variability
-
-from symbols import AbstractContext, BaseContext, ModelContext, SymbolTable
-from utils import get_range
 
 
 # Helper classes to hold name structures
@@ -22,23 +22,12 @@ class NameMaybeIn:
     comp_item: Optional[NameItem]
 
 
-class AntimonyTreeAnalyzer:
+class AntTreeAnalyzer:
     def __init__(self, root: Tree):
         self.issues = list()
         self.table = SymbolTable()
+        self.root = root
         self.handle_parse_tree(root)
-
-    def get_all_names(self):
-        # TODO temporary method to satisfy auto-completion
-        # TODO also remove the same method from table
-        return self.table.get_all_names()
-
-    def record_issues(self, issues):
-        # TODO more sophisticated stuff? e.g. separate errors, warnings, syntax errors, semantic errors>
-        self.issues += issues
-
-    def get_issues(self):
-        return self.issues
 
     def handle_parse_tree(self, tree):
         context = BaseContext()
@@ -61,6 +50,58 @@ class AntimonyTreeAnalyzer:
                     self.handle_assignment(context, child)
                 elif child.data == 'declaration':
                     self.handle_declaration(context, child)
+
+    def resolve_qname(self, qname: QName):
+        return self.table.get(qname)
+
+    def get_qname_at_position(self, pos: SrcPosition) -> Optional[QName]:
+        '''Returns (context, token) the given position. `token` may be None if not found.
+        '''
+        def within_range(pos: SrcPosition, node: ASTNode):
+            range_ = get_range(node)
+            return pos >= range_.start and pos < range_.end
+
+        node = self.root
+        model = None
+        func = None
+        while not isinstance(node, Token):
+            if node.data == 'model':
+                model = str(node.children[1])
+            elif node.data == 'function':
+                func = str(node.children[1])
+
+            for child in node.children:
+                if child is None:
+                    continue
+                assert isinstance(child, Token) or isinstance(child, Tree)
+                if within_range(pos, child):
+                    node = child
+                    break
+            else:
+                # Didn't find it
+                return None
+
+        assert not (model is not None and func is not None)
+        if model:
+            context = ModelContext(model)
+        elif func:
+            context = FunctionContext(func)
+        else:
+            context = BaseContext()
+
+        return QName(context, node)
+
+    def get_all_names(self):
+        # TODO temporary method to satisfy auto-completion
+        # TODO also remove the same method from table
+        return self.table.get_all_names()
+
+    def record_issues(self, issues):
+        # TODO more sophisticated stuff? e.g. separate errors, warnings, syntax errors, semantic errors>
+        self.issues += issues
+
+    def get_issues(self):
+        return self.issues
 
     def resolve_var_name(self, tree) -> NameItem:
         '''Resolve a var_name tree, i.e. one parsed from $A or A.
@@ -100,11 +141,10 @@ class AntimonyTreeAnalyzer:
 
             name_token = var_name.children[-1]
             assert isinstance(name_token, Token)
-            name = str(name_token)
             # TODO create a helper function that masks table.update_type and automatically add
             # the errors
             self.record_issues(
-                self.table.insert(context, name, SymbolType.SPECIES, name_token, None)
+                self.table.insert(QName(context, name_token), SymbolType.SPECIES)
             )
 
     def handle_formula(self, context: AbstractContext, tree: Tree):
@@ -114,9 +154,8 @@ class AntimonyTreeAnalyzer:
 
         for parameter in tree.scan_values(pred):
             assert isinstance(parameter, Token)
-            name = str(parameter)
             self.record_issues(
-                self.table.insert(context, name, SymbolType.PARAMETER, parameter)
+                self.table.insert(QName(context, parameter), SymbolType.PARAMETER)
             )
 
     def handle_reaction(self, context, tree):
@@ -125,7 +164,7 @@ class AntimonyTreeAnalyzer:
             name = str(name_mi.name_item.name_tok)
             token = name_mi.name_item.name_tok
             self.record_issues(
-                self.table.insert(context, name, SymbolType.REACTION, token, tree)
+                self.table.insert(QName(context, token), SymbolType.REACTION, tree)
             )
         # else:
         #     reaction_name = self.table.get_unique_name(context, '_J')
@@ -144,8 +183,8 @@ class AntimonyTreeAnalyzer:
         value = tree.children[2]
         name_mi = self.resolve_name_maybe_in(name)
         self.record_issues(
-            self.table.insert(context, str(name_mi.name_item.name_tok), SymbolType.PARAMETER,
-                                  name_mi.name_item.name_tok)
+            self.table.insert(QName(context, name_mi.name_item.name_tok), SymbolType.PARAMETER,
+                              value_node=tree)
         )
         self.handle_formula(context, value)
 
@@ -165,8 +204,9 @@ class AntimonyTreeAnalyzer:
     def handle_declaration(self, context, tree):
         # TODO add modifiers in table
         modifiers = tree.children[0]
+        # TODO deal with variability
         variab = Variability.UNKNOWN
-        stype = SymbolType.UNKNOWN
+        stype = SymbolType.PARAMETER
         if len(modifiers.children) == 1:
             mod = modifiers.children[0]
             if mod.data in ('const', 'var'):
@@ -181,12 +221,43 @@ class AntimonyTreeAnalyzer:
         for item in tree.children[1::2]:
             assert len(item.children) == 2
             name_mi = self.resolve_name_maybe_in(item.children[0])
+
+            # Only store the value tree if the assignment node is not None
+            value_tree = item if item.children[1] else None
+
             # TODO update variability
             self.record_issues(
-                self.table.insert(context, str(name_mi.name_item.name_tok), stype,
-                                  name_mi.name_item.name_tok, tree)
+                self.table.insert(QName(context, name_mi.name_item.name_tok), stype, tree,
+                                  value_tree)
             )
             # TODO add value in table
             if item.children[1] is not None:
                 # TODO record value
                 pass
+
+
+def get_ancestors(node: ASTNode):
+    ancestors = list()
+    while True:
+        parent = getattr(node, 'parent')
+        if parent is None:
+            break
+        ancestors.append(parent)
+        node = parent
+
+    return ancestors
+
+
+def find_node(nodes: List[Tree], data: str):
+    for node in nodes:
+        if node.data == data:
+            return node
+    return None
+
+
+def get_context(node: ASTNode):
+    '''Create the exact context of a node.'''
+    ancestors = get_ancestors(node)
+    model = find_node(ancestors, 'model')
+    if model:
+        return ModelContext('TODO')

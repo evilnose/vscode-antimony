@@ -8,3 +8,4 @@ pygls==0.9.1
 easydev==0.11.0
 suds-jurko==0.6
 six==1.15.0
+# ./stibium-src

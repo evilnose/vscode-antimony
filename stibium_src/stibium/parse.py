@@ -38,11 +38,15 @@ class AntimonyParser:
                                 maybe_placeholders=True)
 
     def parse(self, text: str, recover=True, keep_parents: bool=True):
+        '''Parse the tree, automatically appending a newline character to the end of the given text.
+        
+        TODO docs
+        '''
         text += '\n'
 
         tree: Tree
+        root_puppet = get_puppet(self.parser, 'root', text)
         if recover:
-            root_puppet = get_puppet(self.parser, 'root', text)
             tree = self._recoverable_parse(root_puppet)
         else:
             tree = self.parser.parse(text)
@@ -52,6 +56,17 @@ class AntimonyParser:
         return tree
 
     def _recoverable_parse(self, puppet):
+        # Slight HACK: this is to make error recovery behave normally in the case that there are
+        # error tokens at the start of the text. In that case, the parser hasn't constructed a 
+        # root node yet, so it is impossible to find the last "suite" node (from which to
+        # construct an error node). In any case, this force-creates an empty statement in the tree
+        # so that edge cases are avoided.
+        # Two semicolons are fed because only after the second semicolon is fed, will the first
+        # semicolon be parsed as an empty statement. Not sure why this is the case yet, but it
+        # doesn't matter that much.
+        INIT_TOKEN = Token('STATEMENT_SEP', '', 0, 0, 0, 0, 0, 0)  # type: ignore
+        puppet.feed_token(INIT_TOKEN)
+        puppet.feed_token(INIT_TOKEN)
         while True:
             state = puppet.parser_state
             try:
@@ -60,7 +75,7 @@ class AntimonyParser:
                     state.feed_token(token)
 
                 token = Token.new_borrow_pos(
-                    '$END', '', token) if token else Token('$END', '', 0, 1, 1) # type: ignore
+                    '$END', '', token) if token else Token('$END', '', 0, 1, 1)  # type: ignore
                 return state.feed_token(token, True)
             except UnexpectedCharacters:
                 self._recover_from_error(puppet)
@@ -101,17 +116,21 @@ class AntimonyParser:
                 meta.column = all_nodes[0].column
                 meta.end_line = all_nodes[-1].end_line
                 meta.end_column = all_nodes[-1].end_column
+                meta.empty = False
                 node = Tree('error_node', all_nodes, meta=meta)
                 # propgate positions
                 value_stack[start_index - 2].children.append(node)
                 del state_stack[start_index:]
                 del value_stack[start_index-1:]
 
-            return bool(all_nodes)
+                return True
+
+            return False
 
         pstate = err_puppet.parser_state
         until_index = last_suite(pstate.state_stack, pstate.parse_conf.states)
 
+        # make all nodes until the last full suite (statement) to be the children of an error node
         if update_stacks(pstate.value_stack, pstate.state_stack, until_index + 1):
             # pushed onto stack; need to feed this token again
             if token:

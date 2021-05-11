@@ -15,7 +15,7 @@ def get_range(node: ASTNode):
                      SrcPosition(node.meta.end_line, node.meta.end_column))
 
 
-def tree_str(self, tree):
+def tree_str(tree):
     if tree is None:
         return ''
 
@@ -24,7 +24,7 @@ def tree_str(self, tree):
         if tree.type == 'error_token':
             return text
 
-        if tree.type in ('NAME', 'NUMBER') or tree.value == '$':
+        if tree.type in ('NAME', 'NUMBER', 'STATEMENT_SEP', 'LPAR', 'RPAR') or tree.value == '$':
             return text
         elif tree.value in (',', ';', ':', 'const', 'var'):
             return text + ' '
@@ -33,7 +33,7 @@ def tree_str(self, tree):
 
     text = ''
     for child in tree.children:
-        text += self.format(child)
+        text += tree_str(child)
 
     return text
 

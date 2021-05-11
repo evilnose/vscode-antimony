@@ -1,0 +1,16 @@
+{
+  "scopeName": "source.antimony",
+  "patterns": [{ "include": "#expression" }],
+  "repository": {
+    "expression": {
+      "patterns": [{ "include": "#assignment" }]
+    },
+    "assignment": {
+        
+    },
+    "equals": {
+        "match": "=",
+        "name": "keyword.operator.assignment.antimony"
+    }
+  }
+}

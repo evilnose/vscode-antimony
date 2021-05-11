@@ -41,7 +41,14 @@
 					"when": "editorLangId == antimony"
 				}
 			]
-		}
+		},
+		"grammars": [
+			{
+				"language": "antimony",
+				"scopeName": "source.antimony",
+				"path": "./syntaxes/antimony.tmLanguage.json"
+			}
+		]
 	},
 	"engines": {
 		"vscode": "^1.52.0"
@@ -56,7 +63,7 @@
 		"vscode:prepublish": "webpack --mode production",
 		"webpack": "webpack --mode development",
 		"webpack-dev": "webpack --mode development --watch",
-		"test-compile": "npx tsc -b",
+		"test-compile": "webpack --mode development && npx tsc -b",
 		"postinstall": "cd client && npm install && cd .. && sh ./scripts/installPythonReqs.sh",
 		"pretest": "webpack",
 		"test": "scripts\\runTestsDriver.bat"

@@ -25,10 +25,14 @@ import sys
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
 
-from .stibium.types import AntError, AntWarning
+# Temporary, before both packages are published
+sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_src"))
+sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_server_src"))
 
-from .utils import AntFile, pygls_range, sb_position, get_antfile
-from .webservices import NetworkError, WebServices
+from stibium.types import AntError, AntWarning
+
+from stibium_server.utils import AntFile, pygls_range, sb_position, get_antfile
+from stibium_server.webservices import NetworkError, WebServices
 
 from typing import List
 import logging
@@ -44,31 +48,6 @@ from pygls.types import (CompletionItem, CompletionList, CompletionParams, Diagn
 
 # TODO remove this for production
 logging.basicConfig(filename='bio-idek.log', filemode='w', level=logging.DEBUG)
-
-
-@dataclass
-class Species:
-    stoich: str
-    name: str
-
-
-# TODO use transformer to keep state of whether a new "complete statement" was encountered
-# remember to reset transformer every new call (or something)
-# TODO add a TODO about writing own parser and custom recrusion loop
-
-
-@dataclass
-class Reaction:
-    reactants: List[Species]
-    products: List[Species]
-    rate_law: str
-
-
-@dataclass
-class Assignment:
-    name: str
-    value: str
-
 
 
 '''=====Server-related Code===='''

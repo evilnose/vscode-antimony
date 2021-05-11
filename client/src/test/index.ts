@@ -5,6 +5,7 @@
 import * as path from 'path';
 import * as Mocha from 'mocha';
 import * as glob from 'glob';
+import { SSL_OP_EPHEMERAL_RSA } from 'node:constants';
 
 export function run(): Promise<void> {
 	// Create the mocha test

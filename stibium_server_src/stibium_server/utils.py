@@ -1,11 +1,11 @@
 from pygls.workspace import Document
-from .stibium.ast import AntTreeAnalyzer
+from stibium.ast import AntTreeAnalyzer
 
-from .stibium.parse import AntimonyParser
-from .stibium.utils import get_range, to_uri
-from .stibium.types import SrcLocation, SrcPosition, SrcRange
+from stibium.parse import AntimonyParser
+from stibium.utils import get_range, to_uri
+from stibium.types import SrcLocation, SrcPosition, SrcRange
 
-from pygls.types import CompletionItem, CompletionList, CompletionParams, Position, Range, TextDocumentPositionParams
+from pygls.types import CompletionItem, CompletionItemKind, CompletionList, CompletionParams, Position, Range, TextDocumentPositionParams
 
 
 
@@ -60,9 +60,9 @@ class AntFile:
         return False
 
     def completions(self, params: CompletionParams) -> CompletionList:
-        # TODO
+        # TODO more specific here
         return CompletionList(False, [
-            CompletionItem(name) for name in self.analyzer.get_all_names()
+            CompletionItem(name, kind=CompletionItemKind.Text) for name in self.analyzer.get_all_names()
         ])
 
 

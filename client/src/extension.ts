@@ -22,11 +22,11 @@ export function activate(context: ExtensionContext) {
 	// TODO this might be python3
 	const pythonInterp = 'python';
 
-	// const pythonMain = context.asAbsolutePath(
-	// 	path.join('server', 'main.py')
-	// );
+	const pythonMain = context.asAbsolutePath(
+		path.join('server', 'main.py')
+	);
 
-	const args = ["-m", "server.main"];
+	const args = [pythonMain];
 
 	// Add debug options here if needed
 	const serverOptions: ServerOptions = { command: pythonInterp, args };

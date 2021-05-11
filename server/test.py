@@ -3,27 +3,21 @@
 Definitely need to add a full suite of tests
 """
 
-from .stibium.types import SrcPosition
+import os
+import sys
+
+# Temporary, before both packages are published
+EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_src"))
+sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_server_src"))
+from stibium.types import SrcPosition
 from .main import AntFile
 
 from dataclasses import dataclass
 from typing import List
 
-FILE = '''
-J0: 2C + 3B -> 2.5Deee; v
-J0: EEEA + B -> 6Ceek; Something * 2
-species AEEEE = 5
-species AEEEE = 5
-ff
-gluc = 7.41
-a= 5
-a = 10
-
-EEEE identity "http://identifiers.org/chebi/CHEBI:17234"
-
-identity identity "http://identifiers.org/chebi/CHEBI:36184"
-
-identity identity "http://identifiers.org/uniprot/Q8W593"
+FILE = ''';
+@J0: 2C + 3B -> 2.5Deee; v
 '''
 
 FILE1 = '''
@@ -758,3 +752,4 @@ def join_tokens(tokens):
 doc = AntFile('', FILE)
 print(doc.get_errors())
 print(doc.symbols_at(SrcPosition(2, 1)))
+print(doc.tree)

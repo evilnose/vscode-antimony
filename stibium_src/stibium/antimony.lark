@@ -3,18 +3,15 @@ var_name : ["$"] NAME
 in_comp : "in" var_name
 name_maybe_in : var_name [in_comp]
 
-
-reaction : [name_maybe_in ":"] reactants _ARROW products ";" rate_law [in_comp]
+reaction : [name_maybe_in ":"] reactants ARROW products ";" rate_law [in_comp]
 reactants : species ("+" species)*
 products : species ("+" species)*
 species : [NUMBER] var_name
 ?rate_law : sum
-_ARROW : "->"
+ARROW : "->"
     | "=>"
 
-
 assignment : name_maybe_in "=" sum
-
 
 annotation : var_name annot_keyword ESCAPED_STRING
 annot_keyword : "identity"      -> identity

@@ -155,3 +155,10 @@ class Variability(Enum):
     UNKNOWN = auto()
     CONSTANT = auto()
     VARIABLE = auto()
+
+
+# TODO move this to another class, e.g. logical/model types
+@dataclass
+class Species:
+    stoich: float
+    name: str

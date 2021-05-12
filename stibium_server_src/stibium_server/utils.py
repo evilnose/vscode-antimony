@@ -1,11 +1,12 @@
 from pygls.workspace import Document
-from stibium.ast import AntTreeAnalyzer
+from stibium.api import AntCompletion, AntCompletionKind, Completer
+from stibium.ast import AntTreeAnalyzer, get_qname_at_position
 
 from stibium.parse import AntimonyParser
 from stibium.utils import get_range, to_uri
 from stibium.types import SrcLocation, SrcPosition, SrcRange
 
-from pygls.types import CompletionItem, CompletionItemKind, CompletionList, CompletionParams, Position, Range, TextDocumentPositionParams
+from pygls.types import CompletionItem, CompletionItemKind, CompletionList, CompletionParams, InsertTextFormat, Position, Range, TextDocumentPositionParams
 
 
 
@@ -27,9 +28,10 @@ class AntFile:
         TODO make a copy
         '''
         assert isinstance(position, SrcPosition)
-        qname = self.analyzer.get_qname_at_position(position)
+        qname = get_qname_at_position(self.tree, position)
         if qname is None:
             return [], None
+        assert qname.token is not None
         return self.analyzer.resolve_qname(qname), get_range(qname.token)
 
     def goto(self, position: SrcPosition):
@@ -59,12 +61,9 @@ class AntFile:
 
         return False
 
-    def completions(self, params: CompletionParams) -> CompletionList:
-        # TODO more specific here
-        return CompletionList(False, [
-            CompletionItem(name, kind=CompletionItemKind.Text) for name in self.analyzer.get_all_names()
-        ])
-
+    def completions(self, position: SrcPosition):
+        completer = Completer(self.analyzer, self.parser, self.text, position)
+        return completer.completions()
 
 
 def sb_position(position: Position):

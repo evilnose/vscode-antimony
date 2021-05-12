@@ -1,4 +1,6 @@
 
+from stibium.types import ASTNode, SrcLocation, SrcPosition
+from stibium.utils import get_range
 from .lark_patch import get_puppet
 
 import os
@@ -55,7 +57,12 @@ class AntimonyParser:
             tree = ParentVisitor().visit(tree)
         return tree
 
-    def _recoverable_parse(self, puppet):
+    def _recoverable_parse(self, puppet, token_callback = None):
+        '''Parse with the given puppet in a recoverable way.
+        '''
+        if token_callback is None:
+            token_callback = lambda _: None
+
         # Slight HACK: this is to make error recovery behave normally in the case that there are
         # error tokens at the start of the text. In that case, the parser hasn't constructed a 
         # root node yet, so it is impossible to find the last "suite" node (from which to
@@ -68,42 +75,35 @@ class AntimonyParser:
         puppet.feed_token(INIT_TOKEN)
         puppet.feed_token(INIT_TOKEN)
         while True:
-            state = puppet.parser_state
             try:
+                state = puppet.parser_state
                 token = None
                 for token in state.lexer.lex(state):
+                    token_callback(token)
                     state.feed_token(token)
 
                 token = Token.new_borrow_pos(
                     '$END', '', token) if token else Token('$END', '', 0, 1, 1)  # type: ignore
-                return state.feed_token(token, True)
+                token_callback(token)
+
+                tree = state.feed_token(token, True)
+                tree.children = tree.children[2:]
+                return tree
             except UnexpectedCharacters:
-                self._recover_from_error(puppet)
+                self._recover_from_error(puppet, token_callback)
             except UnexpectedInput as e:
                 # Encountered error; try to recover
-                self._recover_from_error(puppet, getattr(e, 'token'))
-            except Exception as e:
-                # if self.debug:
-                #     print("")
-                #     print("STATE STACK DUMP")
-                #     print("----------------")
-                #     for i, s in enumerate(state.state_stack):
-                #         print('%d)' % i , s)
-                #     print("")
-                raise
+                self._recover_from_error(puppet, token_callback, getattr(e, 'token'))
 
-    def _recover_from_error(self, err_puppet, token=None):
+    def _recover_from_error(self, err_puppet, token_callback, token=None):
         '''Given a puppet in error, restore the puppet to a state from which it can keep parsing.
 
         Error tokens or error nodes may be created.
         '''
         def last_suite(state_stack, states):
             until_index = None
-            # For now just discard everything that is not a suite or
-            # file_input, if we detect an error.
             for until_index, state_arg in reversed(list(enumerate(state_stack))):
-                # `suite` can sometimes be only simple_stmt, not stmt.
-                if 'full_statement' in states[state_arg]:
+                if 'statement' in states[state_arg]:
                     break
             return until_index
 
@@ -130,9 +130,12 @@ class AntimonyParser:
         pstate = err_puppet.parser_state
         until_index = last_suite(pstate.state_stack, pstate.parse_conf.states)
 
+        if token:
+            token_callback(token)
+
         # make all nodes until the last full suite (statement) to be the children of an error node
         if update_stacks(pstate.value_stack, pstate.state_stack, until_index + 1):
-            # pushed onto stack; need to feed this token again
+            # Retrace steps to feed this token again
             if token:
                 s = err_puppet.lexer_state.state
                 s.line_ctr.column = token.column
@@ -152,5 +155,40 @@ class AntimonyParser:
             text = s.text[p]
             assert text != s.line_ctr.newline_char
             tok = Token('error_token', text, p, line, col, line, col + 1) # type: ignore
+            token_callback(tok)
             pstate.value_stack[-1].children.append(tok)
             s.line_ctr.feed('?')
+    
+    def get_state_at_position(self, token: Token, text: str, stop_pos: SrcPosition):
+        '''Get the parser state & value stacks at the given position.
+        '''
+
+        class PositionReached(Exception):
+            pass
+
+        def token_callback(token: Token):
+            '''
+            In those cases, stop (^ indicates lexer position, * indicates stop position)
+
+            1) last_token      token
+                         ^       *
+            2) last_token      token
+                         ^  *
+            '''
+            if token.type == '$END':
+                raise PositionReached
+            token_range = get_range(token)
+            if stop_pos <= token_range.end:
+                raise PositionReached
+
+        # TODO OPTIMIZE: instead of re-parsing the entire text, try picking out only the
+        # relevant lines nearby, and then parse only that.
+        # that's why we want the leaf
+        puppet = get_puppet(self.parser, 'root', text)
+        try:
+            self._recoverable_parse(puppet, token_callback)
+        except PositionReached:
+            return puppet.parser_state
+        
+        return puppet.parser_state
+

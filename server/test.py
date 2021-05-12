@@ -727,29 +727,30 @@ S99 = 3
 '''
 
 
-@dataclass
-class Species:
-    stoich: str
-    name: str
+# @dataclass
+# class Species:
+#     stoich: str
+#     name: str
 
 
-@dataclass
-class Reaction:
-    reactants: List[Species]
-    products: List[Species]
-    rate_law: str
+# @dataclass
+# class Reaction:
+#     reactants: List[Species]
+#     products: List[Species]
+#     rate_law: str
 
-@dataclass
-class Assignment:
-    name: str
-    value: str
+# @dataclass
+# class Assignment:
+#     name: str
+#     value: str
 
 
 def join_tokens(tokens):
     return ''.join(str(tok) for tok in tokens)
 
 
-doc = AntFile('', FILE)
-print(doc.get_errors())
-print(doc.symbols_at(SrcPosition(2, 1)))
-print(doc.tree)
+doc = AntFile('hello', '2.5 A -> B;              ???? a= 5')
+print(doc.completions(SrcPosition(1, 13)))
+# result = doc.parser.get_state_at_position('a^= 5', SrcPosition(1, 2))
+# print(result.choices())
+

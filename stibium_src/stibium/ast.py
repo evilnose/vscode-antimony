@@ -1,10 +1,10 @@
 
-from .types import ASTNode, SymbolType, Variability, SrcPosition
+from .types import ASTNode, SymbolType, Variability, SrcPosition, Species
 from .symbols import AbstractContext, BaseContext, FunctionContext, ModelContext, QName, SymbolTable
 from .utils import get_range
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 from lark.lexer import Token
 from lark.tree import Tree
 
@@ -20,6 +20,91 @@ class NameItem:
 class NameMaybeIn:
     name_item: NameItem
     comp_item: Optional[NameItem]
+
+
+def get_qname_at_position(root: Tree, pos: SrcPosition) -> Optional[QName]:
+    '''Returns (context, token) the given position. `token` may be None if not found.
+    '''
+    def within_range(pos: SrcPosition, node: ASTNode):
+        range_ = get_range(node)
+        return pos >= range_.start and pos < range_.end
+
+    node = root
+    model = None
+    func = None
+    while not isinstance(node, Token):
+        if node.data == 'model':
+            model = str(node.children[1])
+        elif node.data == 'function':
+            func = str(node.children[1])
+
+        for child in node.children:
+            if child is None:
+                continue
+            assert isinstance(child, Token) or isinstance(child, Tree)
+            if within_range(pos, child):
+                node = child
+                break
+        else:
+            # Didn't find it
+            return None
+
+    assert not (model is not None and func is not None)
+    if model:
+        context = ModelContext(model)
+    elif func:
+        context = FunctionContext(func)
+    else:
+        context = BaseContext()
+
+    return QName(context, node)
+
+
+@dataclass
+class SymbolDatum:
+    token: Token
+    type: SymbolType
+    # TODO add more fields like variability, etc.
+
+
+@dataclass
+class TreeResult:
+    '''Represents the result obtained after walking a syntax tree.'''
+    logical_obj: Any
+    '''This represents data that can be logically interpreted as part of a bio model,
+    such as Species, Reaction, etc.
+    '''
+    symbol_data: List[SymbolDatum]
+    '''This represents symbol data that is useful for semantic analysis (diagnostics)
+    '''
+
+
+def handle_species_list(tree):
+    species_list = list()
+    symbol_list = list()
+
+    for species in tree.children:
+        # A plus sign
+        if isinstance(species, Token):
+            continue
+        assert species.data == 'species'
+        assert not isinstance(species, str)
+        stoich = None
+        var_name: Tree
+        assert len(species.children) == 2
+        if species.children[0] is None:
+            stoich = 1
+        else:
+            stoich = float(species.children[0])
+
+        var_name = species.children[1]
+
+        name_token = var_name.children[-1]
+        assert isinstance(name_token, Token)
+        species_list.append(Species(stoich, str(name_token)))
+        symbol_list.append(SymbolDatum(name_token, SymbolType.SPECIES))
+
+    return TreeResult(species_list, symbol_list)
 
 
 class AntTreeAnalyzer:
@@ -54,43 +139,6 @@ class AntTreeAnalyzer:
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
 
-    def get_qname_at_position(self, pos: SrcPosition) -> Optional[QName]:
-        '''Returns (context, token) the given position. `token` may be None if not found.
-        '''
-        def within_range(pos: SrcPosition, node: ASTNode):
-            range_ = get_range(node)
-            return pos >= range_.start and pos < range_.end
-
-        node = self.root
-        model = None
-        func = None
-        while not isinstance(node, Token):
-            if node.data == 'model':
-                model = str(node.children[1])
-            elif node.data == 'function':
-                func = str(node.children[1])
-
-            for child in node.children:
-                if child is None:
-                    continue
-                assert isinstance(child, Token) or isinstance(child, Tree)
-                if within_range(pos, child):
-                    node = child
-                    break
-            else:
-                # Didn't find it
-                return None
-
-        assert not (model is not None and func is not None)
-        if model:
-            context = ModelContext(model)
-        elif func:
-            context = FunctionContext(func)
-        else:
-            context = BaseContext()
-
-        return QName(context, node)
-
     def get_all_names(self):
         # TODO temporary method to satisfy auto-completion
         # TODO also remove the same method from table
@@ -122,31 +170,6 @@ class AntTreeAnalyzer:
 
         return NameMaybeIn(name_item, comp_item)
 
-    def handle_species_list(self, context, tree):
-        for species in tree.children:
-            # A plus sign
-            if isinstance(species, Token):
-                continue
-            assert species.data == 'species'
-            assert not isinstance(species, str)
-            stoich = None
-            var_name: Tree
-            if len(species.children) == 1:
-                stoich = '1'
-                var_name = species.children[0]
-            else:
-                assert len(species.children) == 2
-                stoich = str(species.children[0])
-                var_name = species.children[1]
-
-            name_token = var_name.children[-1]
-            assert isinstance(name_token, Token)
-            # TODO create a helper function that masks table.update_type and automatically add
-            # the errors
-            self.record_issues(
-                self.table.insert(QName(context, name_token), SymbolType.SPECIES)
-            )
-
     def handle_formula(self, context: AbstractContext, tree: Tree):
         # TODO handle dummy tokens
         def pred(t):
@@ -160,7 +183,7 @@ class AntTreeAnalyzer:
 
     def handle_reaction(self, context, tree):
         if tree.children[0] is not None:
-            name_mi = self.resolve_name_maybe_in(tree.children[0])
+            name_mi = self.resolve_name_maybe_in(tree.children[0].children[0])
             name = str(name_mi.name_item.name_tok)
             token = name_mi.name_item.name_tok
             self.record_issues(
@@ -172,11 +195,18 @@ class AntTreeAnalyzer:
         #     reaction_token = tree.children[3]
 
         # Skip ";"
-        self.handle_species_list(context, tree.children[2])
+        species_symbols = handle_species_list(tree.children[1]).symbol_data
         # Skip "->"
-        self.handle_species_list(context, tree.children[4])
+        species_symbols += handle_species_list(tree.children[3]).symbol_data
+
+        for sym_data in species_symbols:
+            assert sym_data.type == SymbolType.SPECIES
+            self.record_issues(
+                self.table.insert(QName(context, sym_data.token), SymbolType.SPECIES)
+            )
+
         # Skip ";"
-        self.handle_formula(context, tree.children[6])
+        self.handle_formula(context, tree.children[5])
 
     def handle_assignment(self, context, tree):
         name = tree.children[0]

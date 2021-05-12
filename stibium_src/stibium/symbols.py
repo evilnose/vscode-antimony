@@ -1,6 +1,6 @@
 '''Classes for working with and storing symbols.
 '''
-from .types import ObscuredDeclaration, ObscuredValue, SymbolType, IncompatibleType, ASTNode
+from .types import ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType, ASTNode
 from .utils import get_range
 
 import abc
@@ -160,6 +160,7 @@ class SymbolTable:
         # create more specific symbols. Need to store things like value for types like var.
         # Have an inner method that returns (added, [errors]). Update the value, etc. only if
         # successfully added.
+        assert qname.token is not None
         issues = list()
         leaf_table = self._leaf_table(qname.context)
         name = str(qname.token)

@@ -45,7 +45,7 @@ async function testAnnotation(docUri, databaseName, initialEntity : string, test
     // need to pass a null argument at the front, since when createAnnotationDialog is executed
     // from the menu, vscode passes along one argument relating to that menu by default.
     let dialogClosed = false;
-    let dialogPromise = vscode.commands.executeCommand('antimony.createAnnotationDialog', null,
+    vscode.commands.executeCommand('antimony.createAnnotationDialog', null,
         initialEntity).then(() => {
             dialogClosed = true;
         });
@@ -64,6 +64,7 @@ async function testAnnotation(docUri, databaseName, initialEntity : string, test
 }
 
 async function glucoseChEBICallback() {
+    // select first query result
     await selectNthItem(0);
     await sleep(1000);
 
@@ -75,10 +76,10 @@ async function glucoseChEBICallback() {
 }
 
 async function glucChEBICallback() {
+    // select third query result
     await selectNthItem(2);
     await sleep(1000);
 
-    // TODO fuzzy comparison
     const regex = new RegExp('^\nspeciesName identity "http:\/\/identifiers.org\/chebi\/CHEBI:[0-9]+"\n$');
     // replace carriage returns with \n
     const actual = vscode.window.activeTextEditor.document.getText().replace(/\r/g, '');

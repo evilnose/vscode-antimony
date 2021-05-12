@@ -3,7 +3,8 @@ var_name : ["$"] NAME
 in_comp : "in" var_name
 name_maybe_in : var_name [in_comp]
 
-reaction : [name_maybe_in ":"] reactants ARROW products ";" rate_law [in_comp]
+reaction_name : name_maybe_in ":"
+reaction : [reaction_name] reactants ARROW products ";" rate_law [in_comp]
 reactants : species ("+" species)*
 products : species ("+" species)*
 species : [NUMBER] var_name

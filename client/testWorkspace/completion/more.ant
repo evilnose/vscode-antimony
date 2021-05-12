@@ -4,6 +4,7 @@ banana: 2peach + 3orange -> 2.5 watermelon; vroom
 badfruit = 5
 badfruit = 10
 badfruitother = 
+nothing
 
 i122 identity "http://identifiers.org/chebi/CHEBI:17234"
 

@@ -46,7 +46,8 @@ export function activate(context: ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		commands.registerCommand('antimony.createAnnotationDialog', () => createAnnotationDialog(context)));
+		commands.registerCommand('antimony.createAnnotationDialog',
+			(...args: any[]) => createAnnotationDialog(context, args)));
 
 	// Start the client. This will also launch the server
 	client.start();
@@ -59,20 +60,31 @@ export function deactivate(): Thenable<void> | undefined {
 	return client.stop();
 }
 
-async function createAnnotationDialog(context) {
+// initialEntity is for testing and debugging. When executed in production, it is always null
+async function createAnnotationDialog(context, args: any[]) {
 	// Wait till client is ready, or the Python server might not have started yet.
 	// NOTE this is necessary for any command that might use the Python language server.
 	await client.onReady();
 
+	let initialQuery = '';
+	if (args.length == 2) {
+		initialQuery = args[1];
+	}
+
+	const selectedItem = await multiStepInput(context, initialQuery);
+
 	const selection = window.activeTextEditor.selection
 	const selectedText = window.activeTextEditor.document.getText(selection);
+	const initialEntity = selectedText || 'speciesName';
 
-	const selectedItem = await multiStepInput(context);
+	await insertAnnotation(selectedItem, initialEntity);
+}
 
+async function insertAnnotation(selectedItem, entityName) {
 	const entity = selectedItem.entity;
 	const id = entity['id'];
 	const prefix = entity['prefix'];
-	const snippet = `\n${selectedText} identity "http://identifiers.org/${prefix}/${id}"\n`;
+	const snippet = `\n${entityName} identity "http://identifiers.org/${prefix}/${id}"\n`;
 	window.activeTextEditor.edit((builder) => {
 		const doc = window.activeTextEditor.document;
 		const pos = doc.lineAt(doc.lineCount - 1).range.end;

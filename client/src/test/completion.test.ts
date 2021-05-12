@@ -5,9 +5,11 @@
 import * as vscode from 'vscode';
 import * as assert from 'assert';
 import { getDocUri, activate } from './helper';
-import { privateEncrypt } from 'crypto';
 
 suite('Should do completion', () => {
+	// TODO these tests are very far from complete, mainly because completion itself is very far
+	// from complete. More tests should be introduced as the parser becomes more complete and better
+	// completion is implemented.
 	const basicUri = getDocUri('completion/basic.ant');
 	const moreUri = getDocUri('completion/more.ant')
 
@@ -25,6 +27,7 @@ suite('Should do completion', () => {
 			items: [
 				{ label: 'apple_1', kind: vscode.CompletionItemKind.Text },
 				{ label: 'apple_2', kind: vscode.CompletionItemKind.Text },
+				{ label: 'badfruit', kind: vscode.CompletionItemKind.Text },
 				{ label: 'banana', kind: vscode.CompletionItemKind.Text },
 				// TODO add this back once we handle annotation statements
 				// { label: 'i122', kind: vscode.CompletionItemKind.Text },
@@ -56,12 +59,7 @@ async function testCompletion(
 			label: item.label,
 			kind: item.kind
 		}
-	})
+	});
 
-	assert.deepStrictEqual(strippedActualList, expectedCompletionList.items)
-	// expectedCompletionList.items.forEach((expectedItem, i) => {
-	// 	const actualItem = actualCompletionList.items[i];
-	// 	assert.strictEqual(actualItem.label, expectedItem.label);
-	// 	assert.strictEqual(actualItem.kind, expectedItem.kind);
-	// });
+	assert.deepStrictEqual(strippedActualList, expectedCompletionList.items);
 }

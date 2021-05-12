@@ -24,9 +24,10 @@ def tree_str(tree):
         if tree.type == 'error_token':
             return text
 
-        if tree.type in ('NAME', 'NUMBER', 'STATEMENT_SEP', 'LPAR', 'RPAR') or tree.value == '$':
+        if (tree.type in ('NAME', 'NUMBER', 'STATEMENT_SEP', 'LPAR', 'RPAR', 'ESCAPED_STRING')
+            or tree.value == '$'):
             return text
-        elif tree.value in (',', ';', ':', 'const', 'var'):
+        elif tree.value in (',', ';', ':', 'const', 'var', 'species', 'formula', 'compartment'):
             return text + ' '
 
         return ' ' + text + ' '

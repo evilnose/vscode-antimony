@@ -6,18 +6,16 @@
 
 import { assert } from 'node:console';
 import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, Uri, commands, QuickPick } from 'vscode';
+import * as vscode from 'vscode';
 import { ShowMessageNotification } from 'vscode-languageserver-protocol';
-
-function sleep(ms) {
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
+import { sleep } from './utils';
 
 /**
  * A multi-step input using window.createQuickPick() and window.createInputBox().
  * 
  * This first part uses the helper class `MultiStepInput` that wraps the API for the multi-step case.
  */
-export async function multiStepInput(context: ExtensionContext) {
+export async function multiStepInput(context: ExtensionContext, initialEntity: string = null) {
     const databases = [
         { label: 'ChEBI', id: 'chebi' },
         { label: 'UniProt', id: 'uniprot'}];
@@ -29,10 +27,11 @@ export async function multiStepInput(context: ExtensionContext) {
         totalSteps: number;
         database: QuickPickItem;
         entity: QuickPickItem;
+        initialEntity: string;
     }
 
     async function collectInputs() {
-        const state = {} as Partial<State>;
+        const state = {initialEntity} as Partial<State>;
         await MultiStepInput.run(input => pickDatabase(input, state));
         return state as State;
     }
@@ -65,6 +64,7 @@ export async function multiStepInput(context: ExtensionContext) {
             placeholder: 'Enter query',
             items: [],
             activeItem: null,
+            initialValue: state.initialEntity,
             shouldResume: shouldResume,
             onInputChanged: (value) => onQueryUpdated(state.database['id'], value, input),
         });
@@ -122,6 +122,7 @@ interface QuickPickParameters<T extends QuickPickItem> {
     activeItem?: T;
     placeholder: string;
     buttons?: QuickInputButton[];
+    initialValue?: string;
     shouldResume: () => Thenable<boolean>;
     onInputChanged: (v: string) => void;
 }
@@ -177,7 +178,7 @@ export class MultiStepInput {
     }
 
     async showQuickPick<T extends QuickPickItem, P extends QuickPickParameters<T>>(
-        { title, step, totalSteps, items, activeItem, placeholder, buttons, shouldResume, onInputChanged }: P) {
+        { title, step, totalSteps, items, activeItem, placeholder, buttons, initialValue, shouldResume, onInputChanged }: P) {
         const disposables: Disposable[] = [];
         try {
             return await new Promise<T | (P extends { buttons: (infer I)[] } ? I : never)>((resolve, reject) => {
@@ -187,6 +188,10 @@ export class MultiStepInput {
                 input.totalSteps = totalSteps;
                 input.placeholder = placeholder;
                 input.items = items;
+                if (initialValue) {
+                    input.value = initialValue;
+                    onInputChanged(initialValue);
+                }
                 if (activeItem) {
                     input.activeItems = [activeItem];
                 }

@@ -56,12 +56,13 @@ class Completer:
         value_stack = pstate.value_stack
 
         # check if we are at the rate law portion of a reaction
-        if len(value_stack) >= 2:
+        if len(value_stack) >= 4:
             top = value_stack[-1]
             top2 = value_stack[-2]
+            top4 = value_stack[-4]
             if (isinstance(top, Token) and top.value == ';' and isinstance(top2, Tree)
-                and top2.data == 'products'):
-                assert len(value_stack) >= 4 and value_stack[-4].data == 'reactants'
+                and top2.data == 'species_list' and top4.data == 'species_list'):
+                assert len(value_stack) >= 4 and value_stack[-4].data == 'species_list'
 
                 reactants = resolve_species_list(value_stack[-4])
                 products = resolve_species_list(value_stack[-2])

@@ -4,9 +4,8 @@ in_comp : "in" var_name
 maybein : var_name [in_comp]
 
 reaction_name : maybein ":"
-reaction : [reaction_name] reactants ARROW products ";" rate_law [in_comp]
-reactants : species ("+" species)*
-products : species ("+" species)*
+reaction : [reaction_name] species_list ARROW species_list ";" rate_law [in_comp]
+species_list : species ("+" species)*
 species : [NUMBER] var_name
 ?rate_law : sum
 ARROW : "->"
@@ -21,14 +20,14 @@ annot_keyword : "identity"      -> identity
 
 declaration : declaration_modifiers declaration_item ("," declaration_item)*
 declaration_modifiers : var_modifier
-    | var_type
-    | var_modifier var_type
+    | type_modifier
+    | var_modifier type_modifier
 declaration_item : maybein [decl_assignment]
 decl_assignment : "=" sum
 
 var_modifier : "var"            -> var
     | "const"                   -> const
-var_type : "species"            -> species
+type_modifier : "species"            -> species
     | "compartment"             -> compartment
     | "formula"                 -> formula
 
@@ -37,12 +36,12 @@ var_type : "species"            -> species
     | sum "+" product           -> add
     | sum "-" product           -> sub
 
-?product : exponential
-    | product "*" exponential   -> mul
-    | product "/" exponential   -> div
+?product : power
+    | product "*" power   -> mul
+    | product "/" power   -> div
 
-?exponential: atom
-    | exponential "^" atom      -> exp
+?power: atom
+    | power "^" atom      -> exp
 
 ?atom : NUMBER                  -> number
     | NAME                      -> var

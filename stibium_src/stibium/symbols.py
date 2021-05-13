@@ -11,7 +11,7 @@ from lark.lexer import Token
 
 from lark.tree import Tree
 
-'''Classes that represent contexts. TODO do we need treelike contexts?'''
+'''Classes that represent contexts. TODO rename all these to Scope, b/c Scope is not the same thing as Context'''
 class AbstractContext(abc.ABC):
     '''Should never be instantiated.'''
     pass

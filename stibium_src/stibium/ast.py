@@ -1,5 +1,6 @@
 
-from .types import ASTNode, SymbolType, Variability, SrcPosition, Species
+from stibium.tree_builder import Species, resolve_maybein, resolve_species_list
+from .types import ASTNode, SymbolType, Variability, SrcPosition
 from .symbols import AbstractContext, BaseContext, FunctionContext, ModelContext, QName, SymbolTable
 from .utils import get_range
 
@@ -7,19 +8,6 @@ from dataclasses import dataclass
 from typing import Any, List, Optional
 from lark.lexer import Token
 from lark.tree import Tree
-
-
-# Helper classes to hold name structures
-@dataclass
-class NameItem:
-    const_tok: Optional[Token]
-    name_tok: Token
-
-
-@dataclass
-class NameMaybeIn:
-    name_item: NameItem
-    comp_item: Optional[NameItem]
 
 
 def get_qname_at_position(root: Tree, pos: SrcPosition) -> Optional[QName]:
@@ -60,53 +48,6 @@ def get_qname_at_position(root: Tree, pos: SrcPosition) -> Optional[QName]:
     return QName(context, node)
 
 
-@dataclass
-class SymbolDatum:
-    token: Token
-    type: SymbolType
-    # TODO add more fields like variability, etc.
-
-
-@dataclass
-class TreeResult:
-    '''Represents the result obtained after walking a syntax tree.'''
-    logical_obj: Any
-    '''This represents data that can be logically interpreted as part of a bio model,
-    such as Species, Reaction, etc.
-    '''
-    symbol_data: List[SymbolDatum]
-    '''This represents symbol data that is useful for semantic analysis (diagnostics)
-    '''
-
-
-def handle_species_list(tree):
-    species_list = list()
-    symbol_list = list()
-
-    for species in tree.children:
-        # A plus sign
-        if isinstance(species, Token):
-            continue
-        assert species.data == 'species'
-        assert not isinstance(species, str)
-        stoich = None
-        var_name: Tree
-        assert len(species.children) == 2
-        if species.children[0] is None:
-            stoich = 1
-        else:
-            stoich = float(species.children[0])
-
-        var_name = species.children[1]
-
-        name_token = var_name.children[-1]
-        assert isinstance(name_token, Token)
-        species_list.append(Species(stoich, str(name_token)))
-        symbol_list.append(SymbolDatum(name_token, SymbolType.SPECIES))
-
-    return TreeResult(species_list, symbol_list)
-
-
 class AntTreeAnalyzer:
     def __init__(self, root: Tree):
         self.issues = list()
@@ -124,7 +65,7 @@ class AntTreeAnalyzer:
             if suite.data == 'error_node':
                 continue
 
-            if suite.data == 'full_statement':
+            if suite.data == 'suite':
                 child = suite.children[0]
                 if child is None:  # empty statement
                     continue
@@ -151,25 +92,6 @@ class AntTreeAnalyzer:
     def get_issues(self):
         return self.issues
 
-    def resolve_var_name(self, tree) -> NameItem:
-        '''Resolve a var_name tree, i.e. one parsed from $A or A.
-        '''
-        assert len(tree.children) == 2
-
-        return NameItem(tree.children[0], tree.children[1])
-
-    def resolve_name_maybe_in(self, tree) -> NameMaybeIn:
-        assert len(tree.children) == 2
-
-        name_item = self.resolve_var_name(tree.children[0])
-        if tree.children[1] is not None:
-            # skip "in"
-            comp_item = self.resolve_var_name(tree.children[1].children[1])
-        else:
-            comp_item = None
-
-        return NameMaybeIn(name_item, comp_item)
-
     def handle_formula(self, context: AbstractContext, tree: Tree):
         # TODO handle dummy tokens
         def pred(t):
@@ -183,7 +105,7 @@ class AntTreeAnalyzer:
 
     def handle_reaction(self, context, tree):
         if tree.children[0] is not None:
-            name_mi = self.resolve_name_maybe_in(tree.children[0].children[0])
+            name_mi = resolve_maybein(tree.children[0].children[0])
             name = str(name_mi.name_item.name_tok)
             token = name_mi.name_item.name_tok
             self.record_issues(
@@ -195,14 +117,13 @@ class AntTreeAnalyzer:
         #     reaction_token = tree.children[3]
 
         # Skip ";"
-        species_symbols = handle_species_list(tree.children[1]).symbol_data
+        species_list = resolve_species_list(tree.children[1])
         # Skip "->"
-        species_symbols += handle_species_list(tree.children[3]).symbol_data
+        species_list += resolve_species_list(tree.children[3])
 
-        for sym_data in species_symbols:
-            assert sym_data.type == SymbolType.SPECIES
+        for species in species_list:
             self.record_issues(
-                self.table.insert(QName(context, sym_data.token), SymbolType.SPECIES)
+                self.table.insert(QName(context, species.name), SymbolType.SPECIES)
             )
 
         # Skip ";"
@@ -211,7 +132,7 @@ class AntTreeAnalyzer:
     def handle_assignment(self, context, tree):
         name = tree.children[0]
         value = tree.children[2]
-        name_mi = self.resolve_name_maybe_in(name)
+        name_mi = resolve_maybein(name)
         self.record_issues(
             self.table.insert(QName(context, name_mi.name_item.name_tok), SymbolType.PARAMETER,
                               value_node=tree)
@@ -250,7 +171,7 @@ class AntTreeAnalyzer:
         # Skip comma separators
         for item in tree.children[1::2]:
             assert len(item.children) == 2
-            name_mi = self.resolve_name_maybe_in(item.children[0])
+            name_mi = resolve_maybein(item.children[0])
 
             # Only store the value tree if the assignment node is not None
             value_tree = item if item.children[1] else None

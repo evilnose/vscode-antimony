@@ -11,14 +11,19 @@ suite('Should do annotation', () => {
         await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
     });
 
-    test('Annotate "glucose"', async () => {
+    test('Annotate "glucose" with ChEBI', async () => {
         await testAnnotation(emptyUri, 'chebi', 'glucose', glucoseChEBICallback);
     });
 
-    test('Annotate second query result of "gluc"', async () => {
+    test('Annotate second query result of "gluc" with ChEBI', async () => {
         await testAnnotation(emptyUri, 'chebi', 'gluc', glucChEBICallback);
     });
 
+    test('Annotate "glucose" with UniProt', async () => {
+        await testAnnotation(emptyUri, 'uniprot', 'glucose', glucoseUniProtCallback);
+    });
+
+    // TODO test with selected text
 });
 
 async function selectNthItem(n: number) {
@@ -68,7 +73,7 @@ async function glucoseChEBICallback() {
     await selectNthItem(0);
     await sleep(1000);
 
-    const expected = '\nspeciesName identity "http://identifiers.org/chebi/CHEBI:17234"\n';
+    const expected = '\nentityName identity "http://identifiers.org/chebi/CHEBI:17234"\n';
     // replace carriage returns with \n
     const actual = vscode.window.activeTextEditor.document.getText().replace(/\r/g, '');
 
@@ -80,7 +85,21 @@ async function glucChEBICallback() {
     await selectNthItem(2);
     await sleep(1000);
 
-    const regex = new RegExp('^\nspeciesName identity "http:\/\/identifiers.org\/chebi\/CHEBI:[0-9]+"\n$');
+    const regex = new RegExp(
+        '^\nentityName identity "http:\/\/identifiers\.org\/chebi\/CHEBI:[0-9]+"\n$');
+    // replace carriage returns with \n
+    const actual = vscode.window.activeTextEditor.document.getText().replace(/\r/g, '');
+
+    assert(regex.test(actual));
+}
+
+async function glucoseUniProtCallback() {
+    // select first query result
+    await selectNthItem(0);
+    await sleep(1000);
+
+    const regex = new RegExp(
+        '^\nentityName identity "http:\/\/identifiers\.org\/uniprot\/P([0-9]|[A-Z])+"\n$');
     // replace carriage returns with \n
     const actual = vscode.window.activeTextEditor.document.getText().replace(/\r/g, '');
 

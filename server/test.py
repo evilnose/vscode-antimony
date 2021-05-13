@@ -11,6 +11,7 @@ EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_src"))
 sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_server_src"))
 from stibium.types import SrcPosition
+from stibium.parse import AntimonyParser
 from .main import AntFile
 
 from dataclasses import dataclass
@@ -749,8 +750,12 @@ def join_tokens(tokens):
     return ''.join(str(tok) for tok in tokens)
 
 
-doc = AntFile('hello', '2.5 A -> B;              ???? a= 5')
-print(doc.completions(SrcPosition(1, 13)))
+# doc = AntFile('hello', '2.5 A -> B;              ???? a= 5')
+# print(doc.completions(SrcPosition(1, 13)))
 # result = doc.parser.get_state_at_position('a^= 5', SrcPosition(1, 2))
 # print(result.choices())
+doc = AntFile('hello', 'a = 5')
+parser = AntimonyParser()
+tree = parser.parse('a = 5', False)
+print(tree.children[0])
 

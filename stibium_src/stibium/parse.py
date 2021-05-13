@@ -39,31 +39,26 @@ class AntimonyParser:
                                 keep_all_tokens=True,
                                 maybe_placeholders=True)
 
-    def parse(self, text: str, recover=True, keep_parents: bool=True):
+    def parse(self, text: str, recoverable=True, keep_parents: bool=True):
         '''Parse the tree, automatically appending a newline character to the end of the given text.
         
         TODO docs
         '''
-        text += '\n'
-
         tree: Tree
         root_puppet = get_puppet(self.parser, 'root', text)
-        if recover:
-            tree = self._recoverable_parse(root_puppet)
-        else:
-            tree = self.parser.parse(text)
+        tree = self._parse_with_puppet(root_puppet, recoverable)
 
         if keep_parents:
             tree = ParentVisitor().visit(tree)
         return tree
 
-    def _recoverable_parse(self, puppet, token_callback = None):
+    def _parse_with_puppet(self, puppet, recoverable, token_callback = None):
         '''Parse with the given puppet in a recoverable way.
         '''
         if token_callback is None:
             token_callback = lambda _: None
 
-        # Slight HACK: this is to make error recovery behave normally in the case that there are
+        # HACK: this is to make error recovery behave normally in the case that there are
         # error tokens at the start of the text. In that case, the parser hasn't constructed a 
         # root node yet, so it is impossible to find the last "suite" node (from which to
         # construct an error node). In any case, this force-creates an empty statement in the tree
@@ -71,29 +66,48 @@ class AntimonyParser:
         # Two semicolons are fed because only after the second semicolon is fed, will the first
         # semicolon be parsed as an empty statement. Not sure why this is the case yet, but it
         # doesn't matter that much.
-        INIT_TOKEN = Token('STATEMENT_SEP', '', 0, 0, 0, 0, 0, 0)  # type: ignore
-        puppet.feed_token(INIT_TOKEN)
-        puppet.feed_token(INIT_TOKEN)
+        if recoverable:
+            INIT_TOKEN = Token('END_MARKER', '', 0, 0, 0, 0, 0, 0)  # type: ignore
+            puppet.feed_token(INIT_TOKEN)
+            puppet.feed_token(INIT_TOKEN)
+
         while True:
             try:
+                # Main parser loop
                 state = puppet.parser_state
                 token = None
                 for token in state.lexer.lex(state):
                     token_callback(token)
                     state.feed_token(token)
 
+                # HACK feed an END_MARKER if there is no newline at the end of the file
+                if token and token.type != 'END_MARKER' and 'END_MARKER' in puppet.choices():
+                    line_ctr = state.lexer.state.line_ctr
+                    state.feed_token(Token('END_MARKER', '', line_ctr.char_pos, line_ctr.line,
+                                     line_ctr.column, line_ctr.line,
+                                     line_ctr.column, line_ctr.char_pos))  # type: ignore
+
                 token = Token.new_borrow_pos(
                     '$END', '', token) if token else Token('$END', '', 0, 1, 1)  # type: ignore
                 token_callback(token)
 
                 tree = state.feed_token(token, True)
-                tree.children = tree.children[2:]
+
+                # remove the dummy tokens
+                if recoverable:
+                    tree.children = tree.children[2:]
+
                 return tree
-            except UnexpectedCharacters:
-                self._recover_from_error(puppet, token_callback)
+            except UnexpectedCharacters as e:
+                if recoverable:
+                    self._recover_from_error(puppet, token_callback)
+                else:
+                    raise e
             except UnexpectedInput as e:
-                # Encountered error; try to recover
-                self._recover_from_error(puppet, token_callback, getattr(e, 'token'))
+                if recoverable:
+                    self._recover_from_error(puppet, token_callback, getattr(e, 'token'))
+                else:
+                    raise e
 
     def _recover_from_error(self, err_puppet, token_callback, token=None):
         '''Given a puppet in error, restore the puppet to a state from which it can keep parsing.
@@ -159,8 +173,9 @@ class AntimonyParser:
             pstate.value_stack[-1].children.append(tok)
             s.line_ctr.feed('?')
     
-    def get_state_at_position(self, token: Token, text: str, stop_pos: SrcPosition):
+    def get_state_at_position(self, text: str, stop_pos: SrcPosition):
         '''Get the parser state & value stacks at the given position.
+        TODO see note in Completer.__init__(). Possibly to get the leaf and get the previous token
         '''
 
         class PositionReached(Exception):
@@ -186,7 +201,7 @@ class AntimonyParser:
         # that's why we want the leaf
         puppet = get_puppet(self.parser, 'root', text)
         try:
-            self._recoverable_parse(puppet, token_callback)
+            self._parse_with_puppet(puppet, True, token_callback)
         except PositionReached:
             return puppet.parser_state
         

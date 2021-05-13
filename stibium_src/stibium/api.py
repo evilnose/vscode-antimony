@@ -4,9 +4,10 @@ from enum import Enum, auto
 from typing import List
 from lark.lexer import Token
 from lark.tree import Tree
-from stibium.ast import AntTreeAnalyzer, get_qname_at_position, handle_species_list
+from stibium.ast import AntTreeAnalyzer, get_qname_at_position, resolve_species_list
 from stibium.parse import AntimonyParser
-from stibium.types import Species, SrcPosition
+from stibium.tree_builder import Species
+from stibium.types import SrcPosition
 
 
 class AntCompletionKind(Enum):
@@ -45,7 +46,7 @@ class Completer:
         # pstate = parser.get_state_at_position(qname.token, text, position)
 
         # TODO replace None with qname.token after get_qname_at_position is fixed
-        pstate = parser.get_state_at_position(None, text, position)
+        pstate = parser.get_state_at_position(text, position)
         basics = [AntCompletion(name, AntCompletionKind.TEXT) for name in analyzer.get_all_names()]
 
         # special rate law completions
@@ -62,8 +63,8 @@ class Completer:
                 and top2.data == 'products'):
                 assert len(value_stack) >= 4 and value_stack[-4].data == 'reactants'
 
-                reactants = handle_species_list(value_stack[-4]).logical_obj
-                products = handle_species_list(value_stack[-2]).logical_obj
+                reactants = resolve_species_list(value_stack[-4])
+                products = resolve_species_list(value_stack[-2])
                 snippet = self._mass_action_ratelaw(reactants, products)
                 rate_laws.append(AntCompletion(snippet, AntCompletionKind.RATE_LAW))
 

@@ -14,6 +14,8 @@
 ## TODOs
 * Refactor stibium and the server. Move AntFile to stibium. Reorganize requirements
 * Tests! Need to have em. Especially need to test error recovery, before I forget
+* Add transformers to change the parse tree into a more friendly structure. E.g. removing 'suite'
+nodes, adding different classes such as 'Reaction', 'Assignment', etc. and related methods
 * Multithreading for pygls (especially for querying)
 * Figure out the licenses
 * Handle cases where Python is not found

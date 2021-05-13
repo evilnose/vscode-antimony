@@ -3,7 +3,8 @@ import * as path from 'path';
 import {
 	workspace, ExtensionContext, commands, InputBoxOptions, window, QuickInputButtons,
 	QuickPickItem,
-	Position
+	Position,
+	SnippetString
 } from 'vscode';
 
 import {
@@ -75,7 +76,7 @@ async function createAnnotationDialog(context, args: any[]) {
 
 	const selection = window.activeTextEditor.selection
 	const selectedText = window.activeTextEditor.document.getText(selection);
-	const initialEntity = selectedText || 'speciesName';
+	const initialEntity = selectedText || 'entityName';
 
 	await insertAnnotation(selectedItem, initialEntity);
 }
@@ -84,10 +85,10 @@ async function insertAnnotation(selectedItem, entityName) {
 	const entity = selectedItem.entity;
 	const id = entity['id'];
 	const prefix = entity['prefix'];
-	const snippet = `\n${entityName} identity "http://identifiers.org/${prefix}/${id}"\n`;
-	window.activeTextEditor.edit((builder) => {
-		const doc = window.activeTextEditor.document;
-		const pos = doc.lineAt(doc.lineCount - 1).range.end;
-		builder.insert(pos, snippet);
-	});
+	const snippetText = `\n\${1:${entityName}} identity "http://identifiers.org/${prefix}/${id}"\n`;
+	const snippetStr = new SnippetString(snippetText);
+
+	const doc = window.activeTextEditor.document;
+	const pos = doc.lineAt(doc.lineCount - 1).range.end;
+	window.activeTextEditor.insertSnippet(snippetStr, pos);
 }

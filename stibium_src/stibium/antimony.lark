@@ -1,9 +1,9 @@
 
 var_name : ["$"] NAME
 in_comp : "in" var_name
-name_maybe_in : var_name [in_comp]
+maybein : var_name [in_comp]
 
-reaction_name : name_maybe_in ":"
+reaction_name : maybein ":"
 reaction : [reaction_name] reactants ARROW products ";" rate_law [in_comp]
 reactants : species ("+" species)*
 products : species ("+" species)*
@@ -12,7 +12,7 @@ species : [NUMBER] var_name
 ARROW : "->"
     | "=>"
 
-assignment : name_maybe_in "=" sum
+assignment : maybein "=" sum
 
 annotation : var_name annot_keyword ESCAPED_STRING
 annot_keyword : "identity"      -> identity
@@ -23,7 +23,7 @@ declaration : declaration_modifiers declaration_item ("," declaration_item)*
 declaration_modifiers : var_modifier
     | var_type
     | var_modifier var_type
-declaration_item : name_maybe_in [decl_assignment]
+declaration_item : maybein [decl_assignment]
 decl_assignment : "=" sum
 
 var_modifier : "var"            -> var
@@ -50,21 +50,21 @@ var_type : "species"            -> species
     | "(" sum ")"
 
 
-?full_statement : [statement] STATEMENT_SEP
+?suite : [statement] END_MARKER
 ?statement : reaction
     | assignment
     | declaration
     | annotation
-STATEMENT_SEP : _NL
+END_MARKER : _NL
     | ";"
 
 
-// For some reason we need to have at least one full_statement in the model, even if it is just
+// For some reason we need to have at least one suite in the model, even if it is just
 // a newline or a semicolon
-model : ("model" | "module") NAME full_statement+ "end"
+model : ("model" | "module") NAME suite+ "end"
 
 
-root : (full_statement | model)*
+root : (suite | model)*
 
 
 _NL: NEWLINE

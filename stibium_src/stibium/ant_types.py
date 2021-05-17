@@ -20,7 +20,6 @@ class NameMaybeIn:
 
 @dataclass
 class TreeNode:
-    parent: Optional['TrunkNode']
     range: SrcRange
 
     def check_rep(self):
@@ -30,6 +29,7 @@ class TreeNode:
 @dataclass
 class TrunkNode(TreeNode):
     children: List['TreeNode']
+    parent: Optional['TrunkNode'] = None
 
 
 @dataclass
@@ -78,6 +78,7 @@ class Number(ArithmeticExpr, LeafNode):
 @dataclass
 class Operator(LeafNode):
     type: str
+    parent: Optional['TrunkNode'] = None
 
 
 class Keyword(LeafNode):
@@ -131,6 +132,7 @@ class MaybeIn(TrunkNode):
 #     name: Token
 
 
+@dataclass
 class Species(TrunkNode):
     children: Tuple[Optional[Number], VarName]
     
@@ -147,9 +149,11 @@ class Species(TrunkNode):
         return self.get_var_name().get_name()
 
 
+@dataclass
 class ReactionName(TrunkNode):
     '''Represents the 'J0:' at the start of the reaction.'''
-    children: Tuple[Optional[InComp], Operator]
+    children: Tuple[MaybeIn, Operator]
+
     def get_maybein(self):
         return cast(MaybeIn, self.children[0])
 
@@ -157,6 +161,7 @@ class ReactionName(TrunkNode):
         return self.get_maybein().get_var_name().get_name()
 
 
+@dataclass
 class SpeciesList(TrunkNode):
     def get_all_species(self):
         return cast(List[Species], self.children[::2])
@@ -169,6 +174,7 @@ class SpeciesList(TrunkNode):
             assert isinstance(child, LeafNode) and child.text == '+'
 
 
+@dataclass
 class Reaction(TrunkNode):
     children: Tuple[Optional[ReactionName], SpeciesList, Operator, SpeciesList, Operator,
                     ArithmeticExpr, EndMarker]
@@ -187,6 +193,7 @@ class Reaction(TrunkNode):
         return cast(ArithmeticExpr, self.children[5])
 
 
+@dataclass
 class Assignment(TrunkNode):
     children: Tuple[MaybeIn, Operator, ArithmeticExpr]
     def get_maybein(self):
@@ -199,11 +206,13 @@ class Assignment(TrunkNode):
         return cast(ArithmeticExpr, self.children[2])
 
 
+@dataclass
 class VarModifier(Keyword):
     # text: Union[Literal['const'], Literal['var']]
     pass
 
 
+@dataclass
 class TypeModifier(Keyword):
     # text: Union[Literal['species'], Literal['compartment'], Literal['formula']]
     pass
@@ -246,6 +255,7 @@ class DeclModifiers(TrunkNode):
         assert bool(self.children[0]) or bool(self.children[1])
 
 
+@dataclass
 class DeclarationAssignment(TrunkNode):
     children: Tuple[Operator, ArithmeticExpr]
 
@@ -253,10 +263,12 @@ class DeclarationAssignment(TrunkNode):
         return cast(ArithmeticExpr, self.children[1])
 
 
+@dataclass
 class DeclarationItem(TrunkNode):
     children: Tuple[MaybeIn, DeclarationAssignment]
 
 
+@dataclass
 class Declaration(TrunkNode):
     def get_modifiers(self):
         return cast(DeclModifiers, self.children[0])
@@ -273,14 +285,17 @@ class Declaration(TrunkNode):
 
 
 # TODO All below
+@dataclass
 class Annotation(TrunkNode):
     pass
 
 
 # TODO
+@dataclass
 class Model(TrunkNode):
     pass
 
 
+@dataclass
 class Function(TrunkNode):
     pass

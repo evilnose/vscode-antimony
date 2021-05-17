@@ -60,7 +60,7 @@ class AntimonyParser:
 
         # HACK: this is to make error recovery behave normally in the case that there are
         # error tokens at the start of the text. In that case, the parser hasn't constructed a 
-        # root node yet, so it is impossible to find the last "suite" node (from which to
+        # root node yet, so it is impossible to find the last "statement" node (from which to
         # construct an error node). In any case, this force-creates an empty statement in the tree
         # so that edge cases are avoided.
         # Two semicolons are fed because only after the second semicolon is fed, will the first
@@ -114,7 +114,7 @@ class AntimonyParser:
 
         Error tokens or error nodes may be created.
         '''
-        def last_suite(state_stack, states):
+        def last_statement(state_stack, states):
             until_index = None
             for until_index, state_arg in reversed(list(enumerate(state_stack))):
                 if 'statement' in states[state_arg]:
@@ -142,12 +142,12 @@ class AntimonyParser:
             return False
 
         pstate = err_puppet.parser_state
-        until_index = last_suite(pstate.state_stack, pstate.parse_conf.states)
+        until_index = last_statement(pstate.state_stack, pstate.parse_conf.states)
 
         if token:
             token_callback(token)
 
-        # make all nodes until the last full suite (statement) to be the children of an error node
+        # make all nodes until the last statement to be the children of an error node
         if update_stacks(pstate.value_stack, pstate.state_stack, until_index + 1):
             # Retrace steps to feed this token again
             if token:

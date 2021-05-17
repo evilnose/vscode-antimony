@@ -4,10 +4,9 @@ in_comp : "in" var_name
 maybein : var_name [in_comp]
 
 reaction_name : maybein ":"
-reaction : [reaction_name] species_list ARROW species_list ";" rate_law [in_comp]
+reaction : [reaction_name] species_list ARROW species_list ";" sum [in_comp]
 species_list : species ("+" species)*
 species : [NUMBER] var_name
-?rate_law : sum
 ARROW : "->"
     | "=>"
 

@@ -12,18 +12,18 @@ from lark.lexer import Token
 from lark.tree import Tree
 
 '''Classes that represent contexts. TODO rename all these to Scope, b/c Scope is not the same thing as Context'''
-class AbstractContext(abc.ABC):
+class AbstractScope(abc.ABC):
     '''Should never be instantiated.'''
     pass
 
 
-class BaseContext(AbstractContext):
+class BaseScope(AbstractScope):
     '''The highest-level context within a file, outside of any declared models.'''
     def __init__(self):
         pass
 
     def __eq__(self, other):
-        if not isinstance(other, BaseContext):
+        if not isinstance(other, BaseScope):
             return NotImplemented
         
         return True
@@ -32,13 +32,13 @@ class BaseContext(AbstractContext):
         return hash(('_base', ''))
 
 
-class ModelContext(AbstractContext):
+class ModelScope(AbstractScope):
     '''The context for statements in declared models.'''
     def __init__(self, name: str):
         self.name = name
 
     def __eq__(self, other):
-        if not isinstance(other, ModelContext):
+        if not isinstance(other, ModelScope):
             return NotImplemented
         
         return self.name == other.name
@@ -47,13 +47,13 @@ class ModelContext(AbstractContext):
         return hash(('model', self.name))
 
 
-class FunctionContext(AbstractContext):
+class FunctionScope(AbstractScope):
     '''The context for statements in functions.'''
     def __init__(self, name: str):
         self.name = name
 
     def __eq__(self, other):
-        if not isinstance(other, FunctionContext):
+        if not isinstance(other, FunctionScope):
             return NotImplemented
 
         return self.name == other.name
@@ -65,7 +65,7 @@ class FunctionContext(AbstractContext):
 @dataclass
 class QName:
     '''Represents a qualified name; i.e. a context and a name string.'''
-    context: AbstractContext
+    context: AbstractScope
     token: Token
 
 

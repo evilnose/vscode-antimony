@@ -1,7 +1,6 @@
 
-from stibium.tree_builder import Species, resolve_maybein, resolve_species_list
 from .types import ASTNode, SymbolType, Variability, SrcPosition
-from .symbols import AbstractContext, BaseContext, FunctionContext, ModelContext, QName, SymbolTable
+from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable
 from .utils import get_range
 
 from dataclasses import dataclass
@@ -39,13 +38,13 @@ def get_qname_at_position(root: Tree, pos: SrcPosition) -> Optional[QName]:
 
     assert not (model is not None and func is not None)
     if model:
-        context = ModelContext(model)
+        scope = ModelScope(model)
     elif func:
-        context = FunctionContext(func)
+        scope = FunctionScope(func)
     else:
-        context = BaseContext()
+        scope = BaseScope()
 
-    return QName(context, node)
+    return QName(scope, node)
 
 
 class AntTreeAnalyzer:
@@ -56,7 +55,7 @@ class AntTreeAnalyzer:
         self.handle_parse_tree(root)
 
     def handle_parse_tree(self, tree):
-        context = BaseContext()
+        context = BaseScope()
         for suite in tree.children:
             if isinstance(suite, Token):
                 assert suite.type == 'error_token'
@@ -211,4 +210,4 @@ def get_context(node: ASTNode):
     ancestors = get_ancestors(node)
     model = find_node(ancestors, 'model')
     if model:
-        return ModelContext('TODO')
+        return ModelScope('TODO')

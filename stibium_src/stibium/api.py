@@ -4,7 +4,7 @@ from enum import Enum, auto
 from typing import List
 from lark.lexer import Token
 from lark.tree import Tree
-from stibium.ast import AntTreeAnalyzer, get_qname_at_position, resolve_species_list
+from stibium.ast import AntTreeAnalyzer, get_qname_at_position
 from stibium.parse import AntimonyParser
 from stibium.tree_builder import Species
 from stibium.types import SrcPosition

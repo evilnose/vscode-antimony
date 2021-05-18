@@ -21,7 +21,7 @@ def tree_str(tree):
 
     if isinstance(tree, Token):
         text = tree.value
-        if tree.type == 'error_token':
+        if tree.type == 'ERROR_TOKEN':
             return text
 
         if (tree.type in ('NAME', 'NUMBER', 'END_MARKER', 'LPAR', 'RPAR', 'ESCAPED_STRING')

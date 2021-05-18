@@ -5,6 +5,8 @@ from typing import Union
 from lark.lexer import Token
 from lark.tree import Tree
 
+from stibium.ant_types import Name
+
 
 @dataclass(eq=True)
 class SrcPosition:
@@ -87,7 +89,7 @@ class IncompatibleType(AntError):
 
 
 class ObscuredDeclaration(AntWarning):
-    def __init__(self, old_range, new_range, name):
+    def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
         super().__init__(old_range)
         self.message = ("Declaration '{name}' is obscured by a declaration of the same name on "
                         "line {new_line}:{new_column}").format(
@@ -98,7 +100,7 @@ class ObscuredDeclaration(AntWarning):
 
 
 class ObscuredValue(AntWarning):
-    def __init__(self, old_range, new_range, name):
+    def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
         super().__init__(old_range)
         self.message = ("Value assignment to '{name}' is obscured by a later assignment on "
                         "line {new_line}:{new_column}").format(

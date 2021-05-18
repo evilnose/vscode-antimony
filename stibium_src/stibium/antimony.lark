@@ -42,27 +42,28 @@ type_modifier : "species"            -> species
 ?power: atom
     | power "^" atom      -> exp
 
-?atom : NUMBER                  -> number
-    | NAME                      -> var
+?atom : NUMBER
+    | NAME
     | "-" atom                  -> neg
     | "(" sum ")"
 
 
-?suite : [statement] END_MARKER
-?statement : reaction
+?simple_stmt : [small_stmt] STMT_SEPARATOR
+?small_stmt : reaction
     | assignment
     | declaration
     | annotation
-END_MARKER : _NL
+STMT_SEPARATOR : _NL
     | ";"
 
 
 // For some reason we need to have at least one suite in the model, even if it is just
 // a newline or a semicolon
-model : ("model" | "module") NAME suite+ "end"
+model : ("model" | "module") NAME simple_stmt+ "end"
 
 
-root : (suite | model)*
+// TODO rename to 'file'
+root : (simple_stmt | model)*
 
 
 _NL: NEWLINE

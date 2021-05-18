@@ -2,7 +2,6 @@ from typing import List, Optional, Tuple
 from lark.tree import Tree
 
 from stibium.parse import AntimonyParser
-from stibium.tree_builder import resolve_maybein
 from stibium.utils import tree_str
 
 
@@ -40,21 +39,6 @@ def test_parse_end_marker():
     assert len(tree.children) == 1
     tree = parser.parse('foo = 3.5;', recoverable=False)
     assert len(tree.children) == 1
-
-
-# TODO Refactor this later once I implement transformer
-def validate_maybein(tree, name: str, name_const: bool = False, comp: str = None,
-                     comp_const: bool = False):
-    maybein = resolve_maybein(tree)
-    assert name == str(maybein.name_item.name_tok)
-    assert name_const == bool(maybein.name_item.const_tok)
-    
-    if comp:
-        assert maybein.comp_item is not None
-        assert comp == str(maybein.comp_item.name_tok)
-        assert comp_const == bool(maybein.comp_item.const_tok)
-    else:
-        assert maybein.comp_item is None
 
 
 # TODO Refactor this later once I implement transformer

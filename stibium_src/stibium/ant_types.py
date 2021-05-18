@@ -7,20 +7,12 @@ from stibium.types import SrcRange, SymbolType, Variability
 
 
 @dataclass
-class NameItem:
-    const_tok: Optional[Token]
-    name_tok: Token
-
-
-@dataclass
-class NameMaybeIn:
-    name_item: NameItem
-    comp_item: Optional[NameItem]
-
-
-@dataclass
 class TreeNode:
     range: SrcRange
+
+    def scan_leaves(self):
+        '''Return all the leaf nodes that are descendants of this node (possibly including self)'''
+        return _scan_leaves(self)
 
     def check_rep(self):
         pass
@@ -28,13 +20,33 @@ class TreeNode:
 
 @dataclass
 class TrunkNode(TreeNode):
-    children: List['TreeNode']
+    children: Tuple['TreeNode', ...]
     parent: Optional['TrunkNode'] = None
 
 
 @dataclass
 class LeafNode(TreeNode):
     text: str
+    parent: Optional['TrunkNode'] = None
+
+
+def _scan_leaves(node: TreeNode):
+    if isinstance(node, TrunkNode):
+        for child in node.children:
+            _scan_leaves(child)
+    else:
+        assert isinstance(node, LeafNode)
+        yield node
+
+
+@dataclass
+class ErrorNode(TreeNode):
+    pass
+
+
+@dataclass
+class ErrorToken(LeafNode):
+    pass
 
 
 class ArithmeticExpr(TreeNode):
@@ -77,8 +89,7 @@ class Number(ArithmeticExpr, LeafNode):
 
 @dataclass
 class Operator(LeafNode):
-    type: str
-    parent: Optional['TrunkNode'] = None
+    pass
 
 
 class Keyword(LeafNode):
@@ -86,7 +97,7 @@ class Keyword(LeafNode):
 
 
 @dataclass
-class EndMarker(LeafNode):
+class StmtSeparator(LeafNode):
     # text: Union[Literal[''], Literal['\n'], Literal['\r\n'], Literal[';']]
     pass
 
@@ -99,6 +110,9 @@ class VarName(TrunkNode):
         return self.children[0] is not None
 
     def get_name(self):
+        return self.children[1]
+
+    def get_name_text(self):
         return str(self.children[1])
 
 
@@ -160,6 +174,9 @@ class ReactionName(TrunkNode):
     def get_name(self):
         return self.get_maybein().get_var_name().get_name()
 
+    def get_name_text(self):
+        return self.get_maybein().get_var_name().get_name_text()
+
 
 @dataclass
 class SpeciesList(TrunkNode):
@@ -177,16 +194,22 @@ class SpeciesList(TrunkNode):
 @dataclass
 class Reaction(TrunkNode):
     children: Tuple[Optional[ReactionName], SpeciesList, Operator, SpeciesList, Operator,
-                    ArithmeticExpr, EndMarker]
+                    ArithmeticExpr, Optional[InComp]]
+
     def get_name(self):
         if self.children[0] is None:
             return None
         return cast(ReactionName, self.children[0]).get_name()
 
-    def get_reactants(self):
+    def get_name_text(self):
+        if self.children[0] is None:
+            return None
+        return cast(ReactionName, self.children[0]).get_name_text()
+
+    def get_reactant_list(self):
         return cast(SpeciesList, self.children[1])
 
-    def get_products(self):
+    def get_product_list(self):
         return cast(SpeciesList, self.children[3])
 
     def get_rate_law(self):
@@ -201,6 +224,9 @@ class Assignment(TrunkNode):
 
     def get_name(self):
         return self.get_maybein().get_var_name().get_name()
+
+    def get_name_text(self):
+        return self.get_maybein().get_var_name().get_name_text()
 
     def get_value(self):
         return cast(ArithmeticExpr, self.children[2])
@@ -267,6 +293,18 @@ class DeclarationAssignment(TrunkNode):
 class DeclarationItem(TrunkNode):
     children: Tuple[MaybeIn, DeclarationAssignment]
 
+    def get_maybein(self):
+        return self.children[0]
+
+    def get_decl_assignment(self):
+        return self.children[1]
+
+    def get_var_name(self):
+        return self.get_maybein().get_var_name()
+
+    def get_value(self):
+        return self.get_decl_assignment().get_value()
+
 
 @dataclass
 class Declaration(TrunkNode):
@@ -290,12 +328,27 @@ class Annotation(TrunkNode):
     pass
 
 
+@dataclass
+class SimpleStmt(TrunkNode):
+    children: Tuple[Union[Reaction, Assignment, Declaration, Annotation], StmtSeparator]
+
+    def get_stmt(self):
+        return self.children[0]
+
+
 # TODO
 @dataclass
 class Model(TrunkNode):
-    pass
+    def get_name(self):
+        assert False, 'Not implemented'
 
 
 @dataclass
 class Function(TrunkNode):
-    pass
+    def get_name(self):
+        assert False, 'Not implemented'
+
+
+@dataclass
+class FileNode(TrunkNode):
+    children: Tuple[SimpleStmt, ...]

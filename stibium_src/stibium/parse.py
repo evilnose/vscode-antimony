@@ -67,7 +67,7 @@ class AntimonyParser:
         # semicolon be parsed as an empty statement. Not sure why this is the case yet, but it
         # doesn't matter that much.
         if recoverable:
-            INIT_TOKEN = Token('END_MARKER', '', 0, 0, 0, 0, 0, 0)  # type: ignore
+            INIT_TOKEN = Token('STMT_SEPARATOR', '', 0, 0, 0, 0, 0, 0)  # type: ignore
             puppet.feed_token(INIT_TOKEN)
             puppet.feed_token(INIT_TOKEN)
 
@@ -80,10 +80,10 @@ class AntimonyParser:
                     token_callback(token)
                     state.feed_token(token)
 
-                # HACK feed an END_MARKER if there is no newline at the end of the file
-                if token and token.type != 'END_MARKER' and 'END_MARKER' in puppet.choices():
+                # HACK feed an STMT_SEPARATOR if there is no newline at the end of the file
+                if token and token.type != 'STMT_SEPARATOR' and 'STMT_SEPARATOR' in puppet.choices():
                     line_ctr = state.lexer.state.line_ctr
-                    state.feed_token(Token('END_MARKER', '', line_ctr.char_pos, line_ctr.line,
+                    state.feed_token(Token('STMT_SEPARATOR', '', line_ctr.char_pos, line_ctr.line,
                                      line_ctr.column, line_ctr.line,
                                      line_ctr.column, line_ctr.char_pos))  # type: ignore
 
@@ -117,7 +117,7 @@ class AntimonyParser:
         def last_statement(state_stack, states):
             until_index = None
             for until_index, state_arg in reversed(list(enumerate(state_stack))):
-                if 'statement' in states[state_arg]:
+                if 'small_stmt' in states[state_arg]:
                     break
             return until_index
 
@@ -158,7 +158,7 @@ class AntimonyParser:
         else:
             # No error node created; create token instead
             if token:
-                token.type = 'error_token'
+                token.type = 'ERROR_TOKEN'
                 pstate.value_stack[-1].children.append(token)
                 return
 
@@ -168,7 +168,7 @@ class AntimonyParser:
             col = s.line_ctr.column
             text = s.text[p]
             assert text != s.line_ctr.newline_char
-            tok = Token('error_token', text, p, line, col, line, col + 1) # type: ignore
+            tok = Token('ERROR_TOKEN', text, p, line, col, line, col + 1) # type: ignore
             token_callback(tok)
             pstate.value_stack[-1].children.append(tok)
             s.line_ctr.feed('?')

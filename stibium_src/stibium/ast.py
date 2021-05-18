@@ -1,34 +1,38 @@
 
+from typing_extensions import Annotated
+from stibium.ant_types import Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode
 from .types import ASTNode, SymbolType, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable
 from .utils import get_range
 
 from dataclasses import dataclass
 from typing import Any, List, Optional
+from itertools import chain
 from lark.lexer import Token
 from lark.tree import Tree
 
 
-def get_qname_at_position(root: Tree, pos: SrcPosition) -> Optional[QName]:
+def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
     '''Returns (context, token) the given position. `token` may be None if not found.
     '''
-    def within_range(pos: SrcPosition, node: ASTNode):
-        range_ = get_range(node)
-        return pos >= range_.start and pos < range_.end
+    def within_range(pos: SrcPosition, node: TreeNode):
+        return pos >= node.range.start and pos < node.range.end
 
-    node = root
-    model = None
-    func = None
-    while not isinstance(node, Token):
-        if node.data == 'model':
-            model = str(node.children[1])
-        elif node.data == 'function':
-            func = str(node.children[1])
+    node: TreeNode = root
+    model: Optional[Name] = None
+    func: Optional[Name] = None
+    while not isinstance(node, LeafNode):
+        if isinstance(node, Model):
+            assert model is None
+            model = node.get_name()
+        elif isinstance(node, Function):
+            assert func is None
+            func = node.get_name()
 
         for child in node.children:
             if child is None:
                 continue
-            assert isinstance(child, Token) or isinstance(child, Tree)
+
             if within_range(pos, child):
                 node = child
                 break
@@ -36,11 +40,12 @@ def get_qname_at_position(root: Tree, pos: SrcPosition) -> Optional[QName]:
             # Didn't find it
             return None
 
+    # can't have nested models/functions
     assert not (model is not None and func is not None)
     if model:
-        scope = ModelScope(model)
+        scope = ModelScope(str(model))
     elif func:
-        scope = FunctionScope(func)
+        scope = FunctionScope(str(func))
     else:
         scope = BaseScope()
 
@@ -48,33 +53,23 @@ def get_qname_at_position(root: Tree, pos: SrcPosition) -> Optional[QName]:
 
 
 class AntTreeAnalyzer:
-    def __init__(self, root: Tree):
+    def __init__(self, root: FileNode):
         self.issues = list()
         self.table = SymbolTable()
         self.root = root
-        self.handle_parse_tree(root)
-
-    def handle_parse_tree(self, tree):
-        context = BaseScope()
-        for suite in tree.children:
-            if isinstance(suite, Token):
-                assert suite.type == 'error_token'
+        for child in root.children:
+            if isinstance(child, ErrorToken):
                 continue
-
-            if suite.data == 'error_node':
+            if isinstance(child, ErrorNode):
                 continue
-
-            if suite.data == 'suite':
-                child = suite.children[0]
-                if child is None:  # empty statement
-                    continue
-
-                if child.data == 'reaction':
-                    self.handle_reaction(context, child)
-                elif child.data == 'assignment':
-                    self.handle_assignment(context, child)
-                elif child.data == 'declaration':
-                    self.handle_declaration(context, child)
+            if isinstance(child, SimpleStmt):
+                stmt = child.get_stmt()
+                {
+                    'Reaction': self.handle_reaction,
+                    'Assignment': self.handle_assignment,
+                    'Declaration': self.handle_declaration,
+                    'Annotation': self.handle_annotation,
+                }[stmt.__class__.__name__](BaseScope(), stmt)
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
@@ -91,52 +86,39 @@ class AntTreeAnalyzer:
     def get_issues(self):
         return self.issues
 
-    def handle_formula(self, context: AbstractContext, tree: Tree):
+    def handle_arith_expr(self, scope: AbstractScope, expr: ArithmeticExpr):
         # TODO handle dummy tokens
-        def pred(t):
-            return isinstance(t, Token) and t.type == 'NAME'
+        for leaf in expr.scan_leaves():
+            if isinstance(leaf, Name):
+                self.record_issues(
+                    self.table.insert(QName(scope, leaf), SymbolType.PARAMETER)
+                )
 
-        for parameter in tree.scan_values(pred):
-            assert isinstance(parameter, Token)
+    def handle_reaction(self, scope: AbstractScope, reaction: Reaction):
+        name = reaction.get_name()
+        if name is not None:
             self.record_issues(
-                self.table.insert(QName(context, parameter), SymbolType.PARAMETER)
-            )
-
-    def handle_reaction(self, context, tree):
-        if tree.children[0] is not None:
-            name_mi = resolve_maybein(tree.children[0].children[0])
-            name = str(name_mi.name_item.name_tok)
-            token = name_mi.name_item.name_tok
-            self.record_issues(
-                self.table.insert(QName(context, token), SymbolType.REACTION, tree)
+                self.table.insert(QName(scope, name), SymbolType.REACTION, reaction)
             )
         # else:
         #     reaction_name = self.table.get_unique_name(context, '_J')
         #     reaction_range = get_range(tree)
         #     reaction_token = tree.children[3]
 
-        # Skip ";"
-        species_list = resolve_species_list(tree.children[1])
-        # Skip "->"
-        species_list += resolve_species_list(tree.children[3])
-
-        for species in species_list:
+        for species in chain(reaction.get_reactant_list().get_all_species(),
+                             reaction.get_product_list().get_all_species()):
             self.record_issues(
-                self.table.insert(QName(context, species.name), SymbolType.SPECIES)
+                self.table.insert(QName(scope, species.get_name()), SymbolType.SPECIES)
             )
 
-        # Skip ";"
-        self.handle_formula(context, tree.children[5])
+        self.handle_arith_expr(scope, reaction.get_rate_law())
 
-    def handle_assignment(self, context, tree):
-        name = tree.children[0]
-        value = tree.children[2]
-        name_mi = resolve_maybein(name)
+    def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
         self.record_issues(
-            self.table.insert(QName(context, name_mi.name_item.name_tok), SymbolType.PARAMETER,
-                              value_node=tree)
+            self.table.insert(QName(scope, assignment.get_name()), SymbolType.PARAMETER,
+                              value_node=assignment)
         )
-        self.handle_formula(context, value)
+        self.handle_arith_expr(scope, assignment.get_value())
 
     def resolve_variab(self, tree) -> Variability:
         return {
@@ -151,63 +133,42 @@ class AntTreeAnalyzer:
             'formula': SymbolType.PARAMETER,
         }[tree.data]
 
-    def handle_declaration(self, context, tree):
+    def handle_declaration(self, scope: AbstractScope, declaration: Declaration):
         # TODO add modifiers in table
-        modifiers = tree.children[0]
+        modifiers = declaration.get_modifiers()
         # TODO deal with variability
-        variab = Variability.UNKNOWN
-        stype = SymbolType.PARAMETER
-        if len(modifiers.children) == 1:
-            mod = modifiers.children[0]
-            if mod.data in ('const', 'var'):
-                variab = self.resolve_variab(mod)
-            else:
-                stype = self.resolve_var_type(mod)
-        elif len(modifiers.children) == 2:
-            variab = self.resolve_variab(modifiers.children[0])
-            stype = self.resolve_var_type(modifiers.children[1])
+        variab = modifiers.get_variab()
+        stype = modifiers.get_type()
 
         # Skip comma separators
-        for item in tree.children[1::2]:
-            assert len(item.children) == 2
-            name_mi = resolve_maybein(item.children[0])
-
-            # Only store the value tree if the assignment node is not None
-            value_tree = item if item.children[1] else None
-
+        for item in declaration.get_items():
+            name = item.get_maybein().get_var_name().get_name()
+            value = item.get_value()
             # TODO update variability
             self.record_issues(
-                self.table.insert(QName(context, name_mi.name_item.name_tok), stype, tree,
-                                  value_tree)
+                self.table.insert(QName(scope, name), stype, declaration, value)
             )
-            # TODO add value in table
-            if item.children[1] is not None:
-                # TODO record value
-                pass
+            if value:
+                self.handle_arith_expr(scope, value)
+    
+    def handle_annotation(self, scope: AbstractScope, annotation: Annotation):
+        pass
 
 
-def get_ancestors(node: ASTNode):
-    ancestors = list()
-    while True:
-        parent = getattr(node, 'parent')
-        if parent is None:
-            break
-        ancestors.append(parent)
-        node = parent
+# def get_ancestors(node: ASTNode):
+#     ancestors = list()
+#     while True:
+#         parent = getattr(node, 'parent')
+#         if parent is None:
+#             break
+#         ancestors.append(parent)
+#         node = parent
 
-    return ancestors
-
-
-def find_node(nodes: List[Tree], data: str):
-    for node in nodes:
-        if node.data == data:
-            return node
-    return None
+#     return ancestors
 
 
-def get_context(node: ASTNode):
-    '''Create the exact context of a node.'''
-    ancestors = get_ancestors(node)
-    model = find_node(ancestors, 'model')
-    if model:
-        return ModelScope('TODO')
+# def find_node(nodes: List[Tree], data: str):
+#     for node in nodes:
+#         if node.data == data:
+#             return node
+#     return None

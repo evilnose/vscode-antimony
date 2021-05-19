@@ -39,6 +39,7 @@ def formatted_code(node: Optional[TreeNode]):
             prefix = ' '
             suffix = ' '
 
+        # Don't append space after semicolon if the next token is newline, semicolon, or EOF
         if node.text == ';' and (node.next is None or isinstance(node.next, StmtSeparator)):
             suffix = ''
 

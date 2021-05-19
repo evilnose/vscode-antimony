@@ -1,6 +1,5 @@
 
-from typing_extensions import Annotated
-from stibium.ant_types import Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode
+from stibium.ant_types import Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import ASTNode, SymbolType, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable
 from .utils import get_range
@@ -64,6 +63,9 @@ class AntTreeAnalyzer:
                 continue
             if isinstance(child, SimpleStmt):
                 stmt = child.get_stmt()
+                if stmt is None:
+                    continue
+
                 {
                     'Reaction': self.handle_reaction,
                     'Assignment': self.handle_assignment,
@@ -86,7 +88,7 @@ class AntTreeAnalyzer:
     def get_issues(self):
         return self.issues
 
-    def handle_arith_expr(self, scope: AbstractScope, expr: ArithmeticExpr):
+    def handle_arith_expr(self, scope: AbstractScope, expr: TreeNode):
         # TODO handle dummy tokens
         for leaf in expr.scan_leaves():
             if isinstance(leaf, Name):
@@ -144,6 +146,7 @@ class AntTreeAnalyzer:
         for item in declaration.get_items():
             name = item.get_maybein().get_var_name().get_name()
             value = item.get_value()
+
             # TODO update variability
             self.record_issues(
                 self.table.insert(QName(scope, name), stype, declaration, value)

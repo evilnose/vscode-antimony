@@ -61,7 +61,7 @@ def _scan_leaves(node: TreeNode):
 
 
 @dataclass
-class ErrorNode(TreeNode):
+class ErrorNode(TrunkNode):
     pass
 
 
@@ -70,7 +70,7 @@ class ErrorToken(LeafNode):
     pass
 
 
-class ArithmeticExpr:
+class ArithmeticExpr(TreeNode):
     '''Base class for arithmetic expressions.'''
     pass
 
@@ -159,7 +159,7 @@ class InComp(TrunkNode):
     children: Tuple[Keyword, VarName] = field(repr=False)
 
     def get_comp(self) -> VarName:
-        return cast(VarName, self.children[1])
+        return self.children[1]
 
 
 @dataclass
@@ -167,13 +167,13 @@ class MaybeIn(TrunkNode):
     children: Tuple[VarName, Optional[InComp]] = field(repr=False)
 
     def get_var_name(self):
-        return cast(VarName, self.children[0])
+        return self.children[0]
     
     def is_in_comp(self):
         return self.children[1] is not None
 
     def get_comp(self):
-        return cast(InComp, self.children[1]).get_comp()
+        return self.children[1].get_comp()
 
 
 # # TODO move this to another class, e.g. logical/model types
@@ -192,10 +192,10 @@ class Species(TrunkNode):
         if self.children[0] is None:
             return 1
 
-        return cast(Number, self.children[0]).get_value()
+        return self.children[0].get_value()
 
     def get_var_name(self):
-        return cast(VarName, self.children[1])
+        return self.children[1]
 
     def get_name(self):
         return self.get_var_name().get_name()
@@ -207,7 +207,7 @@ class ReactionName(TrunkNode):
     children: Tuple[MaybeIn, Operator] = field(repr=False)
 
     def get_maybein(self):
-        return cast(MaybeIn, self.children[0])
+        return self.children[0]
 
     def get_name(self):
         return self.get_maybein().get_var_name().get_name()
@@ -218,7 +218,7 @@ class ReactionName(TrunkNode):
 
 @dataclass
 class SpeciesList(TrunkNode):
-    def get_all_species(self):
+    def get_all_species(self) -> List[Species]:
         return cast(List[Species], self.children[::2])
 
     def check_rep(self):
@@ -237,28 +237,28 @@ class Reaction(TrunkNode):
     def get_name(self):
         if self.children[0] is None:
             return None
-        return cast(ReactionName, self.children[0]).get_name()
+        return self.children[0].get_name()
 
     def get_name_text(self):
         if self.children[0] is None:
             return None
-        return cast(ReactionName, self.children[0]).get_name_text()
+        return self.children[0].get_name_text()
 
     def get_reactant_list(self):
-        return cast(SpeciesList, self.children[1])
+        return self.children[1]
 
     def get_product_list(self):
-        return cast(SpeciesList, self.children[3])
+        return self.children[3]
 
     def get_rate_law(self):
-        return cast(ArithmeticExpr, self.children[5])
+        return self.children[5]
 
 
 @dataclass
 class Assignment(TrunkNode):
     children: Tuple[MaybeIn, Operator, ArithmeticExpr] = field(repr=False)
     def get_maybein(self):
-        return cast(MaybeIn, self.children[0])
+        return self.children[0]
 
     def get_name(self):
         return self.get_maybein().get_var_name().get_name()
@@ -267,7 +267,7 @@ class Assignment(TrunkNode):
         return self.get_maybein().get_var_name().get_name_text()
 
     def get_value(self):
-        return cast(ArithmeticExpr, self.children[2])
+        return self.children[2]
 
 
 @dataclass
@@ -293,10 +293,10 @@ class DeclModifiers(TrunkNode):
     children: Tuple[Optional[VarModifier], Optional[TypeModifier]] = field(repr=False)
 
     def get_var_modifier(self):
-        return cast(Optional[VarModifier], self.children[0])
+        return self.children[0]
 
     def get_type_modifier(self):
-        return cast(Optional[TypeModifier], self.children[1])
+        return self.children[1]
 
     def get_variab(self):
         var_mod = self.get_var_modifier()
@@ -324,7 +324,7 @@ class DeclAssignment(TrunkNode):
     children: Tuple[Operator, ArithmeticExpr] = field(repr=False)
 
     def get_value(self):
-        return cast(ArithmeticExpr, self.children[1])
+        return self.children[1]
 
 
 @dataclass
@@ -341,7 +341,10 @@ class DeclItem(TrunkNode):
         return self.get_maybein().get_var_name()
 
     def get_value(self):
-        return self.get_decl_assignment().get_value()
+        node = self.get_decl_assignment()
+        if node is None:
+            return None
+        return node.get_value()
 
 
 @dataclass

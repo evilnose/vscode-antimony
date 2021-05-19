@@ -165,7 +165,7 @@ class SymbolTable:
         assert qname.name is not None
         issues = list()
         leaf_table = self._leaf_table(qname.scope)
-        name = str(qname.name)
+        name = qname.name.text
         if name not in leaf_table:
             # TODO use a different Symbol class for other symbols
             sym = VarSymbol(name, typ, qname.name)
@@ -189,7 +189,7 @@ class SymbolTable:
 
         # Override the declaration
         if decl_node is not None:
-            decl_name = qname.name  # this is the declaration tokename.range
+            decl_name = qname.name
             if sym.decl_name is not None:
                 old_range = sym.decl_name.range
                 new_range = decl_name.range
@@ -199,7 +199,7 @@ class SymbolTable:
             sym.decl_name = decl_name
 
         if value_node is not None:
-            value_name = qname.name  # this is the declaration token
+            value_name = qname.name
             if sym.value_node is not None:
                 old_range = sym.value_node.range
                 new_range = value_name.range

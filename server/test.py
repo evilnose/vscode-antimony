@@ -758,8 +758,20 @@ def join_tokens(tokens):
 # print(doc.completions(SrcPosition(1, 13)))
 # result = doc.parser.get_state_at_position('a^= 5', SrcPosition(1, 2))
 # print(result.choices())
-# doc = AntFile('hello', 'a = 5')
-parser = AntimonyParser()
-tree = parser.parse('a = 5;', False)
-print(formatted_code(tree) + 'DONE')
+doc = AntFile('hello', '''
+const species apple_1 = 10, apple_2
+banana: 2peach + 3orange -> 2.5 watermelon; aa
+
+badfruit = 5
+badfruit = 10
+badfruitother = 
+nothing
+
+i122 identity "http://identifiers.org/chebi/CHEBI:17234"
+
+''')
+print(doc.get_errors())
+# parser = AntimonyParser()
+# tree = parser.parse('a = 5;', False)
+# print(formatted_code(tree) + 'DONE')
 

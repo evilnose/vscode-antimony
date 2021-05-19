@@ -4,9 +4,10 @@ from enum import Enum, auto
 from typing import List
 from lark.lexer import Token
 from lark.tree import Tree
+from stibium.ant_types import SpeciesList
 from stibium.ast import AntTreeAnalyzer, get_qname_at_position
 from stibium.parse import AntimonyParser
-from stibium.tree_builder import Species
+from stibium.tree_builder import Species, transform_tree
 from stibium.types import SrcPosition
 
 
@@ -64,22 +65,32 @@ class Completer:
                 and top2.data == 'species_list' and top4.data == 'species_list'):
                 assert len(value_stack) >= 4 and value_stack[-4].data == 'species_list'
 
-                reactants = resolve_species_list(value_stack[-4])
-                products = resolve_species_list(value_stack[-2])
-                snippet = self._mass_action_ratelaw(reactants, products)
+                reactant_list = transform_tree(value_stack[-4])
+                product_list = transform_tree(value_stack[-2])
+                assert isinstance(reactant_list, SpeciesList)
+                assert isinstance(product_list, SpeciesList)
+                reversible = value_stack[-3].value == '->'
+                snippet = self._mass_action_ratelaw(reactant_list.get_all_species(),
+                                                    product_list.get_all_species(),
+                                                    reversible)
                 rate_laws.append(AntCompletion(snippet, AntCompletionKind.RATE_LAW))
 
         self._completions = basics + rate_laws
     
-    def _mass_action_ratelaw(self, reactants: List[Species], products: List[Species]):
-        toks = ['${1:k}']
-        for species in reactants:
-            toks.append(' * {}^{}'.format(species.name, species.stoich))
+    def _mass_action_ratelaw(self, reactants: List[Species], products: List[Species], reversible: bool):
 
-        for species in products:
-            toks.append(' * {}^{}'.format(species.name, -species.stoich))
+        def species_list_str(species_list: List[Species]):
+            toks = list()
+            for species in species_list:
+                toks.append('{}^{}'.format(species.get_name().text, species.get_stoich()))
+            return ' * '.join(toks)
         
-        return ''.join(toks)
+        snippet = '${1:k} * ' + species_list_str(reactants)
+
+        if reversible:
+            snippet += ' - ' + species_list_str(products)
+
+        return snippet
 
     
     def completions(self):

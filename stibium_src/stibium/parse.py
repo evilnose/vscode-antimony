@@ -1,4 +1,6 @@
 
+from stibium.ant_types import FileNode
+from stibium.tree_builder import set_leaf_pointers, set_parents, transform_tree
 from stibium.types import ASTNode, SrcLocation, SrcPosition
 from stibium.utils import get_range
 from .lark_patch import get_puppet
@@ -39,7 +41,7 @@ class AntimonyParser:
                                 keep_all_tokens=True,
                                 maybe_placeholders=True)
 
-    def parse(self, text: str, recoverable=True, keep_parents: bool=True):
+    def parse(self, text: str, recoverable=True) -> FileNode:
         '''Parse the tree, automatically appending a newline character to the end of the given text.
         
         TODO docs
@@ -48,9 +50,13 @@ class AntimonyParser:
         root_puppet = get_puppet(self.parser, 'root', text)
         tree = self._parse_with_puppet(root_puppet, recoverable)
 
-        if keep_parents:
-            tree = ParentVisitor().visit(tree)
-        return tree
+        root = transform_tree(tree)
+        assert root is not None and isinstance(root, FileNode)
+
+        set_parents(root)
+        set_leaf_pointers(root)
+        return root
+
 
     def _parse_with_puppet(self, puppet, recoverable, token_callback = None):
         '''Parse with the given puppet in a recoverable way.
@@ -67,7 +73,7 @@ class AntimonyParser:
         # semicolon be parsed as an empty statement. Not sure why this is the case yet, but it
         # doesn't matter that much.
         if recoverable:
-            INIT_TOKEN = Token('STMT_SEPARATOR', '', 0, 0, 0, 0, 0, 0)  # type: ignore
+            INIT_TOKEN = Token('STMT_SEPARATOR', '', 0, 1, 1, 1, 1, 0)  # type: ignore
             puppet.feed_token(INIT_TOKEN)
             puppet.feed_token(INIT_TOKEN)
 

@@ -1,4 +1,6 @@
 
+from typing import Optional
+from stibium.ant_types import ErrorToken, LeafNode, Name, Number, Operator, SimpleStmt, StmtSeparator, StringLiteral, TreeNode, TrunkNode
 from .types import ASTNode, SrcPosition, SrcRange
 
 from lark.lexer import Token
@@ -9,33 +11,43 @@ import pathlib
 def get_range(node: ASTNode):
     if isinstance(node, Token):
         return SrcRange(SrcPosition(node.line, node.column),
-                     SrcPosition(node.end_line, node.end_column))
+                        SrcPosition(node.end_line, node.end_column))
     else:
+        if len(node.children) == 0:
+            return SrcRange(SrcPosition(1, 1), SrcPosition(1, 1))
+
         return SrcRange(SrcPosition(node.meta.line, node.meta.column),
-                     SrcPosition(node.meta.end_line, node.meta.end_column))
+                        SrcPosition(node.meta.end_line, node.meta.end_column))
 
 
-def tree_str(tree):
-    if tree is None:
+def formatted_code(node: Optional[TreeNode]):
+    if node is None:
         return ''
 
-    if isinstance(tree, Token):
-        text = tree.value
-        if tree.type == 'ERROR_TOKEN':
-            return text
+    if isinstance(node, LeafNode):
+        if isinstance(node, ErrorToken):
+            return node.text
 
-        if (tree.type in ('NAME', 'NUMBER', 'END_MARKER', 'LPAR', 'RPAR', 'ESCAPED_STRING')
-            or tree.value == '$'):
-            return text
-        elif tree.value in (',', ';', ':', 'const', 'var', 'species', 'formula', 'compartment'):
-            return text + ' '
+        prefix = ''
+        suffix = ''
+        if node.text in (',', ';', ':', 'const', 'var', 'species', 'formula', 'compartment'):
+            suffix = ' '
+        elif (isinstance(node, (Name, Number, StmtSeparator, StringLiteral))
+              or node.text in ('(', ')', '$')):
+            pass
+        else:
+            prefix = ' '
+            suffix = ' '
 
-        return ' ' + text + ' '
+        if node.text == ';' and (node.next is None or isinstance(node.next, StmtSeparator)):
+            suffix = ''
 
+        return prefix + node.text + suffix
+
+    assert isinstance(node, TrunkNode)
     text = ''
-    for child in tree.children:
-        text += tree_str(child)
-
+    for child in node.children:
+        text += formatted_code(child)
     return text
 
 

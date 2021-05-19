@@ -6,11 +6,13 @@ Definitely need to add a full suite of tests
 import os
 import sys
 
+
 # Temporary, before both packages are published
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_src"))
 sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_server_src"))
 
+from stibium.utils import formatted_code
 from stibium.tree_builder import transform_tree
 from stibium.types import SrcPosition
 from stibium.parse import AntimonyParser
@@ -758,6 +760,6 @@ def join_tokens(tokens):
 # print(result.choices())
 # doc = AntFile('hello', 'a = 5')
 parser = AntimonyParser()
-tree = parser.parse('a = 5', False)
-print(transform_tree(tree))
+tree = parser.parse('a = 5;', False)
+print(formatted_code(tree) + 'DONE')
 

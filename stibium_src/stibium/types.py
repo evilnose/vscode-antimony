@@ -5,14 +5,15 @@ from typing import Union
 from lark.lexer import Token
 from lark.tree import Tree
 
-from stibium.ant_types import Name
-
 
 @dataclass(eq=True)
 class SrcPosition:
     '''A position in text; uses 1-based index.'''
     line: int
     column: int
+
+    def __repr__(self):
+        return '{}:{}'.format(self.line, self.column)
 
     def __ge__(self, other):
         if self.line > other.line:
@@ -45,9 +46,12 @@ class SrcPosition:
 
 @dataclass
 class SrcRange:
-    '''A position in text; uses 0-based index.'''
+    '''A position in text; uses 1-based index.'''
     start: SrcPosition
     end: SrcPosition
+
+    def __repr__(self):
+        return '{} - {}'.format(self.start, self.end)
 
 
 @dataclass

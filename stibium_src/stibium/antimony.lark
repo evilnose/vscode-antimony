@@ -12,35 +12,30 @@ ARROW : "->"
 
 assignment : maybein "=" sum
 
-annotation : var_name annot_keyword ESCAPED_STRING
-annot_keyword : "identity"      -> identity
-    | "hasPart"                 -> has_part
+annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
+ANNOT_KEYWORD .2: "identity" | "hasPart"   // use .2 to specify higher priority when matching
 
 
-declaration : declaration_modifiers declaration_item ("," declaration_item)*
-declaration_modifiers : var_modifier
-    | type_modifier
-    | var_modifier type_modifier
-declaration_item : maybein [decl_assignment]
+declaration : decl_modifiers decl_item ("," decl_item)*
+decl_modifiers : VAR_MODIFIER
+    | TYPE_MODIFIER
+    | VAR_MODIFIER TYPE_MODIFIER
+decl_item : maybein [decl_assignment]
 decl_assignment : "=" sum
 
-var_modifier : "var"            -> var
-    | "const"                   -> const
-type_modifier : "species"            -> species
-    | "compartment"             -> compartment
-    | "formula"                 -> formula
-
+VAR_MODIFIER .2: "var" | "const"
+TYPE_MODIFIER .2: "species" | "compartment" | "formula"
 
 ?sum : product
-    | sum "+" product           -> add
-    | sum "-" product           -> sub
+    | sum "+" product
+    | sum "-" product
 
 ?product : power
-    | product "*" power   -> mul
-    | product "/" power   -> div
+    | product "*" power
+    | product "/" power
 
 ?power: atom
-    | power "^" atom      -> exp
+    | power "^" atom
 
 ?atom : NUMBER
     | NAME

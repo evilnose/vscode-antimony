@@ -100,7 +100,8 @@ class Symbol:
         self.decl_node = decl_node
         self.value_node = value_node
 
-    def def_token(self):
+    def def_name(self):
+        '''Return the Name that should be considered as the definition'''
         return self.decl_name or self.value_node or self.type_name
 
     def help_str(self):

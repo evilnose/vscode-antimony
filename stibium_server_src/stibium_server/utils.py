@@ -26,13 +26,14 @@ class AntFile:
         position may resolve to, and range is the range of the token under the position.
 
         TODO make a copy
+        TODO no need to return range now
         '''
         assert isinstance(position, SrcPosition)
         qname = get_qname_at_position(self.tree, position)
         if qname is None:
             return [], None
-        assert qname.token is not None
-        return self.analyzer.resolve_qname(qname), get_range(qname.token)
+        assert qname.name is not None
+        return self.analyzer.resolve_qname(qname), qname.name.range
 
     def goto(self, position: SrcPosition):
         symbols, range_ = self.symbols_at(position)
@@ -41,7 +42,7 @@ class AntFile:
 
         return [SrcLocation(
             to_uri(self.path),  # TODO might be other files when we add cross-file functionalities
-            get_range(sym.def_token()),
+            sym.def_name().range,
         ) for sym in symbols], range_
 
 

@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import abc
+from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, Union, cast
 from lark.lexer import Token
 from lark.tree import Tree
@@ -6,13 +7,28 @@ from lark.tree import Tree
 from stibium.types import SrcRange, SymbolType, Variability
 
 
-@dataclass
-class TreeNode:
+class TreeNode(abc.ABC):
+    '''Basically either a TrunkNode or a LeafNode.
+    This is not a dataclass to avoid inheritance issues. The attributes are there for static
+    analysis.
+    '''
     range: SrcRange
+    parent: Optional['TrunkNode']
 
     def scan_leaves(self):
         '''Return all the leaf nodes that are descendants of this node (possibly including self)'''
         return _scan_leaves(self)
+
+    def next_sibling(self):
+        if self.parent is None:
+            return None
+
+        for index, node in enumerate(self.parent.children):
+            if node is self:
+                if index == len(self.parent.children) - 1:
+                    return None
+                return self.parent.children[index + 1]
+        return None
 
     def check_rep(self):
         pass
@@ -20,20 +36,25 @@ class TreeNode:
 
 @dataclass
 class TrunkNode(TreeNode):
-    children: Tuple['TreeNode', ...]
-    parent: Optional['TrunkNode'] = None
+    range: SrcRange
+    children: Tuple[Optional['TreeNode'], ...] = field(repr=False)
+    parent: Optional['TrunkNode'] = field(default=None, compare=False, repr=False)
 
 
 @dataclass
-class LeafNode(TreeNode):
+class LeafNode(TreeNode, abc.ABC):
+    range: SrcRange
     text: str
-    parent: Optional['TrunkNode'] = None
+    parent: Optional['TrunkNode'] = field(default=None, compare=False, repr=False)
+    next: Optional['LeafNode'] = field(default=None, compare=False, repr=False)
+    prev: Optional['LeafNode'] = field(default=None, compare=False, repr=False)
 
 
 def _scan_leaves(node: TreeNode):
     if isinstance(node, TrunkNode):
         for child in node.children:
-            _scan_leaves(child)
+            if child is not None:
+                _scan_leaves(child)
     else:
         assert isinstance(node, LeafNode)
         yield node
@@ -49,28 +70,39 @@ class ErrorToken(LeafNode):
     pass
 
 
-class ArithmeticExpr(TreeNode):
+class ArithmeticExpr:
     '''Base class for arithmetic expressions.'''
     pass
 
 
+@dataclass
 class Sum(ArithmeticExpr, TrunkNode):
     '''Arithmetic expression with an addition/subtraction root operator.'''
     pass
 
 
+@dataclass
 class Product(ArithmeticExpr, TrunkNode):
     '''Arithmetic expression with a multiplication/division root operator.'''
     pass
 
 
+@dataclass
 class Power(ArithmeticExpr, TrunkNode):
     '''Arithmetic expression with a power root operator.'''
     pass
 
 
-class Atom(ArithmeticExpr):
+@dataclass
+class Negation(ArithmeticExpr, TrunkNode):
+    '''Arithmetic expression that represents a negation'''
+    children: Tuple['Operator', 'Atom'] = field(repr=False)
+
+
+@dataclass
+class Atom(TrunkNode):
     '''Atomic arithmetic expression.'''
+    children: Tuple['Operator', Union[ArithmeticExpr, 'Number', 'Name'], 'Operator'] = field(repr=False)
     pass
 
 
@@ -79,7 +111,7 @@ class Name(LeafNode):
         assert bool(self.text)
 
 
-class Number(ArithmeticExpr, LeafNode):
+class Number(LeafNode):
     def get_value(self):
         return float(self.text)
     
@@ -92,7 +124,13 @@ class Operator(LeafNode):
     pass
 
 
+@dataclass
 class Keyword(LeafNode):
+    pass
+
+
+@dataclass
+class StringLiteral(LeafNode):
     pass
 
 
@@ -104,7 +142,7 @@ class StmtSeparator(LeafNode):
 
 @dataclass
 class VarName(TrunkNode):
-    children: Tuple[Optional[Operator], Name]
+    children: Tuple[Optional[Operator], Name] = field(repr=False)
 
     def is_const(self):
         return self.children[0] is not None
@@ -118,7 +156,7 @@ class VarName(TrunkNode):
 
 @dataclass
 class InComp(TrunkNode):
-    children: Tuple[Keyword, VarName]
+    children: Tuple[Keyword, VarName] = field(repr=False)
 
     def get_comp(self) -> VarName:
         return cast(VarName, self.children[1])
@@ -126,7 +164,7 @@ class InComp(TrunkNode):
 
 @dataclass
 class MaybeIn(TrunkNode):
-    children: Tuple[VarName, Optional[InComp]]
+    children: Tuple[VarName, Optional[InComp]] = field(repr=False)
 
     def get_var_name(self):
         return cast(VarName, self.children[0])
@@ -148,7 +186,7 @@ class MaybeIn(TrunkNode):
 
 @dataclass
 class Species(TrunkNode):
-    children: Tuple[Optional[Number], VarName]
+    children: Tuple[Optional[Number], VarName] = field(repr=False)
     
     def get_stoich(self):
         if self.children[0] is None:
@@ -166,7 +204,7 @@ class Species(TrunkNode):
 @dataclass
 class ReactionName(TrunkNode):
     '''Represents the 'J0:' at the start of the reaction.'''
-    children: Tuple[MaybeIn, Operator]
+    children: Tuple[MaybeIn, Operator] = field(repr=False)
 
     def get_maybein(self):
         return cast(MaybeIn, self.children[0])
@@ -194,7 +232,7 @@ class SpeciesList(TrunkNode):
 @dataclass
 class Reaction(TrunkNode):
     children: Tuple[Optional[ReactionName], SpeciesList, Operator, SpeciesList, Operator,
-                    ArithmeticExpr, Optional[InComp]]
+                    ArithmeticExpr, Optional[InComp]] = field(repr=False)
 
     def get_name(self):
         if self.children[0] is None:
@@ -218,7 +256,7 @@ class Reaction(TrunkNode):
 
 @dataclass
 class Assignment(TrunkNode):
-    children: Tuple[MaybeIn, Operator, ArithmeticExpr]
+    children: Tuple[MaybeIn, Operator, ArithmeticExpr] = field(repr=False)
     def get_maybein(self):
         return cast(MaybeIn, self.children[0])
 
@@ -252,7 +290,7 @@ class DeclModifiers(TrunkNode):
     But here it always has two: [DeclVarModifier, DeclTypeModifier]. At most one of those may be
     None.
     '''
-    children: Tuple[Optional[VarModifier], Optional[TypeModifier]]
+    children: Tuple[Optional[VarModifier], Optional[TypeModifier]] = field(repr=False)
 
     def get_var_modifier(self):
         return cast(Optional[VarModifier], self.children[0])
@@ -282,16 +320,16 @@ class DeclModifiers(TrunkNode):
 
 
 @dataclass
-class DeclarationAssignment(TrunkNode):
-    children: Tuple[Operator, ArithmeticExpr]
+class DeclAssignment(TrunkNode):
+    children: Tuple[Operator, ArithmeticExpr] = field(repr=False)
 
     def get_value(self):
         return cast(ArithmeticExpr, self.children[1])
 
 
 @dataclass
-class DeclarationItem(TrunkNode):
-    children: Tuple[MaybeIn, DeclarationAssignment]
+class DeclItem(TrunkNode):
+    children: Tuple[MaybeIn, DeclAssignment] = field(repr=False)
 
     def get_maybein(self):
         return self.children[0]
@@ -313,12 +351,12 @@ class Declaration(TrunkNode):
 
     def get_items(self):
         items = self.children[1::2]
-        return cast(List[DeclarationItem], items)
+        return cast(List[DeclItem], items)
 
     def check_rep(self):
         assert len(self.children) >= 3
         assert isinstance(self.children[0], DeclModifiers)
-        assert isinstance(self.children[1], DeclarationItem)
+        assert isinstance(self.children[1], DeclItem)
         assert isinstance(self.children[2], Operator)
 
 
@@ -330,7 +368,7 @@ class Annotation(TrunkNode):
 
 @dataclass
 class SimpleStmt(TrunkNode):
-    children: Tuple[Union[Reaction, Assignment, Declaration, Annotation], StmtSeparator]
+    children: Tuple[Union[Reaction, Assignment, Declaration, Annotation], StmtSeparator] = field(repr=False)
 
     def get_stmt(self):
         return self.children[0]
@@ -351,4 +389,4 @@ class Function(TrunkNode):
 
 @dataclass
 class FileNode(TrunkNode):
-    children: Tuple[SimpleStmt, ...]
+    children: Tuple[SimpleStmt, ...] = field(repr=False)

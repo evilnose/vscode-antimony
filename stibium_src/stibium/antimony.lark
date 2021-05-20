@@ -1,16 +1,16 @@
 
 var_name : ["$"] NAME
 in_comp : "in" var_name
-maybein : var_name [in_comp]
+namemaybein : var_name [in_comp]
 
-reaction_name : maybein ":"
+reaction_name : namemaybein ":"
 reaction : [reaction_name] species_list ARROW species_list ";" sum [in_comp]
 species_list : species ("+" species)*
 species : [NUMBER] var_name
 ARROW : "->"
     | "=>"
 
-assignment : maybein "=" sum
+assignment : namemaybein "=" sum
 
 annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
 ANNOT_KEYWORD .2: "identity" | "hasPart"   // use .2 to specify higher priority when matching
@@ -20,7 +20,7 @@ declaration : decl_modifiers decl_item ("," decl_item)*
 decl_modifiers : VAR_MODIFIER
     | TYPE_MODIFIER
     | VAR_MODIFIER TYPE_MODIFIER
-decl_item : maybein [decl_assignment]
+decl_item : namemaybein [decl_assignment]
 decl_assignment : "=" sum
 
 VAR_MODIFIER .2: "var" | "const"

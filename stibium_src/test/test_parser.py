@@ -54,8 +54,8 @@ def test_parse_end_marker():
 #     assert len(reaction.children) == 7
 
 #     if name:
-#         maybein = resolve_maybein(reaction.children[0])
-#         assert str(maybein.name_item.name_tok) == name
+#         namemaybein = resolve_maybein(reaction.children[0])
+#         assert str(namemaybein.name_item.name_tok) == name
 #     else:
 #         assert reaction.children[0] is None
     

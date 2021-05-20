@@ -163,7 +163,7 @@ class InComp(TrunkNode):
 
 
 @dataclass
-class MaybeIn(TrunkNode):
+class NameMaybeIn(TrunkNode):
     children: Tuple[VarName, Optional[InComp]] = field(repr=False)
 
     def get_var_name(self):
@@ -204,7 +204,7 @@ class Species(TrunkNode):
 @dataclass
 class ReactionName(TrunkNode):
     '''Represents the 'J0:' at the start of the reaction.'''
-    children: Tuple[MaybeIn, Operator] = field(repr=False)
+    children: Tuple[NameMaybeIn, Operator] = field(repr=False)
 
     def get_maybein(self):
         return self.children[0]
@@ -256,7 +256,7 @@ class Reaction(TrunkNode):
 
 @dataclass
 class Assignment(TrunkNode):
-    children: Tuple[MaybeIn, Operator, ArithmeticExpr] = field(repr=False)
+    children: Tuple[NameMaybeIn, Operator, ArithmeticExpr] = field(repr=False)
     def get_maybein(self):
         return self.children[0]
 
@@ -329,7 +329,7 @@ class DeclAssignment(TrunkNode):
 
 @dataclass
 class DeclItem(TrunkNode):
-    children: Tuple[MaybeIn, DeclAssignment] = field(repr=False)
+    children: Tuple[NameMaybeIn, DeclAssignment] = field(repr=False)
 
     def get_maybein(self):
         return self.children[0]

@@ -1,16 +1,88 @@
 {
   "scopeName": "source.antimony",
-  "patterns": [{ "include": "#expression" }],
+  "patterns": [
+    { "include": "#code" }
+  ],
   "repository": {
-    "expression": {
-      "patterns": [{ "include": "#assignment" }]
+    "code": {
+      "patterns": [
+        { "include": "#string-literal"},
+        { "include": "#keywords"},
+        { "include": "#types"},
+        { "include": "#operators"},
+        { "include": "#numbers"}
+      ]
     },
-    "assignment": {
-        
+    "string-literal": {
+      "name": "string.quoted.double.antimony",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.antimony",
+          "match": "\\."
+        }
+      ]
     },
-    "equals": {
-        "match": "=",
-        "name": "keyword.operator.assignment.antimony"
-    }
+    "operators": {
+      "patterns": [
+        {
+          "match": "=>|->",
+          "name": "punctuation.separator.arrow.antimony"
+        },
+        {
+          "match": "=",
+          "name": "keyword.operator.assignment.antimony"
+        },
+        {
+          "match": "\\-|\\+|\\*|\\/|\\^",
+          "name": "keyword.operator.arithmetic.antimony"
+        },
+        {
+					"match": ";",
+					"name": "punctuation.terminator.antimony"
+				},
+        {
+					"match": ":",
+					"name": "punctuation.separator.reaction.antimony"
+				},
+        {
+          "match": "\\$",
+          "name": "storage.modifier.antimony"
+        }
+      ]
+    },
+    "keywords": {
+			"patterns": [
+				{
+					"match": "\\b(?:identity)\\b",
+					"name": "keyword.operator.assignment.annotation.antimony"
+				},
+				{
+					"match": "\\b(?:const|var)\\b",
+					"name": "storage.modifier.antimony"
+				}
+			]
+    },
+    "types": {
+			"patterns": [
+				{
+					"match": "\\b(?:species|formula|compartment)\\b",
+					"name": "support.type.antimony"
+				}
+			]
+    },
+    "numbers": {
+			"patterns": [
+				{
+					"match": "(?x)\n  (?<! \\w)(?:\n    (?:\n      \\.[0-9]+\n      |\n      [0-9]+ \\. [0-9]+\n      |\n      [0-9]+ \\.\n    ) (?: [eE][+-]?[0-9]+ )?\n    |\n    [0-9]+ (?: [eE][+-]?[0-9]+ )\n  )\n",
+					"name": "constant.numeric.float.antimony"
+				},
+				{
+					"match": "(?x)\n  (?<![\\w\\.])(?:\n      [0-9]+|\n      0 ([0-9]+)(?![eE\\.])\n  )\n",
+					"name": "constant.numeric.decimal.antimony"
+				}
+			]
+		}
   }
 }

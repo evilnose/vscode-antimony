@@ -753,7 +753,6 @@ S99 = 3
 def join_tokens(tokens):
     return ''.join(str(tok) for tok in tokens)
 
-
 # doc = AntFile('hello', '2.5 A -> B;              ???? a= 5')
 # print(doc.completions(SrcPosition(1, 13)))
 # result = doc.parser.get_state_at_position('a^= 5', SrcPosition(1, 2))

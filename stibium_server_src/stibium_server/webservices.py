@@ -77,7 +77,8 @@ class WebServices:
             id_, entry_name, protein_names, genes = row
             objects.append({
                 'id': id_,
-                'name': entry_name,
+                'name': protein_names,
+                'entry_name': entry_name,
                 'protein_names': protein_names,
                 'genes': genes,
                 'prefix': 'uniprot',

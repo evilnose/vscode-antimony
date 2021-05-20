@@ -1,15 +1,18 @@
 a = 10
 J0: 2C + 3B -> 2.5Deee; v * a
-J0: EEEA + B -> 6Ceek; Something * 2
+J0: 2C + 3B -> 2.5Deee; v * a
 species AEEEE = 5
 species AEEEE = 5
 BIA ????fef&&&&= 1
 gluc = 7.41
 J0 = 10
 C = 12
+C = 24
+J0: EEEA + B -> 6Ceek; Something * 2
 
 EEEA identity "http://identifiers.org/chebi/CHEBI:17234"
 
 identity identity "http://identifiers.org/chebi/CHEBI:36184"
 
 identity identity "http://identifiers.org/uniprot/Q8W593"
+EEEA identity "http://identifiers.org/uniprot/P48244"

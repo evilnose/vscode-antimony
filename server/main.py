@@ -25,50 +25,29 @@ import sys
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
 
-from .stibium.types import AntError, AntWarning
+# Temporary, before both packages are published
+sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_src"))
+sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_server_src"))
 
-from .utils import AntFile, pygls_range, sb_position, get_antfile
-from .webservices import NetworkError, WebServices
+from stibium.api import AntCompletion, AntCompletionKind
+from stibium.types import AntError, AntWarning
 
-from typing import List
+from stibium_server.utils import AntFile, pygls_range, sb_position, get_antfile
+from stibium_server.webservices import NetworkError, WebServices
+
 import logging
 from dataclasses import dataclass
 from pygls.features import (COMPLETION, DEFINITION, HOVER, SIGNATURE_HELP, TEXT_DOCUMENT_DID_CHANGE,
                             TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE, WORKSPACE_EXECUTE_COMMAND)
 from pygls.server import LanguageServer
-from pygls.types import (CompletionItem, CompletionList, CompletionParams, Diagnostic, DiagnosticSeverity,
+from pygls.types import (CompletionItem, CompletionItemKind, CompletionList, CompletionParams, Diagnostic, DiagnosticSeverity,
                          DidChangeTextDocumentParams,
-                         DidOpenTextDocumentParams, DidSaveTextDocumentParams, Hover, Location, MarkupContent, MarkupKind,
+                         DidOpenTextDocumentParams, DidSaveTextDocumentParams, Hover, InsertTextFormat, Location, MarkupContent, MarkupKind,
                          TextDocumentContentChangeEvent, TextDocumentPositionParams)
 
 
 # TODO remove this for production
 logging.basicConfig(filename='bio-idek.log', filemode='w', level=logging.DEBUG)
-
-
-@dataclass
-class Species:
-    stoich: str
-    name: str
-
-
-# TODO use transformer to keep state of whether a new "complete statement" was encountered
-# remember to reset transformer every new call (or something)
-# TODO add a TODO about writing own parser and custom recrusion loop
-
-
-@dataclass
-class Reaction:
-    reactants: List[Species]
-    products: List[Species]
-    rate_law: str
-
-
-@dataclass
-class Assignment:
-    name: str
-    value: str
-
 
 
 '''=====Server-related Code===='''
@@ -110,7 +89,21 @@ def completions(params: CompletionParams):
     text_doc = server.workspace.get_document(params.textDocument.uri)
     antfile = get_antfile(text_doc)
     # TODO better isolation; no pygls stuff in antfile
-    return antfile.completions(params)
+    ant_completions = antfile.completions(sb_position(params.position))
+
+    # TODO move this function to utils
+    def map_completion(ant_compl: AntCompletion):
+        if ant_compl.kind == AntCompletionKind.TEXT:
+            return CompletionItem(ant_compl.text, kind=CompletionItemKind.Text)
+        elif ant_compl.kind == AntCompletionKind.RATE_LAW:
+            return CompletionItem('(mass action) ' + ant_compl.text, kind=CompletionItemKind.Text,
+                                  insert_text=ant_compl.text,
+                                  insert_text_format=InsertTextFormat.Snippet)
+        else:
+            assert False, 'Not implemented'
+
+    items = list(map(map_completion, ant_completions))
+    return CompletionList(False, items)
 
 
 @server.feature(HOVER)

@@ -14,6 +14,8 @@
 ## TODOs
 * Refactor stibium and the server. Move AntFile to stibium. Reorganize requirements
 * Tests! Need to have em. Especially need to test error recovery, before I forget
+* Add transformers to change the parse tree into a more friendly structure. E.g. removing 'suite'
+nodes, adding different classes such as 'Reaction', 'Assignment', etc. and related methods
 * Multithreading for pygls (especially for querying)
 * Figure out the licenses
 * Handle cases where Python is not found
@@ -31,7 +33,7 @@ In this case I recommend creating a `launch.json` like so:
         {
             "preLaunchTask": {
                 "type": "npm",
-                "script": "compile"
+                "script": "test-compile"
             },
             "name": "Extension Tests",
             "type": "extensionHost",
@@ -39,13 +41,27 @@ In this case I recommend creating a `launch.json` like so:
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/client/out/test/index"
+                "--extensionTestsPath=${workspaceFolder}/client/out/test/index",
+                "--disable-extensions"
             ],
             "outFiles": [
                 "${workspaceFolder}/out/test/**/*.js"
-            ]
+            ],
+            // This is required so that the test output can be shown. For some reason this is
+            // not the default
+            "internalConsoleOptions": "openOnSessionStart"
         }
     ]
 }
 ```
 This way you can directly run the test from within VSCode.
+
+
+## Test TODOs
+* completion
+* diagnostics (warnings & errors)
+* annotations
+* parser
+* parser error recovery
+* symbol_at
+* resolve_qname

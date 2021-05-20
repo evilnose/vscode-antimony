@@ -3,7 +3,8 @@ import * as path from 'path';
 import {
 	workspace, ExtensionContext, commands, InputBoxOptions, window, QuickInputButtons,
 	QuickPickItem,
-	Position
+	Position,
+	SnippetString
 } from 'vscode';
 
 import {
@@ -22,11 +23,11 @@ export function activate(context: ExtensionContext) {
 	// TODO this might be python3
 	const pythonInterp = 'python';
 
-	// const pythonMain = context.asAbsolutePath(
-	// 	path.join('server', 'main.py')
-	// );
+	const pythonMain = context.asAbsolutePath(
+		path.join('server', 'main.py')
+	);
 
-	const args = ["-m", "server.main"];
+	const args = [pythonMain];
 
 	// Add debug options here if needed
 	const serverOptions: ServerOptions = { command: pythonInterp, args };
@@ -46,7 +47,8 @@ export function activate(context: ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		commands.registerCommand('antimony.createAnnotationDialog', () => createAnnotationDialog(context)));
+		commands.registerCommand('antimony.createAnnotationDialog',
+			(...args: any[]) => createAnnotationDialog(context, args)));
 
 	// Start the client. This will also launch the server
 	client.start();
@@ -59,23 +61,34 @@ export function deactivate(): Thenable<void> | undefined {
 	return client.stop();
 }
 
-async function createAnnotationDialog(context) {
+// initialEntity is for testing and debugging. When executed in production, it is always null
+async function createAnnotationDialog(context, args: any[]) {
 	// Wait till client is ready, or the Python server might not have started yet.
 	// NOTE this is necessary for any command that might use the Python language server.
 	await client.onReady();
 
+	let initialQuery = '';
+	if (args.length == 2) {
+		initialQuery = args[1];
+	}
+
+	const selectedItem = await multiStepInput(context, initialQuery);
+
 	const selection = window.activeTextEditor.selection
 	const selectedText = window.activeTextEditor.document.getText(selection);
+	const initialEntity = selectedText || 'entityName';
 
-	const selectedItem = await multiStepInput(context);
+	await insertAnnotation(selectedItem, initialEntity);
+}
 
+async function insertAnnotation(selectedItem, entityName) {
 	const entity = selectedItem.entity;
 	const id = entity['id'];
 	const prefix = entity['prefix'];
-	const snippet = `\n${selectedText} identity "http://identifiers.org/${prefix}/${id}"\n`;
-	window.activeTextEditor.edit((builder) => {
-		const doc = window.activeTextEditor.document;
-		const pos = doc.lineAt(doc.lineCount - 1).range.end;
-		builder.insert(pos, snippet);
-	});
+	const snippetText = `\n\${1:${entityName}} identity "http://identifiers.org/${prefix}/${id}"\n`;
+	const snippetStr = new SnippetString(snippetText);
+
+	const doc = window.activeTextEditor.document;
+	const pos = doc.lineAt(doc.lineCount - 1).range.end;
+	window.activeTextEditor.insertSnippet(snippetStr, pos);
 }

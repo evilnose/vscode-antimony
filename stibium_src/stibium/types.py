@@ -12,6 +12,9 @@ class SrcPosition:
     line: int
     column: int
 
+    def __repr__(self):
+        return '{}:{}'.format(self.line, self.column)
+
     def __ge__(self, other):
         if self.line > other.line:
             return True
@@ -43,9 +46,12 @@ class SrcPosition:
 
 @dataclass
 class SrcRange:
-    '''A position in text; uses 0-based index.'''
+    '''A position in text; uses 1-based index.'''
     start: SrcPosition
     end: SrcPosition
+
+    def __repr__(self):
+        return '{} - {}'.format(self.start, self.end)
 
 
 @dataclass
@@ -87,7 +93,7 @@ class IncompatibleType(AntError):
 
 
 class ObscuredDeclaration(AntWarning):
-    def __init__(self, old_range, new_range, name):
+    def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
         super().__init__(old_range)
         self.message = ("Declaration '{name}' is obscured by a declaration of the same name on "
                         "line {new_line}:{new_column}").format(
@@ -98,7 +104,7 @@ class ObscuredDeclaration(AntWarning):
 
 
 class ObscuredValue(AntWarning):
-    def __init__(self, old_range, new_range, name):
+    def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
         super().__init__(old_range)
         self.message = ("Value assignment to '{name}' is obscured by a later assignment on "
                         "line {new_line}:{new_column}").format(

@@ -60,7 +60,7 @@
 								}
 							},
 							"end": "\\n",
-							"name": "comment.line.pound.java"
+							"name": "comment.line.number-sign.antimony"
 						}
 					]
 				}

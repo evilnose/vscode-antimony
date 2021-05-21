@@ -68,11 +68,11 @@
 		},
     "code": {
       "patterns": [
-        { "include": "#string-literal"},
-        { "include": "#keywords"},
-        { "include": "#types"},
-        { "include": "#operators"},
-        { "include": "#numbers"}
+        { "include": "#string-literal" },
+        { "include": "#keywords" },
+        { "include": "#reaction-name" },
+        { "include": "#operators" },
+        { "include": "#numbers" }
       ]
     },
     "string-literal": {
@@ -123,14 +123,22 @@
 				{
 					"match": "\\b(?:const|var)\\b",
 					"name": "storage.modifier.antimony"
-				}
-			]
-    },
-    "types": {
-			"patterns": [
+				},
 				{
 					"match": "\\b(?:species|formula|compartment)\\b",
 					"name": "support.type.antimony"
+				}
+			]
+    },
+    "reaction-name": {
+			"patterns": [
+				{
+					"match": "^\\s*([a-zA-Z_][a-zA-Z_0-9]*):",
+					"captures": {
+						"1": {
+							"name": "support.class.antimony"
+						}
+					}
 				}
 			]
     },

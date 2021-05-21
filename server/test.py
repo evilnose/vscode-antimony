@@ -67,14 +67,10 @@ def join_tokens(tokens):
 # print(doc.get_errors())
 parser = AntimonyParser()
 FILE1 = '''
-/* hi there
-
-
-*/
-const a
+i122 identity "// wtauefew"
 '''
 tree = parser.parse(FILE1, False)
-print(tree.children)
+print(tree.children[1].children[0].children)
 
 # print(formatted_code(tree) + 'DONE')
 

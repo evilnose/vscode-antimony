@@ -29,7 +29,8 @@
 				"aliases": [
 					"Antimony",
 					"ant"
-				]
+				],
+				"configuration": "./language-configuration.json"
 			}
 		],
 		"menus": {

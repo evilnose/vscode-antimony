@@ -43,6 +43,8 @@ TYPE_MODIFIER .2: /\b(species|compartment|formula)\b/
     | "(" sum ")"
 
 
+// optimizations possible when there are multiple empty lines
+// example: https://docs.python.org/3/reference/grammar.html
 ?simple_stmt : [small_stmt] (";" | NEWLINE)
 ?small_stmt : reaction
     | assignment
@@ -54,6 +56,10 @@ TYPE_MODIFIER .2: /\b(species|compartment|formula)\b/
 // a newline or a semicolon
 model : ("model" | "module") NAME simple_stmt+ "end"
 
+COMMENT: "/*" /(.|\n)*/ "*/"
+    | "#" /.*/
+    | "//" /.*/
+
 
 // TODO rename to 'file'
 root : (simple_stmt | model)*
@@ -61,10 +67,9 @@ root : (simple_stmt | model)*
 
 %import common.CNAME -> NAME
 %import common.NUMBER
-%import common.DIGIT
-%import common.LETTER
 %import common.WS
 %import common.WS_INLINE
 %import common.NEWLINE
 %import common.ESCAPED_STRING
 %ignore WS_INLINE
+%ignore COMMENT

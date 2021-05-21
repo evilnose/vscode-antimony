@@ -1,6 +1,7 @@
 {
   "scopeName": "source.antimony",
   "patterns": [
+    { "include": "#comment" },
     { "include": "#code" }
   ],
   "repository": {

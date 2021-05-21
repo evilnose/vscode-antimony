@@ -5,8 +5,8 @@ namemaybein : var_name [in_comp]
 
 reaction_name : namemaybein ":"
 reaction : [reaction_name] species_list ARROW species_list ";" sum [in_comp]
-species_list : species ("+" species)*
-species : [NUMBER] var_name
+species_list : species ("+" species)*  // TODO it' s possible that species_list is empty
+species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
@@ -23,8 +23,8 @@ decl_modifiers : VAR_MODIFIER
 decl_item : namemaybein [decl_assignment]
 decl_assignment : "=" sum
 
-VAR_MODIFIER .2: "var" | "const"
-TYPE_MODIFIER .2: "species" | "compartment" | "formula"
+VAR_MODIFIER .2: /\b(var|const)\b/
+TYPE_MODIFIER .2: /\b(species|compartment|formula)\b/
 
 ?sum : product
     | sum "+" product
@@ -43,13 +43,11 @@ TYPE_MODIFIER .2: "species" | "compartment" | "formula"
     | "(" sum ")"
 
 
-?simple_stmt : [small_stmt] STMT_SEPARATOR
+?simple_stmt : [small_stmt] (";" | NEWLINE)
 ?small_stmt : reaction
     | assignment
     | declaration
     | annotation
-STMT_SEPARATOR : _NL
-    | ";"
 
 
 // For some reason we need to have at least one suite in the model, even if it is just
@@ -59,9 +57,6 @@ model : ("model" | "module") NAME simple_stmt+ "end"
 
 // TODO rename to 'file'
 root : (simple_stmt | model)*
-
-
-_NL: NEWLINE
 
 
 %import common.CNAME -> NAME

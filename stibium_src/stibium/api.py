@@ -69,7 +69,7 @@ class Completer:
                 product_list = transform_tree(value_stack[-2])
                 assert isinstance(reactant_list, SpeciesList)
                 assert isinstance(product_list, SpeciesList)
-                reversible = value_stack[-3].value == '->'
+                reversible = value_stack[-3].value == '=>'
                 snippet = self._mass_action_ratelaw(reactant_list.get_all_species(),
                                                     product_list.get_all_species(),
                                                     reversible)

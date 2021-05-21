@@ -1,6 +1,6 @@
 
 from typing import Optional
-from stibium.ant_types import ErrorToken, LeafNode, Name, Number, Operator, SimpleStmt, StmtSeparator, StringLiteral, TreeNode, TrunkNode
+from stibium.ant_types import ErrorToken, LeafNode, Name, Newline, Number, Operator, SimpleStmt, StringLiteral, TreeNode, TrunkNode
 from .types import ASTNode, SrcPosition, SrcRange
 
 from lark.lexer import Token
@@ -32,15 +32,16 @@ def formatted_code(node: Optional[TreeNode]):
         suffix = ''
         if node.text in (',', ';', ':', 'const', 'var', 'species', 'formula', 'compartment'):
             suffix = ' '
-        elif (isinstance(node, (Name, Number, StmtSeparator, StringLiteral))
-              or node.text in ('(', ')', '$')):
+        elif (isinstance(node, (Name, Number, StringLiteral, Newline))
+              or node.text in ('(', ')', '$', ';')):
             pass
         else:
             prefix = ' '
             suffix = ' '
 
-        # Don't append space after semicolon if the next token is newline, semicolon, or EOF
-        if node.text == ';' and (node.next is None or isinstance(node.next, StmtSeparator)):
+        # Don't append space after semicolon if the next token is EOF, newline, or semicolon
+        if node.text == ';' and (node.next is None or isinstance(node.next, Newline) or
+                                 (isinstance(node.next, Operator) and node.next.text == ';')):
             suffix = ''
 
         return prefix + node.text + suffix

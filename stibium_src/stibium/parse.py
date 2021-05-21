@@ -39,7 +39,8 @@ class AntimonyParser:
         self.parser = Lark(grammar_str, start='root', parser='lalr',
                                 propagate_positions=True,
                                 keep_all_tokens=True,
-                                maybe_placeholders=True)
+                                maybe_placeholders=True,
+                                lexer='contextual')
 
     def parse(self, text: str, recoverable=True) -> FileNode:
         '''Parse the tree, automatically appending a newline character to the end of the given text.
@@ -73,7 +74,7 @@ class AntimonyParser:
         # semicolon be parsed as an empty statement. Not sure why this is the case yet, but it
         # doesn't matter that much.
         if recoverable:
-            INIT_TOKEN = Token('STMT_SEPARATOR', '', 0, 1, 1, 1, 1, 0)  # type: ignore
+            INIT_TOKEN = Token('NEWLINE', '', 0, 1, 1, 1, 1, 0)  # type: ignore
             puppet.feed_token(INIT_TOKEN)
             puppet.feed_token(INIT_TOKEN)
 
@@ -86,10 +87,10 @@ class AntimonyParser:
                     token_callback(token)
                     state.feed_token(token)
 
-                # HACK feed an STMT_SEPARATOR if there is no newline at the end of the file
-                if token and token.type != 'STMT_SEPARATOR' and 'STMT_SEPARATOR' in puppet.choices():
+                # HACK feed one NEWLINE if there is no newline at the end of the file
+                if token and token.type not in ('STMT_SEPARATOR', 'NEWLINE') and 'NEWLINE' in puppet.choices():
                     line_ctr = state.lexer.state.line_ctr
-                    state.feed_token(Token('STMT_SEPARATOR', '', line_ctr.char_pos, line_ctr.line,
+                    state.feed_token(Token('NEWLINE', '', line_ctr.char_pos, line_ctr.line,
                                      line_ctr.column, line_ctr.line,
                                      line_ctr.column, line_ctr.char_pos))  # type: ignore
 

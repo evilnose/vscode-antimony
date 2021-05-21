@@ -11,9 +11,9 @@ from stibium.ant_types import (Annotation, ArithmeticExpr, Assignment, Atom, Dec
                                Declaration, DeclAssignment,
                                DeclItem, ErrorNode, ErrorToken,
                                FileNode, InComp, Keyword, LeafNode, NameMaybeIn,
-                               Name, Number, Operator,
+                               Name, Newline, Number, Operator,
                                Power, Product, Reaction, ReactionName,
-                               SimpleStmt, Species, SpeciesList, StmtSeparator, StringLiteral,
+                               SimpleStmt, Species, SpeciesList, StringLiteral,
                                Sum, TreeNode, TrunkNode, TypeModifier, VarModifier,
                                VarName)
 from stibium.symbols import AbstractScope, BaseScope
@@ -24,12 +24,13 @@ from stibium.utils import get_range
 TREE_MAP: Dict[str, Type[TreeNode]] = {
     'NAME': Name,
     'NUMBER': Number,
-    'STMT_SEPARATOR': StmtSeparator,
+    'NEWLINE': Newline,
     'ERROR_TOKEN': ErrorToken,
     'VAR_MODIFIER': VarModifier,
     'TYPE_MODIFIER': TypeModifier,
     'ESCAPED_STRING': StringLiteral,
     'ANNOT_KEYWORD': Keyword,
+    'SEMICOLON': Operator,
     # TODO need to add more operators
     'error_node': ErrorNode,
     'root': FileNode,
@@ -56,7 +57,8 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
 }
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',
-             'DOLLAR', 'CIRCUMFLEX', 'COMMA'}
+             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH'}
+KEYWORDS = {'ANNOT_KEYWORD', 'IN'}
 
 
 def transform_tree(tree: Optional[Union[Tree, str]]):
@@ -67,6 +69,8 @@ def transform_tree(tree: Optional[Union[Tree, str]]):
         assert isinstance(tree, Token)
         if tree.type in OPERATORS:
             cls = Operator
+        elif tree.type in KEYWORDS:
+            cls = Keyword
         else:
             cls = TREE_MAP[tree.type]
 

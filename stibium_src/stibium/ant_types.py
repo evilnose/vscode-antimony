@@ -42,12 +42,12 @@ class TrunkNode(TreeNode):
 
 
 @dataclass
-class LeafNode(TreeNode, abc.ABC):
+class LeafNode(TreeNode):
     range: SrcRange
     text: str
     parent: Optional['TrunkNode'] = field(default=None, compare=False, repr=False)
-    next: Optional['LeafNode'] = field(default=None, compare=False, repr=False)
     prev: Optional['LeafNode'] = field(default=None, compare=False, repr=False)
+    next: Optional['LeafNode'] = field(default=None, compare=False, repr=False)
 
 
 def _scan_leaves(node: TreeNode):
@@ -135,8 +135,7 @@ class StringLiteral(LeafNode):
 
 
 @dataclass
-class StmtSeparator(LeafNode):
-    # text: Union[Literal[''], Literal['\n'], Literal['\r\n'], Literal[';']]
+class Newline(LeafNode):
     pass
 
 
@@ -186,7 +185,7 @@ class NameMaybeIn(TrunkNode):
 
 @dataclass
 class Species(TrunkNode):
-    children: Tuple[Optional[Number], VarName] = field(repr=False)
+    children: Tuple[Optional[Number], Optional[Operator], Name] = field(repr=False)
     
     def get_stoich(self):
         if self.children[0] is None:
@@ -194,11 +193,14 @@ class Species(TrunkNode):
 
         return self.children[0].get_value()
 
-    def get_var_name(self):
-        return self.children[1]
+    def is_const(self):
+        return bool(self.children[1])
 
     def get_name(self):
-        return self.get_var_name().get_name()
+        return self.children[2]
+
+    def get_name_text(self):
+        return self.get_name().text
 
 
 @dataclass
@@ -371,7 +373,7 @@ class Annotation(TrunkNode):
 
 @dataclass
 class SimpleStmt(TrunkNode):
-    children: Tuple[Union[Reaction, Assignment, Declaration, Annotation], StmtSeparator] = field(repr=False)
+    children: Tuple[Union[Reaction, Assignment, Declaration, Annotation], Union[Operator, Newline]] = field(repr=False)
 
     def get_stmt(self):
         return self.children[0]

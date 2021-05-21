@@ -1,10 +1,71 @@
 {
   "scopeName": "source.antimony",
   "patterns": [
-    { "include": "#comment" },
+    { "include": "#comments" },
     { "include": "#code" }
   ],
   "repository": {
+		"comments": {
+			"patterns": [
+				{
+					"captures": {
+						"0": {
+							"name": "punctuation.definition.comment.antimony"
+						}
+					},
+					"match": "/\\*\\*/",
+					"name": "comment.block.empty.antimony"
+				},
+				{
+					"include": "#comments-inline"
+				}
+			]
+		},
+		"comments-inline": {
+			"patterns": [
+				{
+					"begin": "/\\*",
+					"captures": {
+						"0": {
+							"name": "punctuation.definition.comment.antimony"
+						}
+					},
+					"end": "\\*/",
+					"name": "comment.block.antimony"
+				},
+				{
+					"begin": "(^[ \\t]+)?(?=//|#)",
+					"beginCaptures": {
+						"1": {
+							"name": "punctuation.whitespace.comment.leading.antimony"
+						}
+					},
+					"end": "(?!\\G)",
+					"patterns": [
+						{
+							"begin": "//",
+							"beginCaptures": {
+								"0": {
+									"name": "punctuation.definition.comment.antimony"
+								}
+							},
+							"end": "\\n",
+							"name": "comment.line.double-slash.java"
+						},
+						{
+							"begin": "#",
+							"beginCaptures": {
+								"0": {
+									"name": "punctuation.definition.comment.antimony"
+								}
+							},
+							"end": "\\n",
+							"name": "comment.line.pound.java"
+						}
+					]
+				}
+			]
+		},
     "code": {
       "patterns": [
         { "include": "#string-literal"},

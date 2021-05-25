@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
 from lark.tree import Tree
-from stibium.ant_types import FileNode
+from stibium.ant_types import FileNode, Reaction, SimpleStmt
 
 from stibium.parse import AntimonyParser
 from stibium.utils import formatted_code
@@ -58,13 +58,21 @@ def test_parse_end_marker():
 #         assert str(namemaybein.name_item.name_tok) == name
 #     else:
 #         assert reaction.children[0] is None
+
+# TODO test token ranges
     
 
 def test_parse_reaction():
     text = 'J0: A -> B; 2 * k;'
     tree = parser.parse(text, recoverable=False)
 
-    assert len(tree.children) == 1
+    assert len(tree.children) == 2
+    stmt = tree.children[0]
+    assert isinstance(stmt, SimpleStmt)
+
+    reaction = stmt.get_stmt()
+    assert isinstance(reaction, Reaction)
+    assert reaction.range is None # TODO remove this
     # TODO
     # validate_reaction(tree.children[0], 'J0', [(1, 'A')], [(1, 'B')])
     

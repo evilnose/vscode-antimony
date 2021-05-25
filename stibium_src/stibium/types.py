@@ -46,7 +46,13 @@ class SrcPosition:
 
 @dataclass
 class SrcRange:
-    '''A position in text; uses 1-based index.'''
+    '''A range in text; uses 1-based index.
+    
+    Attributes:
+        start: Start position of the range
+        end: End position of the range. This is exclusive, meaning that this is one column after
+             the last position in the range.
+    '''
     start: SrcPosition
     end: SrcPosition
 

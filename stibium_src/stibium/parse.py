@@ -148,37 +148,37 @@ class AntimonyParser:
 
             return False
 
-        pstate = err_puppet.parser_state
-        until_index = last_statement(pstate.state_stack, pstate.parse_conf.states)
 
+        # create the error token
+        manual_add = False
         if token:
-            token_callback(token)
-
-        # make all nodes until the last statement to be the children of an error node
-        if update_stacks(pstate.value_stack, pstate.state_stack, until_index + 1):
-            # Retrace steps to feed this token again
-            if token:
-                s = err_puppet.lexer_state.state
-                s.line_ctr.column = token.column
-                s.line_ctr.line = token.line
-                s.line_ctr.char_pos = token.pos_in_stream
+            token.type = 'ERROR_TOKEN'
         else:
-            # No error node created; create token instead
-            if token:
-                token.type = 'ERROR_TOKEN'
-                pstate.value_stack[-1].children.append(token)
-                return
-
+            # crate token manually
+            manual_add = True
             s = err_puppet.lexer_state.state
             p = s.line_ctr.char_pos
             line = s.line_ctr.line
             col = s.line_ctr.column
             text = s.text[p]
             assert text != s.line_ctr.newline_char
-            tok = Token('ERROR_TOKEN', text, p, line, col, line, col + 1) # type: ignore
-            token_callback(tok)
-            pstate.value_stack[-1].children.append(tok)
+            token = Token('ERROR_TOKEN', text, p, line, col, line, col + 1) # type: ignore
+
+        # callback on the error token before updating the stacks
+        token_callback(token)
+
+        # create error node if possible
+        pstate = err_puppet.parser_state
+        until_index = last_statement(pstate.state_stack, pstate.parse_conf.states)
+        # make all nodes until the last statement to be the children of an error node
+        update_stacks(pstate.value_stack, pstate.state_stack, until_index + 1)
+
+        # finally, add error token
+        if manual_add:
+            s = err_puppet.lexer_state.state
             s.line_ctr.feed('?')
+
+        pstate.value_stack[-1].children.append(token)
     
     def get_state_at_position(self, text: str, stop_pos: SrcPosition):
         '''Get the parser state & value stacks at the given position.
@@ -200,7 +200,8 @@ class AntimonyParser:
             if token.type == '$END':
                 raise PositionReached
             token_range = get_range(token)
-            if stop_pos <= token_range.end:
+            # token_range.end is exclusive, i.e. token at position 1 with length 1 would have end 2.
+            if stop_pos < token_range.end:
                 raise PositionReached
 
         # TODO OPTIMIZE: instead of re-parsing the entire text, try picking out only the

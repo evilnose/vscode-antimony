@@ -93,10 +93,10 @@ class Power(ArithmeticExpr, TrunkNode):
     pass
 
 
-@dataclass
-class Negation(ArithmeticExpr, TrunkNode):
-    '''Arithmetic expression that represents a negation'''
-    children: Tuple['Operator', 'Atom'] = field(repr=False)
+# @dataclass
+# class Negation(ArithmeticExpr, TrunkNode):
+#     '''Arithmetic expression that represents a negation'''
+#     children: Tuple['Operator', 'Atom'] = field(repr=False)
 
 
 @dataclass

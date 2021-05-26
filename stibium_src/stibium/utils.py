@@ -1,6 +1,6 @@
 
 from typing import Optional
-from stibium.ant_types import ErrorToken, LeafNode, Name, Negation, Newline, Number, Operator, SimpleStmt, StringLiteral, TreeNode, TrunkNode
+from stibium.ant_types import Atom, ErrorToken, LeafNode, Name, Newline, Number, Operator, SimpleStmt, StringLiteral, TreeNode, TrunkNode
 from .types import ASTNode, SrcPosition, SrcRange
 
 from lark.lexer import Token
@@ -34,7 +34,9 @@ def formatted_code(node: Optional[TreeNode]):
             suffix = ' '
         elif (isinstance(node, (Name, Number, StringLiteral, Newline))
               or node.text in ('(', ')', '$') or
-              (isinstance(node.parent, Negation) and isinstance(node, Operator))):
+              (isinstance(node.parent, Atom) and isinstance(node, Operator))):
+            # TODO in the case where we have -atom or +atom, we might not want to change the spacing
+            # since the user might have something weird like + + - - + 3
             pass
         else:
             prefix = ' '

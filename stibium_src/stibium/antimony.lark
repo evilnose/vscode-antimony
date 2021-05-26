@@ -41,7 +41,8 @@ TYPE_MODIFIER .2: /\b(species|compartment|formula)\b/
 
 ?atom : NUMBER
     | NAME
-    | "-" atom                  -> neg
+    | "-" atom
+    | "+" atom
     | "(" sum ")"
 
 

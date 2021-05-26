@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, NamedTuple, Optional, Tuple
 from lark.tree import Tree
-from stibium.ant_types import Declaration, FileNode, Reaction, SimpleStmt, Species, SpeciesList
+from stibium.ant_types import ArithmeticExpr, Assignment, Declaration, FileNode, Number, Reaction, SimpleStmt, Species, SpeciesList
 from stibium.parse import AntimonyParser
 from stibium.utils import formatted_code
 from stibium.types import AntimonySyntaxError, SymbolType, Variability
@@ -15,7 +15,7 @@ parser = AntimonyParser()
 # TODO add more tests as more syntax features are added
 @pytest.mark.parametrize('code', [
     'a = 12.5 * b',
-    'J0: A + 3B -> 10C + $D; -12 * a * (4 + 3.332 ^ b);',
+    'J0: A + 3B -> 10C + $D; -+--+12 * a * (4 + 3.332 ^ b);',
     '',
     '''
 const A = 10, A_2
@@ -128,18 +128,6 @@ def test_reaction_reversibility():
     assert isinstance(reaction, Reaction) and reaction.is_reversible()
 
 
-@pytest.mark.parametrize('code', [
-    '1: A -> B;1',  # illegal name
-    ':A->B;1',  # no name
-    '->;1',  # no reactants or products
-    "A->B;"  # no rate law
-])
-def test_parse_fail_reaction(code: str):
-    '''Should fail for illegal reactions'''
-    with pytest.raises(AntimonySyntaxError):
-        parser.parse(code)
-
-
 # Classes for easier testing
 @dataclass
 class DeclMod:
@@ -201,19 +189,68 @@ def test_parse_declaration(code: str, expected: Decl):
     assert [formatted_code(x.get_value()) for x in items] == [x.value for x in expected.items]
 
 
-def test_declaration_errors():
-    # TODO
-    pass
+@pytest.mark.parametrize('code', [
+    # reactions
+    '1: A -> B;1',  # illegal name
+    ':A->B;1',  # no name
+    '=>;1',  # no reactants or products
+    'A->B;',  # no rate law
+
+    # declarations/assignments
+    'a, b',
+    'a = 5, b',
+    'a='
+
+    # numbers
+    'a = 1_5_0',
+    'a = 12e-2.2',
+    'a = 0x12dummy',  # no hex (append dummy unit to make sure x is not parsed as a unit)
+])
+def test_raises_syntax_error(code: str):
+    '''Should fail for illegal reactions'''
+    with pytest.raises(AntimonySyntaxError):
+        parser.parse(code)
+
+@pytest.mark.parametrize('code,expected', [
+    ('a_ = ++-+-12.51e4', ('a_', '++-+-12.51e4')),
+    ('b45=foo ^ 22 * (---3.3 + a15)', ('b45', 'foo ^ 22 * (---3.3 + a15)')),
+])
+def test_parse_assignment(code: str, expected: Tuple[str, str]):
+    tree = parser.parse(code)
+    stmt = tree.children[0]
+    assert isinstance(stmt, SimpleStmt)
+    assignment = stmt.get_stmt()
+    assert isinstance(assignment, Assignment)
+    assert len(assignment.children) == 3
+
+    ename, evalue = expected
+    assert assignment.get_name_text() == ename
+    assert formatted_code(assignment.get_value()) == evalue
 
 
-def test_parse_assignment():
-    # TODO
-    pass
+def get_assignment_value(code: str) -> ArithmeticExpr:
+    '''Must pass an assignment rule of format $var = $value. Return the value.'''
+    tree = parser.parse(code)
+    assert isinstance(tree.children[0], SimpleStmt)
+    assignment = tree.children[0].get_stmt()
+    assert isinstance(assignment, Assignment)
+    return assignment.get_value()
 
 
-def test_assignment_errors():
-    # TODO
-    pass
+@pytest.mark.parametrize('code,expected', [
+    ('a = 5', 5),
+    ('a = 12.5', 12.5),
+    ('a = 3e4', 30000),
+    ('a = 2E3', 2000),
+    ('a = 12e-2', 12e-2),
+    ('a = 00102', 102),
+])
+def test_numbers(code: str, expected: float):
+    '''Test parsing numbers using assignment rules. No signed numbers since that would become
+    more complicated than just a Number.
+    '''
+    val = get_assignment_value(code)
+    assert isinstance(val, Number) and val.get_value() == expected
 
 
 def test_parse_annotation():
@@ -221,16 +258,14 @@ def test_parse_annotation():
     pass
 
 
-# test statements without modules
-def test_base_statements():
+# test multiple statements separated by semicolon or newline
+def test_multiple_statements():
     # TODO
     pass
 
 
-def test_base_errors():
-    # TODO
-    pass
+# TODO in test_syntax_errors, add some involving separators
 
 
-def test_range():
+def test_node_range():
     pass

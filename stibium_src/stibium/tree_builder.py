@@ -119,7 +119,7 @@ def set_leaf_pointers(root: Optional[TreeNode], last: Optional[LeafNode] = None)
     if isinstance(root, LeafNode):
         root.prev = last
         if last:
-            last.next = root.prev
+            last.next = root
         return root
 
     assert isinstance(root, TrunkNode)

@@ -1,6 +1,6 @@
 from pygls.workspace import Document
 from stibium.api import AntCompletion, AntCompletionKind, Completer
-from stibium.ast import AntTreeAnalyzer, get_qname_at_position
+from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
 
 from stibium.parse import AntimonyParser
 from stibium.utils import get_range, to_uri
@@ -18,7 +18,7 @@ class AntFile:
         self.path = path
         self.text = text
         self.parser = AntimonyParser()
-        self.tree = self.parser.parse(text)
+        self.tree = self.parser.parse(text, recoverable=True)
         self.analyzer = AntTreeAnalyzer(self.tree)
 
     def symbols_at(self, position: SrcPosition):

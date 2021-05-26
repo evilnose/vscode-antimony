@@ -1,7 +1,7 @@
 
 from stibium.ant_types import FileNode
 from stibium.tree_builder import set_leaf_pointers, set_parents, transform_tree
-from stibium.types import ASTNode, SrcLocation, SrcPosition
+from stibium.types import ASTNode, AntimonySyntaxError, SrcLocation, SrcPosition
 from stibium.utils import get_range
 from .lark_patch import get_puppet
 
@@ -42,14 +42,14 @@ class AntimonyParser:
                                 maybe_placeholders=True,
                                 lexer='contextual')
 
-    def parse(self, text: str, recoverable=True) -> FileNode:
+    def parse(self, text: str, recoverable=False) -> FileNode:
         '''Parse the tree, automatically appending a newline character to the end of the given text.
         
         TODO docs
         '''
         tree: Tree
         root_puppet = get_puppet(self.parser, 'root', text)
-        tree = self._parse_with_puppet(root_puppet, recoverable)
+        tree = self._parse_with_puppet(root_puppet, recoverable, text)
 
         root = transform_tree(tree)
         assert root is not None and isinstance(root, FileNode)
@@ -59,7 +59,7 @@ class AntimonyParser:
         return root
 
 
-    def _parse_with_puppet(self, puppet, recoverable, token_callback = None):
+    def _parse_with_puppet(self, puppet, recoverable, text: str, token_callback = None):
         '''Parse with the given puppet in a recoverable way.
         '''
         if token_callback is None:
@@ -109,12 +109,16 @@ class AntimonyParser:
                 if recoverable:
                     self._recover_from_error(puppet, token_callback)
                 else:
-                    raise e
+                    # re-throw error using our own class
+                    raise AntimonySyntaxError(text[e.pos_in_stream], SrcPosition(e.line, e.column))
             except UnexpectedInput as e:
+                token = getattr(e, 'token')
                 if recoverable:
-                    self._recover_from_error(puppet, token_callback, getattr(e, 'token'))
+                    self._recover_from_error(puppet, token_callback, token)
                 else:
-                    raise e
+                    # re-throw error using our class
+                    range_ = get_range(token)
+                    raise AntimonySyntaxError(token.value, range_.start, range_.end)
 
     def _recover_from_error(self, err_puppet, token_callback, token=None):
         '''Given a puppet in error, restore the puppet to a state from which it can keep parsing.
@@ -209,7 +213,7 @@ class AntimonyParser:
         # that's why we want the leaf
         puppet = get_puppet(self.parser, 'root', text)
         try:
-            self._parse_with_puppet(puppet, True, token_callback)
+            self._parse_with_puppet(puppet, True, text, token_callback)
         except PositionReached:
             return puppet.parser_state
         

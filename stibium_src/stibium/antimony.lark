@@ -3,9 +3,11 @@ var_name : ["$"] NAME
 in_comp : "in" var_name
 namemaybein : var_name [in_comp]
 
+empty:
 reaction_name : namemaybein ":"
-reaction : [reaction_name] species_list ARROW species_list ";" sum [in_comp]
-species_list : species ("+" species)*  // TODO it' s possible that species_list is empty
+reaction : [reaction_name] species_list ARROW [species_list] ";" sum [in_comp]
+    | [reaction_name] [species_list] ARROW species_list ";" sum [in_comp]
+species_list : species ("+" species)*
 species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"

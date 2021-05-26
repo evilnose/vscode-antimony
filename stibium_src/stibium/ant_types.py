@@ -150,7 +150,7 @@ class VarName(TrunkNode):
         return self.children[1]
 
     def get_name_text(self):
-        return str(self.children[1])
+        return self.children[1].text
 
 
 @dataclass
@@ -246,14 +246,30 @@ class Reaction(TrunkNode):
             return None
         return self.children[0].get_name_text()
 
-    def get_reactant_list(self):
+    def get_reactant_list(self) -> Optional[SpeciesList]:
         return self.children[1]
 
-    def get_product_list(self):
+    def get_product_list(self) -> Optional[SpeciesList]:
         return self.children[3]
+
+    def get_reactants(self) -> List[Species]:
+        slist = self.get_reactant_list()
+        if slist:
+            return slist.get_all_species()
+        return list()
+
+    def get_products(self) -> List[Species]:
+        slist = self.get_product_list()
+        if slist:
+            return slist.get_all_species()
+        return list()
 
     def get_rate_law(self):
         return self.children[5]
+
+    def is_reversible(self):
+        assert self.children[2].text in ('->', '=>')
+        return self.children[2].text == '=>'
 
 
 @dataclass

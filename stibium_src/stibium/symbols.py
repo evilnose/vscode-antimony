@@ -77,8 +77,8 @@ class Symbol:
     Attributes:
         name:           The name of the symbol.
         typ:            The type of the symbol.
-        type_name:     The exact AST token of the symbol.
-        dcl_node:       The AST Node that represents the declaration statement of the symbol. May
+        type_name:     The exact analysis token of the symbol.
+        dcl_node:       The analysis Node that represents the declaration statement of the symbol. May
                         be None if the symbol was not explicitly declared.
     '''
 

@@ -107,8 +107,7 @@ class AntTreeAnalyzer:
         #     reaction_range = get_range(tree)
         #     reaction_token = tree.children[3]
 
-        for species in chain(reaction.get_reactant_list().get_all_species(),
-                             reaction.get_product_list().get_all_species()):
+        for species in chain(reaction.get_reactants(), reaction.get_products()):
             self.record_issues(
                 self.table.insert(QName(scope, species.get_name()), SymbolType.SPECIES)
             )

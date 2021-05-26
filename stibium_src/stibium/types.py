@@ -70,25 +70,29 @@ class SrcLocation:
 ASTNode = Union[Tree, Token]
 
 
-class AntError:
-    def __init__(self, range_):
+class Severity(Enum):
+    ERROR = auto()  # semantic error; guaranteed to fail if passed to Tellurium
+    WARNING = auto()
+    # TODO more
+
+
+class Issue:
+    def __init__(self, range_: SrcRange, severity: Severity):
         self.range = range_
         self.message = ''
+        self.severity = severity
 
     def __str__(self):
         return self.message
 
     def __repr__(self):
-        return "{}('{}', '{}')".format(type(self).__name__, self.range, self.message)
+        return "{}({}, {}, '{}')".format(self.severity.name, type(self).__name__, self.range,
+                                         self.message)
 
 
-class AntWarning(AntError):
-    pass
-
-
-class IncompatibleType(AntError):
+class IncompatibleType(Issue):
     def __init__(self, old_type, old_range, new_type, new_range):
-        super().__init__(new_range)
+        super().__init__(new_range, Severity.ERROR)
         self.message = ("Type '{new_type}' is incompatible with type '{old_type}' indicated on "
                         "line {old_line}:{old_column}").format(
             new_type=new_type,
@@ -98,9 +102,9 @@ class IncompatibleType(AntError):
         )
 
 
-class ObscuredDeclaration(AntWarning):
+class ObscuredDeclaration(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
-        super().__init__(old_range)
+        super().__init__(old_range, Severity.WARNING)
         self.message = ("Declaration '{name}' is obscured by a declaration of the same name on "
                         "line {new_line}:{new_column}").format(
             name=name,
@@ -109,15 +113,27 @@ class ObscuredDeclaration(AntWarning):
         )
 
 
-class ObscuredValue(AntWarning):
+class ObscuredValue(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
-        super().__init__(old_range)
+        super().__init__(old_range, Severity.WARNING)
         self.message = ("Value assignment to '{name}' is obscured by a later assignment on "
                         "line {new_line}:{new_column}").format(
             name=name,
             new_line=new_range.start.line,
             new_column=new_range.start.column,
         )
+
+
+SyntaxError
+class AntimonySyntaxError(Exception):
+    # TODO this is far from complete. To include: filename, possible token choices,
+    # and possibly even parser state?
+    def __init__(self, text: str, pos: SrcPosition, end_pos: SrcPosition=None):
+        message = f"unexpected token '{text}' at {pos}"
+        super().__init__(message)
+        self.text = text
+        self.pos = pos
+        self.end_pos = end_pos
 
 
 class SymbolType(Enum):

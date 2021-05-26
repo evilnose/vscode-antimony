@@ -5,7 +5,7 @@ from typing import List
 from lark.lexer import Token
 from lark.tree import Tree
 from stibium.ant_types import SpeciesList
-from stibium.ast import AntTreeAnalyzer, get_qname_at_position
+from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
 from stibium.parse import AntimonyParser
 from stibium.tree_builder import Species, transform_tree
 from stibium.types import SrcPosition

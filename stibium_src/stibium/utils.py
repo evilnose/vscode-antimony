@@ -33,7 +33,7 @@ def formatted_code(node: Optional[TreeNode]):
         if node.text in (',', ';', ':', 'const', 'var', 'species', 'formula', 'compartment'):
             suffix = ' '
         elif (isinstance(node, (Name, Number, StringLiteral, Newline))
-              or node.text in ('(', ')', '$', ';')):
+              or node.text in ('(', ')', '$')):
             pass
         else:
             prefix = ' '

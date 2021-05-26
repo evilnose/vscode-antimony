@@ -1,9 +1,10 @@
-from typing import List, Optional, Tuple
+from dataclasses import dataclass
+from typing import List, NamedTuple, Optional, Tuple
 from lark.tree import Tree
-from stibium.ant_types import FileNode, Reaction, SimpleStmt, Species, SpeciesList
+from stibium.ant_types import Declaration, FileNode, Reaction, SimpleStmt, Species, SpeciesList
 from stibium.parse import AntimonyParser
 from stibium.utils import formatted_code
-from stibium.types import AntimonySyntaxError
+from stibium.types import AntimonySyntaxError, SymbolType, Variability
 
 import pytest
 
@@ -14,7 +15,7 @@ parser = AntimonyParser()
 # TODO add more tests as more syntax features are added
 @pytest.mark.parametrize('code', [
     'a = 12.5 * b',
-    'J0: A + 3B -> 10C + $D; a * (4 + 3.332 ^ b);',
+    'J0: A + 3B -> 10C + $D; -12 * a * (4 + 3.332 ^ b);',
     '',
     '''
 const A = 10, A_2
@@ -139,18 +140,65 @@ def test_parse_fail_reaction(code: str):
         parser.parse(code)
 
 
-def test_range():
-    pass
+# Classes for easier testing
+@dataclass
+class DeclMod:
+    variab: Variability
+    type: SymbolType  # this is the formatted code of the value
 
 
-def test_reaction_errors():
+@dataclass
+class DeclItm:
+    name: str
+    value: str
+
+
+@dataclass
+class Decl:
+    mod: DeclMod
+    items: List[DeclItm]
+
+
+@pytest.mark.parametrize('code,expected', [
+    ('var a',
+     Decl(mod=DeclMod(Variability.VARIABLE, SymbolType.UNKNOWN), items=[DeclItm('a', '')])),
+
+    ('const a22', Decl(mod=DeclMod(Variability.CONSTANT,
+     SymbolType.UNKNOWN), items=[DeclItm('a22', '')])),
+
+    ('species a', Decl(mod=DeclMod(Variability.UNKNOWN,
+     SymbolType.SPECIES), items=[DeclItm('a', '')])),
+
+    ('formula a_ = 12.5\n', Decl(mod=DeclMod(Variability.UNKNOWN,
+     SymbolType.PARAMETER), items=[DeclItm('a_', '12.5')])),
+
+    ('compartment a', Decl(mod=DeclMod(Variability.UNKNOWN,
+     SymbolType.COMPARTMENT), items=[DeclItm('a', '')])),
+
+    ('const species foo;', Decl(mod=DeclMod(Variability.CONSTANT,
+     SymbolType.SPECIES), items=[DeclItm('foo', '')])),
+
+    ('var formula foo, b22=12.5,bar,c=-5e4* k - 2', Decl(mod=DeclMod(Variability.VARIABLE,
+     SymbolType.PARAMETER), items=[DeclItm('foo', ''), DeclItm('b22', '12.5'), DeclItm('bar', ''),
+     DeclItm('c', '-5e4 * k - 2')])),
+])
+def test_parse_declaration(code: str, expected: Decl):
     # TODO
-    pass
+    tree = parser.parse(code)
+    assert len(tree.children) in (1, 2)
+    stmt = tree.children[0]
+    assert isinstance(stmt, SimpleStmt) and len(stmt.children) == 2
 
+    declaration = stmt.children[0]
+    assert isinstance(declaration, Declaration)
 
-def test_parse_declaration():
-    # TODO
-    pass
+    mods = declaration.get_modifiers()
+    assert mods.get_variab() == expected.mod.variab
+    assert mods.get_type() == expected.mod.type
+
+    items = declaration.get_items()
+    assert [x.get_name_text() for x in items] == [x.name for x in expected.items]
+    assert [formatted_code(x.get_value()) for x in items] == [x.value for x in expected.items]
 
 
 def test_declaration_errors():
@@ -181,4 +229,8 @@ def test_base_statements():
 
 def test_base_errors():
     # TODO
+    pass
+
+
+def test_range():
     pass

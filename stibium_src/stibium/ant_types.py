@@ -134,6 +134,8 @@ class StringLiteral(LeafNode):
     pass
 
 
+# NOTE for now, the EOF is constructed as a Newline with text being an empty string. In the future,
+# we may want to add a special EOF class
 @dataclass
 class Newline(LeafNode):
     pass
@@ -275,6 +277,7 @@ class Reaction(TrunkNode):
 @dataclass
 class Assignment(TrunkNode):
     children: Tuple[NameMaybeIn, Operator, ArithmeticExpr] = field(repr=False)
+
     def get_maybein(self):
         return self.children[0]
 
@@ -320,7 +323,7 @@ class DeclModifiers(TrunkNode):
         var_mod = self.get_var_modifier()
         if var_mod is None:
             return Variability.UNKNOWN
-        return Variability.CONSTANT if var_mod == 'const' else Variability.VARIABLE
+        return Variability.CONSTANT if var_mod.text == 'const' else Variability.VARIABLE
 
     def get_type(self):
         type_mod = self.get_type_modifier()
@@ -355,8 +358,11 @@ class DeclItem(TrunkNode):
     def get_decl_assignment(self):
         return self.children[1]
 
-    def get_var_name(self):
-        return self.get_maybein().get_var_name()
+    def get_name(self):
+        return self.get_maybein().get_var_name().get_name()
+
+    def get_name_text(self):
+        return self.get_maybein().get_var_name().get_name_text()
 
     def get_value(self):
         node = self.get_decl_assignment()

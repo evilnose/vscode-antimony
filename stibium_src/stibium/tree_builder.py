@@ -11,7 +11,7 @@ from stibium.ant_types import (Annotation, ArithmeticExpr, Assignment, Atom, Dec
                                Declaration, DeclAssignment,
                                DeclItem, ErrorNode, ErrorToken,
                                FileNode, InComp, Keyword, LeafNode, NameMaybeIn,
-                               Name, Newline, Number, Operator,
+                               Name, Negation, Newline, Number, Operator,
                                Power, Product, Reaction, ReactionName,
                                SimpleStmt, Species, SpeciesList, StringLiteral,
                                Sum, TreeNode, TrunkNode, TypeModifier, VarModifier,
@@ -52,6 +52,7 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'sum': Sum,
     'product': Product,
     'power': Power,
+    'neg': Negation,
     'atom': Atom,
     # TODO more
 }

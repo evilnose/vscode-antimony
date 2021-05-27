@@ -48,8 +48,8 @@ FILE = ''';
 def join_tokens(tokens):
     return ''.join(str(tok) for tok in tokens)
 
-# doc = AntFile('hello', '2.5 A -> B;              ???? a= 5')
-# print(doc.completions(SrcPosition(1, 12)))
+doc = AntFile('hello', 'J:2.5 A -> B;              ???? a= 5')
+print(doc.completions(SrcPosition(1, 15)))
 # # result = doc.parser.get_state_at_position('a^= 5', SrcPosition(1, 2))
 # doc = AntFile('hello', '''
 # const species apple_1 = 10, apple_2
@@ -70,8 +70,8 @@ FILE1 = '''
 compartment compartment = 5
 '''
 
-tree = parser.parse(FILE1)
-print(formatted_code(tree))
+# tree = parser.parse(FILE1)
+# print(formatted_code(tree))
 # print(tree.children[1].children[0].children)
 
 # print(formatted_code(tree) + 'DONE')

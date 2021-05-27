@@ -138,15 +138,31 @@ class SymbolTable:
             names |= leaf_table.keys()
         return list(names)
 
-    def get_unique_name(self, scope: AbstractScope, prefix: str):
-        '''Obtain a unique name under the scope by trying successively larger number suffixes.'''
-        leaf_table = self._leaf_table(scope)
-        i = 0
-        while True:
-            name = '{}{}'.format(prefix, i)
-            if name not in leaf_table:
-                break
-            i += 1
+    def get_unique_name(self, prefix: str, scope: AbstractScope = None) -> str:
+        '''Obtain a unique name under the scope by trying successively larger number suffixes.
+        
+        If scope is None, then find a name unique in every scope.
+        '''
+        if scope is None:
+            all_names = set()
+            for leaf_table in self.table.values():
+                all_names.add(leaf_table.values())
+
+            i = 0
+            while True:
+                name = '{}{}'.format(prefix, i)
+                if name not in all_names:
+                    break
+                i += 1
+        else:
+            leaf_table = self._leaf_table(scope)
+            i = 0
+            while True:
+                name = '{}{}'.format(prefix, i)
+                if name not in leaf_table:
+                    break
+                i += 1
+        return name
 
     def get(self, qname: QName) -> List[Symbol]:
         leaf_table = self._leaf_table(qname.scope)

@@ -88,6 +88,9 @@ class AntTreeAnalyzer:
     def get_issues(self):
         return self.issues
 
+    def get_unique_name(self, prefix: str):
+        return self.table.get_unique_name(prefix)
+
     def handle_arith_expr(self, scope: AbstractScope, expr: TreeNode):
         # TODO handle dummy tokens
         for leaf in expr.scan_leaves():
@@ -103,7 +106,7 @@ class AntTreeAnalyzer:
                 self.table.insert(QName(scope, name), SymbolType.REACTION, reaction)
             )
         # else:
-        #     reaction_name = self.table.get_unique_name(context, '_J')
+        #     reaction_name = self.table.get_unique_name('_J', scope)
         #     reaction_range = get_range(tree)
         #     reaction_token = tree.children[3]
 

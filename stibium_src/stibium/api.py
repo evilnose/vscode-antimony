@@ -4,7 +4,7 @@ from enum import Enum, auto
 from typing import List
 from lark.lexer import Token
 from lark.tree import Tree
-from stibium.ant_types import SpeciesList
+from stibium.ant_types import NameMaybeIn, ReactionName, SpeciesList
 from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
 from stibium.parse import AntimonyParser
 from stibium.tree_builder import Species, transform_tree
@@ -57,7 +57,7 @@ class Completer:
         value_stack = pstate.value_stack
 
         # check if we are at the rate law portion of a reaction
-        if len(value_stack) >= 4:
+        if len(value_stack) >= 5:
             top = value_stack[-1]
             top2 = value_stack[-2]
             top4 = value_stack[-4]
@@ -65,19 +65,32 @@ class Completer:
                 and top2.data == 'species_list' and top4.data == 'species_list'):
                 assert len(value_stack) >= 4 and value_stack[-4].data == 'species_list'
 
+                # produce rate law completion
+
+                # populate name if there is a reaction name
+                if len(value_stack) >= 5 and isinstance(value_stack[-5], Tree) and \
+                    value_stack[-5].data == 'reaction_name':
+                    name_node = transform_tree(value_stack[-5])
+                    assert isinstance(name_node, ReactionName)
+                    reaction_name = name_node.get_name_text()
+                else:
+                    reaction_name = analyzer.get_unique_name('J')
+
                 reactant_list = transform_tree(value_stack[-4])
                 product_list = transform_tree(value_stack[-2])
                 assert isinstance(reactant_list, SpeciesList)
                 assert isinstance(product_list, SpeciesList)
                 reversible = value_stack[-3].value == '=>'
-                snippet = self._mass_action_ratelaw(reactant_list.get_all_species(),
+                snippet = self._mass_action_ratelaw(reaction_name,
+                                                    reactant_list.get_all_species(),
                                                     product_list.get_all_species(),
                                                     reversible)
                 rate_laws.append(AntCompletion(snippet, AntCompletionKind.RATE_LAW))
 
         self._completions = basics + rate_laws
     
-    def _mass_action_ratelaw(self, reactants: List[Species], products: List[Species], reversible: bool):
+    def _mass_action_ratelaw(self, name: str, reactants: List[Species], products: List[Species],
+                             reversible: bool):
 
         def species_list_str(species_list: List[Species]):
             toks = list()
@@ -85,7 +98,11 @@ class Completer:
                 toks.append('{}^{}'.format(species.get_name().text, species.get_stoich()))
             return ' * '.join(toks)
         
-        snippet = '${1:k} * ' + species_list_str(reactants)
+        # snippet is of the format '${1:placeholder} ... ${2:placeholder} ...'. We want to use
+        # Python formatting to interpolate the reaction name into this getting something like
+        # '${1:k_J0}', but Python format treats '{}' as interpolation, so we need to use two
+        # brackets '{{}}' to escape that.
+        snippet = f'${{1:k_{name}}} * ' + species_list_str(reactants)
 
         if reversible:
             snippet += ' - ' + species_list_str(products)

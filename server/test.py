@@ -48,27 +48,30 @@ FILE = ''';
 def join_tokens(tokens):
     return ''.join(str(tok) for tok in tokens)
 
-doc = AntFile('hello', '2.5 A -> B;              ???? a= 5')
-print(doc.completions(SrcPosition(1, 12)))
-# result = doc.parser.get_state_at_position('a^= 5', SrcPosition(1, 2))
-doc = AntFile('hello', '''
-const species apple_1 = 10, apple_2
-banana: 2peach + 3orange -> 2.5 watermelon; aa
+# doc = AntFile('hello', '2.5 A -> B;              ???? a= 5')
+# print(doc.completions(SrcPosition(1, 12)))
+# # result = doc.parser.get_state_at_position('a^= 5', SrcPosition(1, 2))
+# doc = AntFile('hello', '''
+# const species apple_1 = 10, apple_2
+# banana: 2peach + 3orange -> 2.5 watermelon; aa
 
-badfruit = 5
-badfruit = 10
-badfruitother = 
-nothing
+# badfruit = 5
+# badfruit = 10
+# badfruitother = 
+# nothing
 
-i122 identity "http:identifiers.org/chebi/CHEBI:17234"
+# i122 identity "http:identifiers.org/chebi/CHEBI:17234"
 
-''')
+# ''')
+
 # print(doc.get_errors())
-# parser = AntimonyParser()
-# FILE1 = '''
-# i122 identity "// wtauefew"
-# '''
-# tree = parser.parse(FILE1, False)
+parser = AntimonyParser()
+FILE1 = '''
+compartment compartment = 5
+'''
+
+tree = parser.parse(FILE1)
+print(formatted_code(tree))
 # print(tree.children[1].children[0].children)
 
 # print(formatted_code(tree) + 'DONE')

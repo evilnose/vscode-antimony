@@ -30,7 +30,7 @@ sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_src"))
 sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_server_src"))
 
 from stibium.api import AntCompletion, AntCompletionKind
-from stibium.types import AntError, AntWarning
+from stibium.types import Issue, IssueSeverity
 
 from stibium_server.utils import AntFile, pygls_range, sb_position, get_antfile
 from stibium_server.webservices import NetworkError, WebServices
@@ -55,14 +55,14 @@ server = LanguageServer()
 services = WebServices()
 
 
-def to_diagnostic(error: AntError):
+def to_diagnostic(issue: Issue):
     severity = DiagnosticSeverity.Error
-    if isinstance(error, AntWarning):
+    if issue.severity == IssueSeverity.Warning:
         severity = DiagnosticSeverity.Warning
 
     return Diagnostic(
-        range=pygls_range(error.range),
-        message=error.message,
+        range=pygls_range(issue.range),
+        message=issue.message,
         severity=severity
     )
 

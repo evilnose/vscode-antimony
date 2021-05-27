@@ -70,14 +70,14 @@ class SrcLocation:
 ASTNode = Union[Tree, Token]
 
 
-class Severity(Enum):
-    ERROR = auto()  # semantic error; guaranteed to fail if passed to Tellurium
-    WARNING = auto()
+class IssueSeverity(Enum):
+    Error = auto()  # semantic error; guaranteed to fail if passed to Tellurium
+    Warning = auto()
     # TODO more
 
 
 class Issue:
-    def __init__(self, range_: SrcRange, severity: Severity):
+    def __init__(self, range_: SrcRange, severity: IssueSeverity):
         self.range = range_
         self.message = ''
         self.severity = severity
@@ -92,7 +92,7 @@ class Issue:
 
 class IncompatibleType(Issue):
     def __init__(self, old_type, old_range, new_type, new_range):
-        super().__init__(new_range, Severity.ERROR)
+        super().__init__(new_range, IssueSeverity.Error)
         self.message = ("Type '{new_type}' is incompatible with type '{old_type}' indicated on "
                         "line {old_line}:{old_column}").format(
             new_type=new_type,
@@ -104,7 +104,7 @@ class IncompatibleType(Issue):
 
 class ObscuredDeclaration(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
-        super().__init__(old_range, Severity.WARNING)
+        super().__init__(old_range, IssueSeverity.Warning)
         self.message = ("Declaration '{name}' is obscured by a declaration of the same name on "
                         "line {new_line}:{new_column}").format(
             name=name,
@@ -115,7 +115,7 @@ class ObscuredDeclaration(Issue):
 
 class ObscuredValue(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
-        super().__init__(old_range, Severity.WARNING)
+        super().__init__(old_range, IssueSeverity.Warning)
         self.message = ("Value assignment to '{name}' is obscured by a later assignment on "
                         "line {new_line}:{new_column}").format(
             name=name,

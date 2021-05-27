@@ -32,6 +32,17 @@ class ParentVisitor(Visitor):
                 setattr(subtree, 'parent', tree)
 
 
+DUMMY_VALUE = "@@DUMMY@@"
+
+
+def dummy_newline() -> Token:
+    return Token('NEWLINE', DUMMY_VALUE, 0, 1, 1, 1, 1, 0)  # type: ignore
+
+
+def is_dummy(token: Token):
+    return token.value == DUMMY_VALUE
+
+
 class AntimonyParser:
     '''Frontend of a parser for Antimony, basically wrapping a Lark parser with error recovery.'''
     def __init__(self):
@@ -74,7 +85,7 @@ class AntimonyParser:
         # semicolon be parsed as an empty statement. Not sure why this is the case yet, but it
         # doesn't matter that much.
         if recoverable:
-            INIT_TOKEN = Token('NEWLINE', '', 0, 1, 1, 1, 1, 0)  # type: ignore
+            INIT_TOKEN = dummy_newline()
             puppet.feed_token(INIT_TOKEN)
             puppet.feed_token(INIT_TOKEN)
 
@@ -128,23 +139,44 @@ class AntimonyParser:
         def last_statement(state_stack, states):
             until_index = None
             for until_index, state_arg in reversed(list(enumerate(state_stack))):
-                if 'small_stmt' in states[state_arg]:
+                if 'simple_stmt' in states[state_arg]:
                     break
             return until_index
 
-        def update_stacks(value_stack, state_stack, start_index):
-            all_nodes = value_stack[start_index-1:]
+        def recover_stacks(value_stack, state_stack, start_index):
+            '''Remove nodes/tokens preceding an error token in the parser stacks, so that the stacks
+            are again at a valid state.
+
+            Note that by default an ErrorNode containing the removed nodes/tokens is added to
+            the stack in place of those tokens so as to preserve the tree.
+
+            Args:
+                value_stack: The parser value stack (for more details see LALR parsers and Lark)
+                state_stack: The parser state stack
+                start_index: The index of the first token in the *state stack* that needs to be
+                             removed, i.e. the first token that has not been parsed as part of
+                             a full statement.
+            '''
+            # I cannot remember the exact implementation details of Lark, but it seems that
+            # the indexing of state stack is one higher than that of value stack. That's why
+            # I'm decreasing it by 1 here.
+            all_nodes = value_stack[start_index-1:]  # the nodes to remove
 
             if all_nodes:
-                meta = Meta()
-                meta.line = all_nodes[0].line
-                meta.column = all_nodes[0].column
-                meta.end_line = all_nodes[-1].end_line
-                meta.end_column = all_nodes[-1].end_column
-                meta.empty = False
-                node = Tree('error_node', all_nodes, meta=meta)
-                # propgate positions
-                value_stack[start_index - 2].children.append(node)
+                # if we added a dummy NEWLINE token previously (see 'HACK' below), then don't add
+                # the token as an error node
+                if not (len(all_nodes) == 1 and is_dummy(all_nodes[0])):
+                    # propgate positions
+                    meta = Meta()
+                    meta.line = all_nodes[0].line
+                    meta.column = all_nodes[0].column
+                    meta.end_line = all_nodes[-1].end_line
+                    meta.end_column = all_nodes[-1].end_column
+                    meta.empty = False
+                    # create error node with removed nodes as children
+                    node = Tree('error_node', all_nodes, meta=meta)
+                    value_stack[start_index - 2].children.append(node)
+
                 del state_stack[start_index:]
                 del value_stack[start_index-1:]
 
@@ -158,31 +190,63 @@ class AntimonyParser:
         if token:
             token.type = 'ERROR_TOKEN'
         else:
-            # crate token manually
+            # create token manually
             manual_add = True
             s = err_puppet.lexer_state.state
             p = s.line_ctr.char_pos
-            line = s.line_ctr.line
-            col = s.line_ctr.column
-            text = s.text[p]
-            assert text != s.line_ctr.newline_char
-            token = Token('ERROR_TOKEN', text, p, line, col, line, col + 1) # type: ignore
+            if p == len(s.text):
+                # unexpected EOF; don't add token
+                token = None
+            else:
+                line = s.line_ctr.line
+                col = s.line_ctr.column
+                text = s.text[p]
+                assert text != s.line_ctr.newline_char
+                token = Token('ERROR_TOKEN', text, p, line, col, line, col + 1) # type: ignore
 
         # callback on the error token before updating the stacks
-        token_callback(token)
+        if token is not None:
+            token_callback(token)
+
+        choices = err_puppet.choices()
+        if 'NEWLINE' in choices:
+            action, rule = choices['NEWLINE']
+            if action.name == 'Reduce' and rule.origin.name == 'simple_stmt':
+                # HACK it is possible that we have a full statement now, and we only need to reduce it.
+                # We need to force it to be reduced by passing it a NEWLINE. A concrete example:
+                # Suppose we are here:
+                # 'a = 5;?'
+                #        ^
+                # Then parser_state.state_stack contains:
+                # [..., Assignment, SEMICOLON]
+                # This is not yet a simple_stmt. Ideally we want
+                # [..., SimpleStmt(Assignment, SEMICOLON)]
+                # so that we can produce a full statement before inserting the error token.
+                # The easy hacky way to do so would be to check if NEWLINE is an expected token and
+                # leads to Reduce. If so, we pass in NEWLINE, so that the state stack is like so
+                # [..., SimpleStmt(...), NEWLINE]
+                # And then pop the NEWLINE from the state stack
+                err_puppet.feed_token(dummy_newline())
 
         # create error node if possible
         pstate = err_puppet.parser_state
         until_index = last_statement(pstate.state_stack, pstate.parse_conf.states)
+
         # make all nodes until the last statement to be the children of an error node
-        update_stacks(pstate.value_stack, pstate.state_stack, until_index + 1)
+        # until_index is the last full statement. Increase it by 1 to get the first token to remove
+        recover_stacks(pstate.value_stack, pstate.state_stack, until_index + 1)
 
         # finally, add error token
-        if manual_add:
+        if manual_add and token is not None:
+            # advance the line counter if the token was manually created (since the token was not
+            # resolved by Lark's lexer and thus the line counter was not updated)
             s = err_puppet.lexer_state.state
-            s.line_ctr.feed('?')
+            s.line_ctr.feed(token.value)
 
-        pstate.value_stack[-1].children.append(token)
+        if token is not None:
+            # token could be None if the EOF is unexpected. In this case we don't add the EOF as
+            # an ErrorToken, since we normally never see EOF
+            pstate.value_stack[-1].children.append(token)
     
     def get_state_at_position(self, text: str, stop_pos: SrcPosition):
         '''Get the parser state & value stacks at the given position.

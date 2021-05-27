@@ -62,6 +62,17 @@ def _scan_leaves(node: TreeNode):
 
 @dataclass
 class ErrorNode(TrunkNode):
+    '''ErrorNode is a tree of tokens that appear before an unexpected token (ErrorToken).
+
+    In particular, if the tokens that appeared before the ErrorToken have not been able to form
+    a statement yet, they would be collected into an ErrorNode. For example in a =?, 'a =' forms
+    an error node, but in 'a = 5;?', there is no error node, since 'a = 5;' forms a complete
+    statement, and we don't need to handle any dangling tokens before '?'.
+    
+    The error node does not have to contain only leaf nodes. It contains the best guess of the
+    parser at that point, so one may see full nodes (e.g. NameMaybeIn) if there is no ambiguity
+    at that point.
+    '''
     pass
 
 

@@ -15,7 +15,7 @@ ARROW : "->"
 assignment : namemaybein "=" sum
 
 annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
-ANNOT_KEYWORD .2: "identity" | "hasPart"   // use .2 to specify higher priority when matching
+ANNOT_KEYWORD: "identity" | "hasPart"
 
 
 declaration : decl_modifiers decl_item ("," decl_item)*
@@ -25,8 +25,8 @@ decl_modifiers : VAR_MODIFIER
 decl_item : namemaybein [decl_assignment]
 decl_assignment : "=" sum
 
-VAR_MODIFIER .2: /\b(var|const)\b/
-TYPE_MODIFIER .2: /\b(species|compartment|formula)\b/
+VAR_MODIFIER: /\b(var|const)\b/
+TYPE_MODIFIER: /\b(species|compartment|formula)\b/
 
 ?sum : product
     | sum "+" product
@@ -48,6 +48,7 @@ TYPE_MODIFIER .2: /\b(species|compartment|formula)\b/
 
 // optimizations possible when there are multiple empty lines
 // example: https://docs.python.org/3/reference/grammar.html
+// Now note that NEWLINE is already doing that, but ";" is not
 ?simple_stmt : [small_stmt] (";" | NEWLINE)
 ?small_stmt : reaction
     | assignment
@@ -68,7 +69,10 @@ COMMENT: "/*" /(.|\n)*/ "*/"
 root : (simple_stmt | model)*
 
 
-%import common.CNAME -> NAME
+NAME : /(?!(var|const|compartment|species|formula))/ CNAME
+
+
+%import common.CNAME
 %import common.NUMBER
 %import common.WS
 %import common.WS_INLINE

@@ -234,6 +234,13 @@ def test_declaration(code: str, expected: Decl):
 
     # strings
     'a in "\\"'
+
+    # reserved keywords (identity, hasPart, etc. are not reserved)
+    'var species = 5',
+    'var = 5',
+    'compartment compartment = 2',
+    'species = 2',
+    'formula: A -> B;1',
 ])
 def test_raises_syntax_error(code: str):
     '''Should fail for illegal reactions'''
@@ -294,6 +301,8 @@ def test_numbers(code: str, expected: float):
         '"http://identifiers.org/chebi/CHEBI:17234"'),
     ('aga hasPart ""', 'aga', 'hasPart', '""'),  # empty uri
     ('aga hasPart "\\n"', 'aga', 'hasPart', '"\\n"'),  # escaped character
+    ('aga hasPart ";"', 'aga', 'hasPart', '";"'),  # semicolon
+    ('aga hasPart "const"', 'aga', 'hasPart', '"const"'),  # keyword
 ])
 def test_annotation(code: str, name: str, keyword: str, uri: str):
     # TODO
@@ -368,4 +377,7 @@ def test_node_range():
 
     assert reaction.range.start == SrcPosition(2, 4)
     assert reaction.range.end == SrcPosition(2, 10)  # excludes the whitespace after that
+
+
+# TODO test comments
 

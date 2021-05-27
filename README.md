@@ -57,6 +57,19 @@ In this case I recommend creating a `launch.json` like so:
 This way you can directly run the test from within VSCode.
 
 
+## Notes on Error Recovery
+For now error recovery is based solely on threshold set by `simple_stmt`. Namely, when an error
+token is encountered, I backtrack to the last fully parsed `simple_stmt` node as the last valid
+state. By inspecting the (LALR) parser stack, all nodes/tokens encountered between the last fully
+parsed `simple_stmt` and the error token are formed into an `ErrorNode`, and the errored token is
+formed into an `ErrorToken`. The parser state is then set to as if it just finished parsing a
+`simple_stmt`.
+
+In the future, when models and functions are introduced, we will need to modify `parse.py` so that
+instead of backtracking to the last `simple_stmt`, we instead go to the last full statement/model/
+function, whichever rule that is.
+
+
 ## Test TODOs
 * completion
 * diagnostics (warnings & errors)

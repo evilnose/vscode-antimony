@@ -40,7 +40,7 @@ TYPE_MODIFIER .2: /\b(species|compartment|formula)\b/
     | power "^" atom
 
 ?atom : NUMBER
-    | NAME
+    | var_name
     | "-" atom
     | "+" atom
     | "(" sum ")"

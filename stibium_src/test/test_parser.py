@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import List, NamedTuple, Optional, Tuple
+from typing import List, NamedTuple, Optional, Tuple, Union
 from lark.tree import Tree
-from stibium.ant_types import ArithmeticExpr, Assignment, Declaration, FileNode, Number, Reaction, SimpleStmt, Species, SpeciesList
+from stibium.ant_types import Annotation, ArithmeticExpr, Assignment, DeclItem, DeclModifiers, Declaration, FileNode, InComp, Keyword, Name, NameMaybeIn, Number, Operator, Reaction, ReactionName, SimpleStmt, Species, SpeciesList, StringLiteral, VarName
 from stibium.parse import AntimonyParser
 from stibium.utils import formatted_code
-from stibium.types import AntimonySyntaxError, SymbolType, Variability
+from stibium.types import AntimonySyntaxError, SrcPosition, SymbolType, Variability
 
 import pytest
 
@@ -15,7 +15,7 @@ parser = AntimonyParser()
 # TODO add more tests as more syntax features are added
 @pytest.mark.parametrize('code', [
     'a = 12.5 * b',
-    'J0: A + 3B -> 10C + $D; -+--+12 * a * (4 + 3.332 ^ b);',
+    'J0: A + 3B -> 10C + $D; -+--+12 * a * (4 + 3.332 ^ $b23);',
     '',
     '''
 const A = 10, A_2
@@ -36,7 +36,7 @@ def test_formatted_code(code):
     assert code == formatted_code(tree)
 
 
-def test_parse_end_marker():
+def test_end_marker():
     '''Ensure this handles end marker well.'''
     tree = parser.parse('foo = 3.5')
     assert len(tree.children) == 1
@@ -50,6 +50,15 @@ def assert_reaction(reaction: Reaction, expected_reactants: List[Tuple[float, st
 
     # structural assertions
     assert len(reaction.children) == 7
+    assert reaction.children[0] is None or isinstance(reaction.children[0], ReactionName)
+    assert reaction.children[1] is None or isinstance(reaction.children[1], SpeciesList)
+    assert isinstance(reaction.children[2], Operator)
+    assert reaction.children[3] is None or isinstance(reaction.children[3], SpeciesList)
+    assert isinstance(reaction.children[4], Operator)
+    assert isinstance(reaction.children[5], (ArithmeticExpr, Name))
+    assert reaction.children[6] is None or isinstance(reaction.children[6], InComp)
+    assert reaction.children[1] is not None or reaction.children[3] is not None
+
     assert reaction.get_name_text() == name
 
     reactants = reaction.get_reactants()
@@ -86,7 +95,7 @@ def assert_reaction(reaction: Reaction, expected_reactants: List[Tuple[float, st
     # no name or reactants
     ('-> 1.4C; 1;', ('', '1.4/C', None)),
 ])
-def test_parse_reaction(code: str, expected_args: Tuple[str, str, Optional[str]]):
+def test_reaction(code: str, expected_args: Tuple[str, str, Optional[str]]):
     def parse_species_list(text: str):
         '''Helper for parsing expected species lists'''
         if not text:
@@ -166,20 +175,31 @@ class Decl:
     ('const species foo;', Decl(mod=DeclMod(Variability.CONSTANT,
      SymbolType.SPECIES), items=[DeclItm('foo', '')])),
 
-    ('var formula foo, b22=12.5,bar,c=-5e4* k - 2', Decl(mod=DeclMod(Variability.VARIABLE,
+    ('var formula foo, b22=12.5,bar, c=-5e4* k - 2', Decl(mod=DeclMod(Variability.VARIABLE,
      SymbolType.PARAMETER), items=[DeclItm('foo', ''), DeclItm('b22', '12.5'), DeclItm('bar', ''),
      DeclItm('c', '-5e4 * k - 2')])),
 ])
-def test_parse_declaration(code: str, expected: Decl):
+def test_declaration(code: str, expected: Decl):
     # TODO
     tree = parser.parse(code)
     assert len(tree.children) in (1, 2)
     stmt = tree.children[0]
     assert isinstance(stmt, SimpleStmt) and len(stmt.children) == 2
 
+    # structural assertions
     declaration = stmt.children[0]
     assert isinstance(declaration, Declaration)
+    declmod = declaration.children[0]
+    assert isinstance(declmod, DeclModifiers)
+    assert declmod.children[0] is None or isinstance(declmod.children[0], Keyword)
+    assert declmod.children[1] is None or isinstance(declmod.children[1], Keyword)
+    assert declmod.children[0] is not None or declmod.children[1] is not None
+    assert isinstance(declaration.children[1], DeclItem)
+    for i in range(2, len(declaration.children), 2):
+        assert isinstance(declaration.children[i], Operator)
+        assert isinstance(declaration.children[i + 1], DeclItem)
 
+    # interface assertions
     mods = declaration.get_modifiers()
     assert mods.get_variab() == expected.mod.variab
     assert mods.get_type() == expected.mod.type
@@ -201,10 +221,19 @@ def test_parse_declaration(code: str, expected: Decl):
     'a = 5, b',
     'a='
 
+    # separators
+    'a = \n5',  # cannot span multiple lines
+    'a = ;5',  # similar to above
+    'A -> B; a = 5'  # reaction divider is not the same as statement separator
+    'A -> B\n5',  # reaction divider cannot be newline
+
     # numbers
     'a = 1_5_0',
     'a = 12e-2.2',
     'a = 0x12dummy',  # no hex (append dummy unit to make sure x is not parsed as a unit)
+
+    # strings
+    'a in "\\"'
 ])
 def test_raises_syntax_error(code: str):
     '''Should fail for illegal reactions'''
@@ -212,23 +241,30 @@ def test_raises_syntax_error(code: str):
         parser.parse(code)
 
 @pytest.mark.parametrize('code,expected', [
+    ('c = $b', ('c', '$b')),
     ('a_ = ++-+-12.51e4', ('a_', '++-+-12.51e4')),
     ('b45=foo ^ 22 * (---3.3 + a15)', ('b45', 'foo ^ 22 * (---3.3 + a15)')),
 ])
-def test_parse_assignment(code: str, expected: Tuple[str, str]):
+def test_assignment(code: str, expected: Tuple[str, str]):
     tree = parser.parse(code)
     stmt = tree.children[0]
     assert isinstance(stmt, SimpleStmt)
     assignment = stmt.get_stmt()
+
+    # structural assertions
     assert isinstance(assignment, Assignment)
     assert len(assignment.children) == 3
+    assert isinstance(assignment.children[0], NameMaybeIn)
+    assert isinstance(assignment.children[1], Operator)
+    assert isinstance(assignment.children[2], (ArithmeticExpr, VarName))
 
+    # interface assertions
     ename, evalue = expected
     assert assignment.get_name_text() == ename
     assert formatted_code(assignment.get_value()) == evalue
 
 
-def get_assignment_value(code: str) -> ArithmeticExpr:
+def get_assignment_value(code: str) -> Union[ArithmeticExpr, Name]:
     '''Must pass an assignment rule of format $var = $value. Return the value.'''
     tree = parser.parse(code)
     assert isinstance(tree.children[0], SimpleStmt)
@@ -253,19 +289,83 @@ def test_numbers(code: str, expected: float):
     assert isinstance(val, Number) and val.get_value() == expected
 
 
-def test_parse_annotation():
+@pytest.mark.parametrize('code,name,keyword,uri', [
+    ('i122 identity "http://identifiers.org/chebi/CHEBI:17234"', 'i122', 'identity',
+        '"http://identifiers.org/chebi/CHEBI:17234"'),
+    ('aga hasPart ""', 'aga', 'hasPart', '""'),  # empty uri
+    ('aga hasPart "\\n"', 'aga', 'hasPart', '"\\n"'),  # escaped character
+])
+def test_annotation(code: str, name: str, keyword: str, uri: str):
     # TODO
-    pass
+    tree = parser.parse(code)
+    stmt = tree.children[0]
+    assert len(stmt.children) == 2
+    annotation = stmt.get_stmt()
+
+    # structural assertions
+    assert isinstance(annotation, Annotation)
+    assert len(annotation.children) == 3
+    assert isinstance(annotation.children[0], VarName)
+    assert isinstance(annotation.children[1], Keyword)
+    assert isinstance(annotation.children[2], StringLiteral)
+
+    # interface assertions
+    assert annotation.get_name_text() == name
+    assert annotation.get_keyword() == keyword
+    assert annotation.get_uri() == uri
 
 
 # test multiple statements separated by semicolon or newline
 def test_multiple_statements():
     # TODO
-    pass
+    tree = parser.parse('''
+    A -> B; c; a = 5.2; const compartment c = 12.5, d = 6
+    J: C -> D; $foo * 66
+    A identity "http://www.example.com"
+    ''')
+    
+    # TODO once we add optimizations to merge statement separators, modify this test to reflec that
 
+    # the first line is empty; therefore the first simplestmt is None
+    assert isinstance(tree.children[0], SimpleStmt) and tree.children[0].get_stmt() is None
+    assert isinstance(tree.children[1], SimpleStmt) and isinstance(tree.children[1].get_stmt(), Reaction)
+    assert isinstance(tree.children[2], SimpleStmt) and isinstance(tree.children[2].get_stmt(), Assignment)
+    assert isinstance(tree.children[3], SimpleStmt) and isinstance(tree.children[3].get_stmt(), Declaration)
+    assert isinstance(tree.children[4], SimpleStmt) and isinstance(tree.children[4].get_stmt(), Reaction)
+    assert isinstance(tree.children[5], SimpleStmt) and isinstance(tree.children[5].get_stmt(), Annotation)
 
-# TODO in test_syntax_errors, add some involving separators
+    # verify one of the statement
+    assignment = tree.children[2].get_stmt()
+    assert isinstance(assignment, Assignment)
+    assert assignment.get_name_text() == 'a'
+    val = assignment.get_value()
+    assert isinstance(val, Number)
+    assert val.get_value() == 5.2
 
 
 def test_node_range():
-    pass
+    tree = parser.parse('beef   =37.2 * $B\n   A->B;1     ;')
+    assignment = tree.children[0].get_stmt()
+    assert isinstance(assignment, Assignment)
+    assert assignment.range.start == SrcPosition(1, 1)
+    assert assignment.range.end == SrcPosition(1, 18)  # range is end-exclusive and also excludes \n
+
+    nmi = assignment.children[0]
+    assert nmi.range.start == SrcPosition(1, 1)
+    assert nmi.range.end == SrcPosition(1, 5)
+
+    op = assignment.children[1]
+    assert op.range.start == SrcPosition(1, 8)
+    assert op.range.end == SrcPosition(1, 9)
+
+    val = assignment.children[2]
+    assert val.range.start == SrcPosition(1, 9)
+    assert val.range.end == SrcPosition(1, 18)
+
+    reaction = tree.children[1].get_stmt()
+    assert tree.children[1].range.start == SrcPosition(2, 4)
+    assert tree.children[1].range.end == SrcPosition(2, 16)  # includes ;
+
+    assert reaction.range.start == SrcPosition(2, 4)
+    assert reaction.range.end == SrcPosition(2, 10)  # excludes the whitespace after that
+

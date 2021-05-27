@@ -100,10 +100,11 @@ class Power(ArithmeticExpr, TrunkNode):
 
 
 @dataclass
-class Atom(TrunkNode):
+class Atom(TrunkNode, ArithmeticExpr):
     '''Atomic arithmetic expression.'''
-    children: Tuple['Operator', Union[ArithmeticExpr, 'Number', 'Name'], 'Operator'] = field(repr=False)
-    pass
+    children: Tuple['Operator', Union[ArithmeticExpr, 'Number', 'VarName'], 'Operator'] = field(repr=False)
+    # TODO also possible that children be '-' 'number' or '+' 'name', etc. Possibly create a new
+    # rule called Factor that handles that?
 
 
 class Name(LeafNode):
@@ -111,7 +112,7 @@ class Name(LeafNode):
         assert bool(self.text)
 
 
-class Number(LeafNode):
+class Number(LeafNode, ArithmeticExpr):
     def get_value(self):
         return float(self.text)
     
@@ -390,7 +391,19 @@ class Declaration(TrunkNode):
 # TODO All below
 @dataclass
 class Annotation(TrunkNode):
-    pass
+    children: Tuple[VarName, Keyword, StringLiteral]
+
+    def get_var_name(self):
+        return self.children[0]
+
+    def get_name_text(self):
+        return self.get_var_name().get_name_text()
+
+    def get_keyword(self):
+        return self.children[1].text
+
+    def get_uri(self):
+        return self.children[2].text
 
 
 @dataclass

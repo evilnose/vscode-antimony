@@ -233,7 +233,14 @@ def test_declaration(code: str, expected: Decl):
     'a = 0x12dummy',  # no hex (append dummy unit to make sure x is not parsed as a unit)
 
     # strings
-    'a in "\\"'
+    'a in "\\"',
+
+    # comments
+    'a = //',
+    '''a = 5 /*
+    multiline comment */ b = 10
+    ''',  # antimony does not allow this, presumably because it straight up ignores the multiline
+          # comment, so that there is no newline between 'a = 5' and 'b = 10'
 
     # reserved keywords (identity, hasPart, etc. are not reserved)
     'var species = 5',
@@ -380,4 +387,12 @@ def test_node_range():
 
 
 # TODO test comments
+@pytest.mark.parametrize('code,reconstructed', [
+    ('a = 5//comment\nb =    6', 'a = 5\nb = 6'),
+    ('a = 5  //comment;b =    6', 'a = 5'),  # comment is not broken by ';'
+    ('A -> B; 1 /* multi\nline\ncomment   */\nvar c', 'A -> B; 1\nvar c')
+])
+def test_comments(code: str, reconstructed: str):
+    tree = parser.parse(code)
+    assert formatted_code(tree) == reconstructed
 

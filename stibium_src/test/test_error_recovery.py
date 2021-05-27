@@ -2,12 +2,18 @@ from stibium.ant_types import Assignment, DeclModifiers, ErrorNode, ErrorToken, 
 from stibium.parse import AntimonyParser
 from stibium.utils import formatted_code
 
+import pytest
+
 
 parser = AntimonyParser()
 
 
-def test_leading_tokens():
-    tree = parser.parse('?$a= 3', recoverable=True)
+@pytest.mark.parametrize('code', [
+    ('?$a= 3'),
+    ('=$a  =3')
+])
+def test_leading_tokens(code):
+    tree = parser.parse(code, recoverable=True)
     assert isinstance(tree.children[0], ErrorToken)
     assert isinstance(tree.children[1], SimpleStmt)
 
@@ -57,6 +63,17 @@ def test_full_stmt_1():
     assert isinstance(tree.children[1], ErrorToken)
 
 
+def test_recovered():
+    '''Make sure the statement after the error is fine'''
+    tree = parser.parse('J0: A -> const\n  cee =  12', recoverable=True)
+    assert isinstance(tree.children[0], ErrorNode)
+    assert isinstance(tree.children[1], ErrorToken)  # 'const'
+    assert isinstance(tree.children[2], SimpleStmt)  # empty stmt between const and newline
+    assert isinstance(tree.children[3], SimpleStmt)
+    stmt = tree.children[3].get_stmt()
+    assert isinstance(stmt, Assignment) and formatted_code(stmt) == 'cee = 12'
+
+
 def test_unexpected_eof():
     tree = parser.parse('a = ', recoverable=True)
     assert len(tree.children) == 1
@@ -101,7 +118,7 @@ def test_wrong_name():
     assert formatted_code(tree.children[2]) == 'a = 5'
 
 
-def test_multiple():
+def test_multiple_tokens():
     tree = parser.parse('$$==]$%', recoverable=True)
 
     assert len(tree.children) == 7

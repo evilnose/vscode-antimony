@@ -82,7 +82,7 @@
       "patterns": [
         {
           "name": "constant.character.escape.antimony",
-          "match": "\\."
+          "match": "\\\\."
         }
       ]
     },

@@ -1,11 +1,11 @@
 
-from stibium.ant_types import Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import ASTNode, SymbolType, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable
 from .utils import get_range
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Set
 from itertools import chain
 from lark.lexer import Token
 from lark.tree import Tree
@@ -56,6 +56,7 @@ class AntTreeAnalyzer:
         self.issues = list()
         self.table = SymbolTable()
         self.root = root
+        base_scope = BaseScope()
         for child in root.children:
             if isinstance(child, ErrorToken):
                 continue
@@ -71,19 +72,17 @@ class AntTreeAnalyzer:
                     'Assignment': self.handle_assignment,
                     'Declaration': self.handle_declaration,
                     'Annotation': self.handle_annotation,
-                }[stmt.__class__.__name__](BaseScope(), stmt)
+                }[stmt.__class__.__name__](base_scope, stmt)
+                self.handle_child_incomp(base_scope, stmt)
+        
+        self.issues += self.table.issues
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
 
-    def get_all_names(self):
+    def get_all_names(self) -> Set[str]:
         # TODO temporary method to satisfy auto-completion
-        # TODO also remove the same method from table
         return self.table.get_all_names()
-
-    def record_issues(self, issues):
-        # TODO more sophisticated stuff? e.g. separate errors, warnings, syntax errors, semantic errors>
-        self.issues += issues
 
     def get_issues(self):
         return self.issues
@@ -91,37 +90,35 @@ class AntTreeAnalyzer:
     def get_unique_name(self, prefix: str):
         return self.table.get_unique_name(prefix)
 
+    def handle_child_incomp(self, scope: AbstractScope, node: TrunkNode):
+        '''Find all `incomp` nodes among the descendants of node and record the compartment names.'''
+        for child in node.descendants():
+            if child and isinstance(child, InComp):
+                self.table.insert(QName(scope, child.get_comp().get_name()), SymbolType.Compartment)
+
     def handle_arith_expr(self, scope: AbstractScope, expr: TreeNode):
         # TODO handle dummy tokens
         for leaf in expr.scan_leaves():
             if isinstance(leaf, Name):
-                self.record_issues(
-                    self.table.insert(QName(scope, leaf), SymbolType.PARAMETER)
-                )
+                self.table.insert(QName(scope, leaf), SymbolType.Parameter)
 
     def handle_reaction(self, scope: AbstractScope, reaction: Reaction):
         name = reaction.get_name()
         if name is not None:
-            self.record_issues(
-                self.table.insert(QName(scope, name), SymbolType.REACTION, reaction)
-            )
+            self.table.insert(QName(scope, name), SymbolType.Reaction, reaction)
         # else:
         #     reaction_name = self.table.get_unique_name('_J', scope)
         #     reaction_range = get_range(tree)
         #     reaction_token = tree.children[3]
 
         for species in chain(reaction.get_reactants(), reaction.get_products()):
-            self.record_issues(
-                self.table.insert(QName(scope, species.get_name()), SymbolType.SPECIES)
-            )
+            self.table.insert(QName(scope, species.get_name()), SymbolType.Species)
 
         self.handle_arith_expr(scope, reaction.get_rate_law())
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
-        self.record_issues(
-            self.table.insert(QName(scope, assignment.get_name()), SymbolType.PARAMETER,
-                              value_node=assignment)
-        )
+        self.table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
+                            value_node=assignment)
         self.handle_arith_expr(scope, assignment.get_value())
 
     def resolve_variab(self, tree) -> Variability:
@@ -132,9 +129,9 @@ class AntTreeAnalyzer:
 
     def resolve_var_type(self, tree) -> SymbolType:
         return {
-            'species': SymbolType.SPECIES,
-            'compartment': SymbolType.COMPARTMENT,
-            'formula': SymbolType.PARAMETER,
+            'species': SymbolType.Species,
+            'compartment': SymbolType.Compartment,
+            'formula': SymbolType.Parameter,
         }[tree.data]
 
     def handle_declaration(self, scope: AbstractScope, declaration: Declaration):
@@ -150,14 +147,19 @@ class AntTreeAnalyzer:
             value = item.get_value()
 
             # TODO update variability
-            self.record_issues(
-                self.table.insert(QName(scope, name), stype, declaration, value)
-            )
+            # If there is value assignment (value is not None), then record the declaration item
+            # as the value node. Otherwise put None. See that we can't directly put "value" as
+            # argument "valud_node" since they are different things
+            value_node = item if value else None
+            self.table.insert(QName(scope, name), stype, declaration, value_node)
             if value:
                 self.handle_arith_expr(scope, value)
     
     def handle_annotation(self, scope: AbstractScope, annotation: Annotation):
-        pass
+        name = annotation.get_var_name().get_name()
+        # TODO(Gary) maybe we can have a narrower type here, since annotation is restricted only to
+        # species or compartments? I'm not sure. If that's the case though, we'll need union types.
+        self.table.insert(QName(scope, name), SymbolType.Parameter)
 
 
 # def get_ancestors(node: ASTNode):

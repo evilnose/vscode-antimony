@@ -17,7 +17,8 @@ class TreeNode(abc.ABC):
 
     def scan_leaves(self):
         '''Return all the leaf nodes that are descendants of this node (possibly including self)'''
-        return _scan_leaves(self)
+        for leaf in _scan_leaves(self):
+            yield leaf
 
     def next_sibling(self):
         if self.parent is None:
@@ -40,6 +41,18 @@ class TrunkNode(TreeNode):
     children: Tuple[Optional['TreeNode'], ...] = field(repr=False)
     parent: Optional['TrunkNode'] = field(default=None, compare=False, repr=False)
 
+    def descendants(self):
+        '''Iterate over all descendants, including self and the None nodes.'''
+        for child in self.children:
+            if child is not None:
+                if isinstance(child, LeafNode):
+                    yield child
+                else:
+                    child = cast(TrunkNode, child)
+                    for desc in child.descendants():
+                        yield desc
+        yield self
+
 
 @dataclass
 class LeafNode(TreeNode):
@@ -54,7 +67,8 @@ def _scan_leaves(node: TreeNode):
     if isinstance(node, TrunkNode):
         for child in node.children:
             if child is not None:
-                _scan_leaves(child)
+                for leaf in _scan_leaves(child):
+                    yield leaf
     else:
         assert isinstance(node, LeafNode)
         yield node
@@ -340,12 +354,12 @@ class DeclModifiers(TrunkNode):
     def get_type(self):
         type_mod = self.get_type_modifier()
         if type_mod is None:
-            return SymbolType.UNKNOWN
+            return SymbolType.Unknown
 
         return {
-            'species': SymbolType.SPECIES,
-            'compartment': SymbolType.COMPARTMENT,
-            'formula': SymbolType.PARAMETER,
+            'species': SymbolType.Species,
+            'compartment': SymbolType.Compartment,
+            'formula': SymbolType.Parameter,
         }[type_mod.text]
 
     def check_rep(self):

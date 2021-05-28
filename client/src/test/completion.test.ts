@@ -29,11 +29,10 @@ suite('Should do completion', () => {
 				{ label: 'apple_2', kind: vscode.CompletionItemKind.Text },
 				{ label: 'badfruit', kind: vscode.CompletionItemKind.Text },
 				{ label: 'banana', kind: vscode.CompletionItemKind.Text },
-				// TODO add this back once we handle annotation statements
-				// { label: 'i122', kind: vscode.CompletionItemKind.Text },
+				{ label: 'i122', kind: vscode.CompletionItemKind.Text },
+				{ label: 'k', kind: vscode.CompletionItemKind.Text },
 				{ label: 'orange', kind: vscode.CompletionItemKind.Text },
 				{ label: 'peach', kind: vscode.CompletionItemKind.Text },
-				{ label: 'vroom', kind: vscode.CompletionItemKind.Text },
 				{ label: 'watermelon', kind: vscode.CompletionItemKind.Text },
 			]
 		});

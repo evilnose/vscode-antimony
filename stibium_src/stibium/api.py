@@ -1,14 +1,15 @@
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List
+from typing import List, Optional, cast
 from lark.lexer import Token
 from lark.tree import Tree
-from stibium.ant_types import NameMaybeIn, ReactionName, SpeciesList
+from stibium.ant_types import NameMaybeIn, Number, Reaction, ReactionName, SpeciesList
 from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
 from stibium.parse import AntimonyParser
 from stibium.tree_builder import Species, transform_tree
-from stibium.types import SrcPosition
+from stibium.types import SrcLocation, SrcPosition
+from stibium.utils import to_uri
 
 
 class AntCompletionKind(Enum):
@@ -32,14 +33,14 @@ class Completer:
         '''NOTE
         Right now completion makes use of only the parser state (stacks) at the completion
         position. This won't be sufficient for more sophisticated completion. Below is a TODO list
-        
+
         * If completion is done in the middle of a token (e.g. gluco<-- completion here), we would
         need to find the previous token (beware of edge case at beginning of file), do completion
         after that, and filter to get completions that begin with the token prefix.
         * Get the scope of the token. It's probably possible to do this with just the parser
         stacks, but I think it'd be easier with 
         * possible optimization, see get_state_and_position()
-        
+
         '''
 
         # TODO fix: what if there is no token at the given position?
@@ -47,69 +48,126 @@ class Completer:
         # pstate = parser.get_state_at_position(qname.token, text, position)
 
         # TODO replace None with qname.token after get_qname_at_position is fixed
-        pstate = parser.get_state_at_position(text, position)
+        puppet = parser.get_puppet_at_position(text, position)
         basics = [AntCompletion(name, AntCompletionKind.TEXT) for name in analyzer.get_all_names()]
 
         # special rate law completions
         rate_laws = list()
-        states = pstate.parse_conf.parse_table.states
-        state_stack = pstate.state_stack
-        value_stack = pstate.value_stack
 
-        # check if we are at the rate law portion of a reaction
-        if len(value_stack) >= 5:
-            top = value_stack[-1]
-            top2 = value_stack[-2]
-            top4 = value_stack[-4]
-            if (isinstance(top, Token) and top.value == ';' and isinstance(top2, Tree)
-                and top2.data == 'species_list' and top4.data == 'species_list'):
-                assert len(value_stack) >= 4 and value_stack[-4].data == 'species_list'
+        choices = puppet.choices()
+        reaction: Optional[Reaction] = None
+        # try to construct a reaction
+        if 'NUMBER' in choices:
+            rxn_puppet = puppet.copy()
+            rxn_puppet.feed_token(Token('NUMBER', 0))  # type: ignore
+            if 'NEWLINE' in rxn_puppet.choices():
+                rxn_puppet.feed_token(Token('NEWLINE', ''))  # type: ignore
 
-                # produce rate law completion
+                vstack = rxn_puppet.parser_state.value_stack
+                if len(vstack) >= 2:
+                    maybe_reaction = vstack[-2]
+                    if isinstance(maybe_reaction, Tree) and maybe_reaction.data == 'reaction':
+                        # we're at the start of the rate law of a reaction!
+                        reaction = cast(Reaction, transform_tree(maybe_reaction))
+                        assert isinstance(reaction, Reaction)
 
-                # populate name if there is a reaction name
-                if len(value_stack) >= 5 and isinstance(value_stack[-5], Tree) and \
-                    value_stack[-5].data == 'reaction_name':
-                    name_node = transform_tree(value_stack[-5])
-                    assert isinstance(name_node, ReactionName)
-                    reaction_name = name_node.get_name_text()
-                else:
-                    reaction_name = analyzer.get_unique_name('J')
-
-                reactant_list = transform_tree(value_stack[-4])
-                product_list = transform_tree(value_stack[-2])
-                assert isinstance(reactant_list, SpeciesList)
-                assert isinstance(product_list, SpeciesList)
-                reversible = value_stack[-3].value == '=>'
-                snippet = self._mass_action_ratelaw(reaction_name,
-                                                    reactant_list.get_all_species(),
-                                                    product_list.get_all_species(),
-                                                    reversible)
-                rate_laws.append(AntCompletion(snippet, AntCompletionKind.RATE_LAW))
+        # construct rate law completion if we're at the start of the rate law portion of a reaction
+        # Note that if the rate law of a reaction is not merely a number, it means we might be in
+        # a situation like 'A -> B;  1 * ', where the rate law is already being populated. For
+        # now, we don't do any completion in this case.
+        if reaction is not None and isinstance(reaction.get_rate_law(), Number):
+            # use reaction's name or generate one if it is anonymous
+            reaction_name = reaction.get_name_text() or analyzer.get_unique_name('J')
+            snippet = self._mass_action_ratelaw(reaction_name,
+                                                reaction.get_reactants(),
+                                                reaction.get_products(),
+                                                reaction.is_reversible())
+            rate_laws.append(AntCompletion(snippet, AntCompletionKind.RATE_LAW))
 
         self._completions = basics + rate_laws
-    
+
     def _mass_action_ratelaw(self, name: str, reactants: List[Species], products: List[Species],
                              reversible: bool):
 
         def species_list_str(species_list: List[Species]):
+            if not species_list:
+                return ''
             toks = list()
             for species in species_list:
-                toks.append('{}^{}'.format(species.get_name().text, species.get_stoich()))
-            return ' * '.join(toks)
-        
+                toks.append('{}^{:g}'.format(species.get_name().text, species.get_stoich()))
+            return ' * ' + ' * '.join(toks)
+
         # snippet is of the format '${1:placeholder} ... ${2:placeholder} ...'. We want to use
         # Python formatting to interpolate the reaction name into this getting something like
         # '${1:k_J0}', but Python format treats '{}' as interpolation, so we need to use two
         # brackets '{{}}' to escape that.
-        snippet = f'${{1:k_{name}}} * ' + species_list_str(reactants)
+        snippet = f'${{1:k_f_{name}}}' + species_list_str(reactants)
 
         if reversible:
-            snippet += ' - ' + species_list_str(products)
+            # if reactants_str is nonempty, then that means there is already ${1:k_f..} in the
+            # snippet. We set the second parameter to {2:k_b..} in this case, as it is the
+            # second move target for tab.
+            snippet += ' - ${{2:k_b_{name}}}{products}'.format(name=name,
+                products=species_list_str(products))
 
         return snippet
 
-    
     def completions(self):
         return self._completions
 
+
+# Holds information pertaining to one Antimony document
+# TODO move this to stibium.api
+class AntFile:
+    '''Interface for an Antimony source file and contains useful methods.'''
+
+    def __init__(self, path: str, text: str):
+        self.path = path
+        self.text = text
+        self.parser = AntimonyParser()
+        self.tree = self.parser.parse(text, recoverable=True)
+        self.analyzer = AntTreeAnalyzer(self.tree)
+
+    def symbols_at(self, position: SrcPosition):
+        '''Return (symbols, range) where symbols is the list of symbols that the token at
+        position may resolve to, and range is the range of the token under the position.
+
+        TODO make a copy
+        TODO no need to return range now
+        '''
+        assert isinstance(position, SrcPosition)
+        qname = get_qname_at_position(self.tree, position)
+        if qname is None:
+            return [], None
+        assert qname.name is not None
+        return self.analyzer.resolve_qname(qname), qname.name.range
+
+    def goto(self, position: SrcPosition):
+        symbols, range_ = self.symbols_at(position)
+        if not symbols:
+            return [], range_
+
+        return [SrcLocation(
+            to_uri(self.path),  # TODO might be other files when we add cross-file functionalities
+            sym.def_name().range,
+        ) for sym in symbols], range_
+
+    def get_issues(self):
+        return self.analyzer.get_issues()
+
+    def save_checkpoint(self, tree) -> bool:
+        '''Returns whether we should save the state of the parser (i.e. in a ParserPuppet).
+
+        Basically returns whether the rule that was just parsed is a complete rule, i.e. a statement
+        or a model-end. This way, if we encounter an error later, we can restore the puppet to
+        this complete state, find the next newline or semicolon, and continue parsing (having
+        skipped the errored part).
+        '''
+        if tree.data in ('reaction', 'assignment', 'declaration', 'annotation', 'model'):
+            return True
+
+        return False
+
+    def completions(self, position: SrcPosition):
+        completer = Completer(self.analyzer, self.parser, self.text, position)
+        return completer.completions()

@@ -158,25 +158,25 @@ class Decl:
 
 @pytest.mark.parametrize('code,expected', [
     ('var a',
-     Decl(mod=DeclMod(Variability.VARIABLE, SymbolType.UNKNOWN), items=[DeclItm('a', '')])),
+     Decl(mod=DeclMod(Variability.VARIABLE, SymbolType.Unknown), items=[DeclItm('a', '')])),
 
     ('const a22', Decl(mod=DeclMod(Variability.CONSTANT,
-     SymbolType.UNKNOWN), items=[DeclItm('a22', '')])),
+     SymbolType.Unknown), items=[DeclItm('a22', '')])),
 
     ('species a', Decl(mod=DeclMod(Variability.UNKNOWN,
-     SymbolType.SPECIES), items=[DeclItm('a', '')])),
+     SymbolType.Species), items=[DeclItm('a', '')])),
 
     ('formula a_ = 12.5\n', Decl(mod=DeclMod(Variability.UNKNOWN,
-     SymbolType.PARAMETER), items=[DeclItm('a_', '12.5')])),
+     SymbolType.Parameter), items=[DeclItm('a_', '12.5')])),
 
     ('compartment a', Decl(mod=DeclMod(Variability.UNKNOWN,
-     SymbolType.COMPARTMENT), items=[DeclItm('a', '')])),
+     SymbolType.Compartment), items=[DeclItm('a', '')])),
 
     ('const species foo;', Decl(mod=DeclMod(Variability.CONSTANT,
-     SymbolType.SPECIES), items=[DeclItm('foo', '')])),
+     SymbolType.Species), items=[DeclItm('foo', '')])),
 
     ('var formula foo, b22=12.5,bar, c=-5e4* k - 2', Decl(mod=DeclMod(Variability.VARIABLE,
-     SymbolType.PARAMETER), items=[DeclItm('foo', ''), DeclItm('b22', '12.5'), DeclItm('bar', ''),
+     SymbolType.Parameter), items=[DeclItm('foo', ''), DeclItm('b22', '12.5'), DeclItm('bar', ''),
      DeclItm('c', '-5e4 * k - 2')])),
 ])
 def test_declaration(code: str, expected: Decl):

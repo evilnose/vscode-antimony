@@ -70,7 +70,7 @@ def to_diagnostic(issue: Issue):
 def publish_diagnostics(uri: str):
     doc = server.workspace.get_document(uri)
     antfile = get_antfile(doc)
-    errors = antfile.get_errors()
+    errors = antfile.get_issues()
     diagnostics = [to_diagnostic(e) for e in errors]
     server.publish_diagnostics(uri, diagnostics)
 

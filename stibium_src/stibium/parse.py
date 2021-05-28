@@ -248,8 +248,8 @@ class AntimonyParser:
             # an ErrorToken, since we normally never see EOF
             pstate.value_stack[-1].children.append(token)
     
-    def get_state_at_position(self, text: str, stop_pos: SrcPosition):
-        '''Get the parser state & value stacks at the given position.
+    def get_puppet_at_position(self, text: str, stop_pos: SrcPosition):
+        '''Get the parser puppet at the given source position
         TODO see note in Completer.__init__(). Possibly to get the leaf and get the previous token
         '''
 
@@ -279,7 +279,7 @@ class AntimonyParser:
         try:
             self._parse_with_puppet(puppet, True, text, token_callback)
         except PositionReached:
-            return puppet.parser_state
+            return puppet
         
-        return puppet.parser_state
+        return puppet
 

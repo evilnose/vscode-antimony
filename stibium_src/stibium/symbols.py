@@ -1,8 +1,7 @@
 '''Classes for working with and storing symbols.
 '''
 from stibium.ant_types import Name, TreeNode
-from .types import ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType, ASTNode
-from .utils import get_range
+from .types import ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
 
 import abc
 from collections import defaultdict, namedtuple
@@ -125,18 +124,22 @@ class SymbolTable:
     table: DefaultDict[AbstractScope, Dict[str, Symbol]]
 
     def __init__(self):
-        ''''''
-        self.table = defaultdict(dict)
+        self._table = defaultdict(dict)
+        self._issues = list()
 
     def _leaf_table(self, scope: AbstractScope):
-        return self.table[scope]
+        return self._table[scope]
+
+    @property
+    def issues(self):
+        return self._issues
 
     def get_all_names(self):
-        '''Get all the unique names in the table (outside of scope) '''
+        '''Get all the unique names in the table as a set (outside of scope) '''
         names = set()
-        for leaf_table in self.table.values():
+        for leaf_table in self._table.values():
             names |= leaf_table.keys()
-        return list(names)
+        return names
 
     def get_unique_name(self, prefix: str, scope: AbstractScope = None) -> str:
         '''Obtain a unique name under the scope by trying successively larger number suffixes.
@@ -144,9 +147,7 @@ class SymbolTable:
         If scope is None, then find a name unique in every scope.
         '''
         if scope is None:
-            all_names = set()
-            for leaf_table in self.table.values():
-                all_names.add(leaf_table.values())
+            all_names = self.get_all_names()
 
             i = 0
             while True:
@@ -179,7 +180,6 @@ class SymbolTable:
         # Have an inner method that returns (added, [errors]). Update the value, etc. only if
         # successfully added.
         assert qname.name is not None
-        issues = list()
         leaf_table = self._leaf_table(qname.scope)
         name = qname.name.text
         if name not in leaf_table:
@@ -200,8 +200,8 @@ class SymbolTable:
             else:
                 old_range = sym.type_name.range
                 new_range = qname.name.range
-                issues.append(IncompatibleType(old_type, old_range, typ, new_range))
-                return issues
+                self._issues.append(IncompatibleType(old_type, old_range, typ, new_range))
+                return
 
         # TODO improve decl_name/decl_node behavior, or delete decl_name entirely.
         # Overriding declaration should generally be
@@ -223,9 +223,7 @@ class SymbolTable:
             value_name = qname.name
             if sym.value_node is not None:
                 old_range = sym.value_node.range
-                new_range = value_name.range
+                new_range = value_node.range
                 # Overriding previous declaration
-                issues.append(ObscuredValue(old_range, new_range, value_name.text))
+                self._issues.append(ObscuredValue(old_range, new_range, value_name.text))
             sym.value_node = value_node
-
-        return issues

@@ -93,6 +93,10 @@ class Issue:
 class IncompatibleType(Issue):
     def __init__(self, old_type, old_range, new_type, new_range):
         super().__init__(new_range, IssueSeverity.Error)
+        self.old_type = old_type
+        self.old_range = old_range
+        self.new_type = new_type
+        self.new_range = new_range
         self.message = ("Type '{new_type}' is incompatible with type '{old_type}' indicated on "
                         "line {old_line}:{old_column}").format(
             new_type=new_type,
@@ -105,6 +109,9 @@ class IncompatibleType(Issue):
 class ObscuredDeclaration(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
         super().__init__(old_range, IssueSeverity.Warning)
+        self.old_range = old_range
+        self.new_range = new_range
+        self.name = name
         self.message = ("Declaration '{name}' is obscured by a declaration of the same name on "
                         "line {new_line}:{new_column}").format(
             name=name,
@@ -116,6 +123,9 @@ class ObscuredDeclaration(Issue):
 class ObscuredValue(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
         super().__init__(old_range, IssueSeverity.Warning)
+        self.old_range = old_range
+        self.new_range = new_range
+        self.name = name
         self.message = ("Value assignment to '{name}' is obscured by a later assignment on "
                         "line {new_line}:{new_column}").format(
             name=name,
@@ -137,24 +147,24 @@ class AntimonySyntaxError(Exception):
 
 
 class SymbolType(Enum):
-    UNKNOWN = 'unknown'
+    Unknown = 'unknown'
 
     # Subtypes of UNKNOWN
-    VARIABLE = 'variable'
-    SUBMODEL = 'submodel'
-    MODEL = 'model'
-    FUNCTION = 'function'
-    UNIT = 'unit'
+    Variable = 'variable'
+    Submodel = 'submodel'
+    Model = 'model'
+    Function = 'function'
+    Unit = 'unit'
 
     # Subtype of VARIABLE. Also known as "formula"
-    PARAMETER = 'parameter'
+    Parameter = 'parameter'
 
     # Subtypes of PARAMETER
-    SPECIES = 'species'
-    COMPARTMENT = 'compartment'
-    REACTION = 'reaction'
-    EVENT = 'event'
-    CONSTRAINT = 'constraint'
+    Species = 'species'
+    Compartment = 'compartment'
+    Reaction = 'reaction'
+    Event = 'event'
+    Constraint = 'constraint'
 
     def __str__(self):
         return self.value
@@ -163,17 +173,17 @@ class SymbolType(Enum):
         if self == other:
             return True
 
-        if other == SymbolType.UNKNOWN:
+        if other == SymbolType.Unknown:
             return True
 
-        derives_from_param = self in (SymbolType.SPECIES, SymbolType.COMPARTMENT,
-                                      SymbolType.REACTION,
-                                      SymbolType.CONSTRAINT)
+        derives_from_param = self in (SymbolType.Species, SymbolType.Compartment,
+                                      SymbolType.Reaction,
+                                      SymbolType.Constraint)
 
-        if other == SymbolType.VARIABLE:
-            return derives_from_param or self == SymbolType.PARAMETER
+        if other == SymbolType.Variable:
+            return derives_from_param or self == SymbolType.Parameter
 
-        if other == SymbolType.PARAMETER:
+        if other == SymbolType.Parameter:
             return derives_from_param
 
         return False

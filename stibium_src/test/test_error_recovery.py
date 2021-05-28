@@ -142,5 +142,3 @@ def test_unmatched_quote():
     assert isinstance(tree.children[2], ErrorNode)  # expected fefeeeee but failed immediately
     assert isinstance(tree.children[3], ErrorToken)  # don't expect \n right after Name
     assert isinstance(tree.children[4], SimpleStmt)  # full assignment here
-
-

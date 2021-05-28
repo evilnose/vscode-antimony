@@ -64,7 +64,7 @@ print(doc.completions(SrcPosition(1, 15)))
 
 # ''')
 
-# print(doc.get_errors())
+# print(doc.get_issues())
 parser = AntimonyParser()
 FILE1 = '''
 compartment compartment = 5

@@ -1,6 +1,6 @@
 
 from stibium.ant_types import Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
-from .types import ASTNode, SymbolType, Variability, SrcPosition
+from .types import ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable
 from .utils import get_range
 
@@ -53,7 +53,6 @@ def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
 
 class AntTreeAnalyzer:
     def __init__(self, root: FileNode):
-        self.issues = list()
         self.table = SymbolTable()
         self.root = root
         base_scope = BaseScope()
@@ -75,7 +74,23 @@ class AntTreeAnalyzer:
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
         
-        self.issues += self.table.issues
+        self.semantic_issues = self.table.issues
+        self.syntax_issues = list()
+        self._record_syntax_issues()
+
+    def _record_syntax_issues(self):
+        for node in self.root.descendants():
+            if isinstance(node, ErrorToken):
+                if node.text.strip() == '':
+                    # this must be an unexpected newline
+                    self.syntax_issues.append(UnexpectedNewlineIssue(node.range.start))
+                else:
+                    self.syntax_issues.append(UnexpectedTokenIssue(node.range, node.text))
+            elif isinstance(node, ErrorNode):
+                last_leaf = node.last_leaf()
+                if last_leaf and last_leaf.next is None:
+                    self.syntax_issues.append(UnexpectedEOFIssue(last_leaf.range))
+
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
@@ -84,8 +99,9 @@ class AntTreeAnalyzer:
         # TODO temporary method to satisfy auto-completion
         return self.table.get_all_names()
 
-    def get_issues(self):
-        return self.issues
+    def get_issues(self) -> List[Issue]:
+        # no deepcopy because issues should be frozen
+        return (self.semantic_issues + self.syntax_issues).copy()
 
     def get_unique_name(self, prefix: str):
         return self.table.get_unique_name(prefix)

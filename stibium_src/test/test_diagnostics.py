@@ -1,7 +1,8 @@
 
 
+from typing import Tuple
 from stibium.api import AntFile
-from stibium.types import IncompatibleType, ObscuredValue, SrcPosition, SrcRange
+from stibium.types import IncompatibleType, ObscuredValue, SrcPosition, SrcRange, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue
 
 import pytest
 
@@ -24,6 +25,22 @@ i122 identity "http://identifiers.org/chebi/CHEBI:17234"'''),
 def test_no_issues(code):
     antfile = AntFile('', code)
     assert len(antfile.get_issues()) == 0
+
+
+@pytest.mark.parametrize('code,range_,type_', [
+    ('a=', (1, 2, 1, 3), UnexpectedEOFIssue),
+    ('ae= \n', (1, 5, 2, 1), UnexpectedNewlineIssue),
+    ('a=%', (1, 3, 1, 4), UnexpectedTokenIssue),
+    ('a eee', (1, 3, 1, 6), UnexpectedTokenIssue),
+])
+def test_syntax_issue(code, range_: Tuple[int, int, int, int], type_):
+    antfile = AntFile('', code)
+    issues = antfile.get_issues()
+    assert len(issues) == 1
+
+    assert issues[0].range == SrcRange(SrcPosition(range_[0], range_[1]),
+                                       SrcPosition(range_[2], range_[3]))
+    assert isinstance(issues[0], type_)
 
 
 def test_incompatible_declarations():

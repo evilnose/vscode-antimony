@@ -69,7 +69,8 @@ COMMENT: "/*" /(.|\n)*/ "*/"
 root : (simple_stmt | model)*
 
 
-NAME : /(?!(var|const|compartment|species|formula))/ CNAME
+// negative lookahead to avoid matching keywords (note the word boundaries)
+NAME : /(?!\b(var|const|compartment|species|formula)\b)/ CNAME
 
 
 %import common.CNAME

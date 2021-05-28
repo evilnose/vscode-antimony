@@ -27,7 +27,8 @@ baggins = 5;;;
 
 gamgee = 10
 
-i122 identity "http://identifiers.org/chebi/CHEBI:17234"'''
+i122 identity "http://identifiers.org/chebi/CHEBI:17234"''',
+'const compartment_, reaction_, _species, var1, const2, formula__',  # starts with reserved keyword
 ])
 def test_formatted_code(code):
     tree = parser.parse(code)

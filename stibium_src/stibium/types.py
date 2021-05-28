@@ -90,6 +90,31 @@ class Issue:
                                          self.message)
 
 
+class SyntaxErrorIssue(Issue):
+    pass
+
+
+class UnexpectedTokenIssue(SyntaxErrorIssue):
+    def __init__(self, leaf_range: SrcRange, leaf_name: str):
+        super().__init__(leaf_range, IssueSeverity.Error)
+        self.message = "Unexpected token '{name}'".format(name=leaf_name)
+
+
+class UnexpectedEOFIssue(SyntaxErrorIssue):
+    '''Unexpected newline or EOF when we expected another token.'''
+    def __init__(self, last_leaf_range: SrcRange):
+        super().__init__(last_leaf_range, IssueSeverity.Error)
+        self.message = "Expected a token"
+
+
+class UnexpectedNewlineIssue(SyntaxErrorIssue):
+    '''Unexpected newline or EOF when we expected another token.'''
+    def __init__(self, leaf_pos: SrcPosition):
+        leaf_range = SrcRange(leaf_pos, SrcPosition(leaf_pos.line + 1, 1))
+        super().__init__(leaf_range, IssueSeverity.Error)
+        self.message = "Expected a token"
+
+
 class IncompatibleType(Issue):
     def __init__(self, old_type, old_range, new_type, new_range):
         super().__init__(new_range, IssueSeverity.Error)
@@ -134,7 +159,6 @@ class ObscuredValue(Issue):
         )
 
 
-SyntaxError
 class AntimonySyntaxError(Exception):
     # TODO this is far from complete. To include: filename, possible token choices,
     # and possibly even parser state?

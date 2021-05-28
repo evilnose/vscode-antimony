@@ -8,7 +8,7 @@ from stibium.ant_types import NameMaybeIn, Number, Reaction, ReactionName, Speci
 from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
 from stibium.parse import AntimonyParser
 from stibium.tree_builder import Species, transform_tree
-from stibium.types import SrcLocation, SrcPosition
+from stibium.types import Issue, SrcLocation, SrcPosition
 from stibium.utils import to_uri
 
 
@@ -152,7 +152,7 @@ class AntFile:
             sym.def_name().range,
         ) for sym in symbols], range_
 
-    def get_issues(self):
+    def get_issues(self) -> List[Issue]:
         return self.analyzer.get_issues()
 
     def save_checkpoint(self, tree) -> bool:

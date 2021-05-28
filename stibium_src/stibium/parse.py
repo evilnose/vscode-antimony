@@ -282,4 +282,3 @@ class AntimonyParser:
             return puppet
         
         return puppet
-

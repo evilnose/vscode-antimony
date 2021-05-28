@@ -53,6 +53,19 @@ class TrunkNode(TreeNode):
                         yield desc
         yield self
 
+    def last_leaf(self):
+        for child in reversed(self.children):
+            if child is None:
+                continue
+            if isinstance(child, LeafNode):
+                return child
+
+            assert isinstance(child, TrunkNode)
+            ret = child.last_leaf()
+            if ret is not None:
+                return ret
+
+        return None
 
 @dataclass
 class LeafNode(TreeNode):

@@ -1,6 +1,6 @@
 # BioIDEK README WIP
 
-## Current Features
+## Features
 * Basic autocompletion of species names
 * Recovery from syntax error
 

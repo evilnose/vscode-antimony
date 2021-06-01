@@ -127,6 +127,10 @@
 				{
 					"match": "\\b(?:species|formula|compartment)\\b",
 					"name": "support.type.antimony"
+				},
+				{
+					"match": "\\b(?:in)\\b",
+					"name": "keyword.operator.compartment.antimony"
 				}
 			]
     },

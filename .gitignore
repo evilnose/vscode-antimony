@@ -13,4 +13,4 @@ client/out
 dist
 **/*.log
 .lark-cache
-
+*.prof

@@ -86,4 +86,4 @@ def func():
 # func()
 
 import cProfile
-cProfile.run('func()', 'antfile.stat')
+cProfile.run('func()', 'antfile.prof')

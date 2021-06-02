@@ -31,3 +31,4 @@ venv
 **/*.map
 **/*.pyc
 node_modules
+.lark-cache

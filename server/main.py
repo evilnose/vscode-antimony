@@ -44,6 +44,8 @@ from pygls.types import (CompletionItem, CompletionItemKind, CompletionList, Com
                          DidChangeTextDocumentParams,
                          DidOpenTextDocumentParams, DidSaveTextDocumentParams, Hover, InsertTextFormat, Location, MarkupContent, MarkupKind,
                          TextDocumentContentChangeEvent, TextDocumentPositionParams)
+import threading
+import time
 
 
 # TODO remove this for production
@@ -138,10 +140,31 @@ def definition(params):
     return definitions or None
 
 
+# Performance trick: don't re-parse as soon as DidChange is issued, but wait for 0.5 seconds. If
+# the user makes any more changes within that 0.5 seconds, don't actually perform the work.
+lock = threading.Lock()
+latest_millis = 0
+
+@server.thread()
 @server.feature(TEXT_DOCUMENT_DID_CHANGE)
 def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
     """Text document did open notification."""
-    publish_diagnostics(params.textDocument.uri)
+    global latest_millis
+
+    def callback(millis):
+        with lock:
+            if millis < latest_millis:
+                return
+            assert millis == latest_millis
+        publish_diagnostics(params.textDocument.uri)
+
+    cur_millis = int(time.time() * 1000)
+
+    with lock:
+        latest_millis = max(cur_millis, latest_millis)
+
+    t = threading.Timer(0.5, lambda: callback(cur_millis))
+    t.start()
 
 
 @server.feature(TEXT_DOCUMENT_DID_SAVE)

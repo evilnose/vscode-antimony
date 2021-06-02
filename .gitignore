@@ -12,4 +12,5 @@ node_modules
 client/out
 dist
 **/*.log
+.lark-cache
 

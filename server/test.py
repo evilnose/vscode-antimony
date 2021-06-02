@@ -45,11 +45,11 @@ FILE = ''';
 #     value: str
 
 
-def join_tokens(tokens):
-    return ''.join(str(tok) for tok in tokens)
+# def join_tokens(tokens):
+#     return ''.join(str(tok) for tok in tokens)
 
-doc = AntFile('hello', 'J:2.5 A -> B;              ???? a= 5')
-print(doc.completions(SrcPosition(1, 15)))
+# doc = AntFile('hello', 'J:2.5 A -> B;              ???? a= 5')
+# print(doc.completions(SrcPosition(1, 15)))
 # # result = doc.parser.get_state_at_position('a^= 5', SrcPosition(1, 2))
 # doc = AntFile('hello', '''
 # const species apple_1 = 10, apple_2
@@ -65,10 +65,10 @@ print(doc.completions(SrcPosition(1, 15)))
 # ''')
 
 # print(doc.get_issues())
-parser = AntimonyParser()
-FILE1 = '''
-compartment compartment = 5
-'''
+# parser = AntimonyParser()
+# FILE1 = '''
+# compartment compartment = 5
+# '''
 
 # tree = parser.parse(FILE1)
 # print(formatted_code(tree))
@@ -76,3 +76,14 @@ compartment compartment = 5
 
 # print(formatted_code(tree) + 'DONE')
 
+
+with open('temp/bigmodel.ant', 'r') as f:
+    text = f.read()
+
+def func():
+    for i in range(50):
+        file = AntFile('bigmodel', text)
+# func()
+
+import cProfile
+cProfile.run('func()', 'antfile.stat')

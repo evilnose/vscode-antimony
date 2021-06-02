@@ -67,16 +67,18 @@ async function createAnnotationDialog(context, args: any[]) {
 	// NOTE this is necessary for any command that might use the Python language server.
 	await client.onReady();
 
-	let initialQuery = '';
-	if (args.length == 2) {
-		initialQuery = args[1];
-	}
-
-	const selectedItem = await multiStepInput(context, initialQuery);
-
 	const selection = window.activeTextEditor.selection
 	const selectedText = window.activeTextEditor.document.getText(selection);
 	const initialEntity = selectedText || 'entityName';
+
+	let initialQuery;
+	if (args.length == 2) {
+		initialQuery = args[1];
+	} else {
+		initialQuery = selectedText;
+	}
+
+	const selectedItem = await multiStepInput(context, initialQuery);
 
 	await insertAnnotation(selectedItem, initialEntity);
 }

@@ -3,7 +3,6 @@ from stibium.api import AntCompletion, AntCompletionKind, AntFile, Completer
 from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
 
 from stibium.parse import AntimonyParser
-from stibium.utils import get_range, to_uri
 from stibium.types import SrcLocation, SrcPosition, SrcRange
 
 from pygls.types import CompletionItem, CompletionItemKind, CompletionList, CompletionParams, InsertTextFormat, Position, Range, TextDocumentPositionParams

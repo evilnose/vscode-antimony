@@ -18,6 +18,10 @@
 			{
 				"command": "antimony.sendQuery",
 				"title": "Invoke the web query service"
+			},
+			{
+				"command": "antimony.getAnnotated",
+				"title": "Get the list of annotated ranges in the source text"
 			}
 		],
 		"languages": [
@@ -57,7 +61,8 @@
 	"activationEvents": [
 		"onLanguage:antimony",
 		"onCommand:sendQuery",
-		"onCommand:createAnnotationDialog"
+		"onCommand:createAnnotationDialog",
+		"onCommand:getAnnotated"
 	],
 	"main": "./dist/extension",
 	"scripts": {

@@ -1,6 +1,6 @@
 # BioIDEK VSCode Extension
 This is a VSCode extension for the Antimony language. The backend used for parsing and analyzing 
-Antimony is (Stibium)[https://github.com/evilnose/stibium].
+Antimony is [Stibium](https://github.com/evilnose/stibium).
 
 This tool is still in development stage, and the progress of this extension heavily depends on the
 progress of the Stibium project. And as of now, Stibium is capable of handling only a subset of the
@@ -17,7 +17,7 @@ The below features are currently supported:
 ## Planned Features
 * Better annotations UI flow (add "loading" to title when doing requests; more information in
 selection items, maybe even use tabular format.)
-* For language support features, see (Stibium)[https://github.com/evilnose/stibium].
+* For language support features, see [Stibium](https://github.com/evilnose/stibium).
 
 ## Requirements
 Python == 3.6, `node` & `npm`, andVSCode >= 1.52.0 is required.
@@ -69,7 +69,7 @@ the dependencies of the dependencies in `requirements.txt`. This is required sin
 to only install pure Python packages for bundling, and for that to work, we need to pass to `pip`
 every package we need. Therefore, if a new dependency is added to `requirements.txt`,
 `all-requirements.txt` should be re-generated using `pip freeze > all-requirements.txt`.
-* `language-configuration.json`: See VSCode (docs)[https://code.visualstudio.com/api/language-extensions/language-configuration-guide]
+* `language-configuration.json`: See VSCode [docs](https://code.visualstudio.com/api/language-extensions/language-configuration-guide)
 for details.
 * `package.json`: Used by VScode as a manifest file for the extension. See VSCode docs for more info.
 * `webpack.config.js`: Used to compile Typescript files and bundled the extension into one single

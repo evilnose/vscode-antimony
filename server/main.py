@@ -32,12 +32,12 @@ sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_server_src"))
 from stibium.api import AntCompletion, AntCompletionKind
 from stibium.types import Issue, IssueSeverity
 
-from stibium_server.utils import AntFile, pygls_range, sb_position, get_antfile
+from stibium_server.utils import AntFile, pygls_range, sb_position, get_antfile, sb_range
 from stibium_server.webservices import NetworkError, WebServices
 
 import logging
 from dataclasses import dataclass
-from pygls.features import (COMPLETION, DEFINITION, HOVER, SIGNATURE_HELP, TEXT_DOCUMENT_DID_CHANGE,
+from pygls.features import (CODE_LENS, COMPLETION, DEFINITION, HOVER, SIGNATURE_HELP, TEXT_DOCUMENT_DID_CHANGE,
                             TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE, WORKSPACE_EXECUTE_COMMAND)
 from pygls.server import LanguageServer
 from pygls.types import (CompletionItem, CompletionItemKind, CompletionList, CompletionParams, Diagnostic, DiagnosticSeverity,
@@ -69,21 +69,19 @@ def to_diagnostic(issue: Issue):
     )
 
 
-def publish_diagnostics(uri: str):
+def _publish_diagnostics(uri: str) -> AntFile:
     doc = server.workspace.get_document(uri)
     antfile = get_antfile(doc)
     errors = antfile.get_issues()
     diagnostics = [to_diagnostic(e) for e in errors]
     server.publish_diagnostics(uri, diagnostics)
+    return antfile
 
 
 @server.feature(TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
     """Text document did open notification."""
-    publish_diagnostics(params.textDocument.uri)
-
-
-count = 0
+    antfile = _publish_diagnostics(params.textDocument.uri)
 
 
 @server.feature(COMPLETION)
@@ -120,7 +118,8 @@ def hover(params: TextDocumentPositionParams):
 
     # TODO fix the interface
     sym = symbols[0]
-    contents = MarkupContent(MarkupKind.PlainText, sym.help_str())
+    text = sym.help_str()
+    contents = MarkupContent(MarkupKind.Markdown, text)
     return Hover(
         contents=contents,
         range=pygls_range(range_),
@@ -156,7 +155,7 @@ def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
             if millis < latest_millis:
                 return
             assert millis == latest_millis
-        publish_diagnostics(params.textDocument.uri)
+        _publish_diagnostics(params.textDocument.uri)
 
     cur_millis = int(time.time() * 1000)
 
@@ -170,7 +169,7 @@ def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
 @server.feature(TEXT_DOCUMENT_DID_SAVE)
 def did_save(ls, params: DidSaveTextDocumentParams):
     """Text document did open notification."""
-    publish_diagnostics(params.textDocument.uri)
+    antfile = _publish_diagnostics(params.textDocument.uri)
 
 
 @server.thread()
@@ -195,6 +194,24 @@ def query_species(ls: LanguageServer, args):
         return {
             'error': 'Connection Error'
         }
+
+
+@server.command('antimony.getAnnotated')
+def mark_annotations(ls: LanguageServer, args):
+    text = args[0]
+    antfile = AntFile('', text)
+    qnames = antfile.analyzer.table.get_all_qnames()
+    annotated = [q for q in qnames if antfile.get_annotations(q)]
+    ranges = [pygls_range(a.name.range) for a in annotated]
+    range_objs = [
+        {
+            'line': r.start.line,
+            'column': r.start.character,
+            'end_line': r.end.line,
+            'end_column': r.end.character,
+            } for r in ranges
+    ]
+    return range_objs
 
 
 if __name__ == '__main__':

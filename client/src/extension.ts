@@ -1,10 +1,7 @@
 import { privateEncrypt } from 'crypto';
 import * as path from 'path';
 import {
-	workspace, ExtensionContext, commands, InputBoxOptions, window, QuickInputButtons,
-	QuickPickItem,
-	Position,
-	SnippetString
+	ExtensionContext, commands, SnippetString, window, Range, Position, DecorationOptions, workspace, Event, TextDocument, ColorThemeKind,
 } from 'vscode';
 
 import {
@@ -17,7 +14,7 @@ import { multiStepInput } from './annotationInput';
 
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
 	// TODO allow the user to manually specify an interpreter to use, possibly leveraging the
 	// Python language extension. See https://code.visualstudio.com/api/references/vscode-api#extensions
 	// TODO this might be python3
@@ -52,6 +49,12 @@ export function activate(context: ExtensionContext) {
 
 	// Start the client. This will also launch the server
 	client.start();
+
+	decorateDocument(window.activeTextEditor.document);
+	workspace.onDidSaveTextDocument(decorateDocument);
+	workspace.onDidOpenTextDocument(decorateDocument);
+	window.onDidChangeActiveTextEditor(e => decorateDocument(e.document));
+	window.onDidChangeActiveColorTheme(() => decorateDocument(window.activeTextEditor.document));
 }
 
 export function deactivate(): Thenable<void> | undefined {
@@ -93,4 +96,47 @@ async function insertAnnotation(selectedItem, entityName) {
 	const doc = window.activeTextEditor.document;
 	const pos = doc.lineAt(doc.lineCount - 1).range.end;
 	window.activeTextEditor.insertSnippet(snippetStr, pos);
+}
+
+interface ServerRange {
+	line: number;
+	column: number;
+	end_line: number;
+	end_column: number;
+}
+const annotDecorTypeDark = window.createTextEditorDecorationType({	
+	borderStyle: 'none none solid none',
+	borderColor: 'white',
+	borderWidth: '1px',
+});
+const annotDecorTypeLight = window.createTextEditorDecorationType({	
+	borderStyle: 'none none solid none',
+	borderColor: 'black',
+	borderWidth: '1px',
+});
+
+async function decorateDocument(doc: TextDocument) {
+	await client.onReady();
+	if (doc.languageId !== 'antimony') {
+		return;
+	}
+
+	let decorations: DecorationOptions[] = [];
+	const sranges: ServerRange[] = await commands.executeCommand('antimony.getAnnotated', doc.getText());
+    
+	for (const srange of sranges) {
+		const range = new Range(
+			new Position(srange.line, srange.column),
+			new Position(srange.end_line, srange.end_column),
+		);
+		
+		const decor = { range };
+		decorations.push(decor);
+	}
+
+	const isLight = window.activeColorTheme.kind === ColorThemeKind.Light;
+	const decorType = isLight ? annotDecorTypeLight : annotDecorTypeDark;
+	const otherDecorType = !isLight ? annotDecorTypeLight : annotDecorTypeDark;
+	window.activeTextEditor.setDecorations(decorType, decorations);
+	window.activeTextEditor.setDecorations(otherDecorType, []);
 }

@@ -35,6 +35,7 @@ This extension mainly operates on Antimony source files, which are files that en
 for intellisense, autocompletion, etc. to work, you must have a `.ant` file open.
 
 ### Annotations
+* Be in a Antimony file.
 * Right click to bring up the context menu.
 * Select "Create Annotation" to bring up the annotation dialog menu.
 * Select the database in which to query, one of "ChEBI" and "UniProt".
@@ -43,6 +44,9 @@ for intellisense, autocompletion, etc. to work, you must have a `.ant` file open
 and the [UniProtKB](https://www.uniprot.org/) website.
 * Once you have found the desired annotation, click on the selection. A piece of annotation code
 will be automatically generated and appended to the end of the file.
+
+You can optionally select the name of a variable beforehand. This will populate the species query
+input and the generated annotation code with that name.
 
 After you have generated an annotation, you can save the file, and all appearances of the species
 that was annotated would be marked in the document.

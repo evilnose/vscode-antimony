@@ -82,7 +82,7 @@
 	],
 	"main": "./dist/extension",
 	"scripts": {
-		"vscode:prepublish": "webpack --mode development",
+		"vscode:prepublish": "webpack --mode production",
 		"webpack": "webpack --mode development",
 		"webpack-dev": "webpack --mode development --watch",
 		"test-compile": "webpack --mode development && npx tsc -b",

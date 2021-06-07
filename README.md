@@ -35,7 +35,7 @@ This extension mainly operates on Antimony source files, which are files that en
 for intellisense, autocompletion, etc. to work, you must have a `.ant` file open.
 
 ### Annotations
-* Be in a Antimony file.
+* Be in an Antimony file.
 * Right click to bring up the context menu.
 * Select "Create Annotation" to bring up the annotation dialog menu.
 * Select the database in which to query, one of "ChEBI" and "UniProt".

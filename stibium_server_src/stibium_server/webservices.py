@@ -72,7 +72,7 @@ class WebServices:
         reader = csv.reader(result_f, delimiter='\t')
         objects = list()
         # Skip header
-        next(reader)
+        next(reader, None)
         for row in reader:
             id_, entry_name, protein_names, genes = row
             objects.append({

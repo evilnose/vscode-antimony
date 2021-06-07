@@ -1,7 +1,7 @@
 {
 	"name": "bio-ide",
 	"displayName": "BioIDE",
-	"description": "Language extension for Antimony",
+	"description": "Language support and annotation tools for Antimony",
 	"author": "Gary Geng",
 	"publisher": "sauro-lab",
 	"repository": {

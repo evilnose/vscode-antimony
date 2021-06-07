@@ -14,12 +14,73 @@ The below features are currently supported:
 * Autocomplete reaction rate law (e.g. mass-action)
 * Convenient generation of annotation (see below for more information)
 
+## Installing
+This extension is still in development and is not yet published in the VSCode Marketplace. To
+manually install, first download the release binary `bio-ide-0.0.1.vsix`. Then, to install the
+extension:
+
+* Press `ctrl+shift+P` (or `cmd+shift+P` on Mac) to bring up the Command Palette
+* Type "vsix" into the text box
+* Select the option **Extensions: Install from VSIX**. A file explorer will pop up.
+* Select the `.vsix` file that was downloaded.
+
+You can also follow the official instructions for installing a local extension
+[here](https://code.visualstudio.com/docs/editor/extension-marketplace#_install-from-a-vsix).
+
+After you've installed it, create an Antimony source file `*.ant` to get started. See [usage](#usage)
+for more details.
+
+## Usage
+This extension mainly operates on Antimony source files, which are files that end with `.ant`. So
+for intellisense, autocompletion, etc. to work, you must have a `.ant` file open.
+
+### Annotations
+* Right click to bring up the context menu.
+* Select "Create Annotation" to bring up the annotation dialog menu.
+* Select the database in which to query, one of "ChEBI" and "UniProt".
+* Enter the species query. The available list of selection will update according to what is entered.
+* The format of the query is the same as those on the [CheBI](https://www.ebi.ac.uk/chebi/) website
+and the [UniProtKB](https://www.uniprot.org/) website.
+* Once you have found the desired annotation, click on the selection. A piece of annotation code
+will be automatically generated and appended to the end of the file.
+
+After you have generated an annotation, you can save the file, and all appearances of the species
+that was annotated would be marked in the document.
+
+### Autocompletion
+Autocompletion can be manually triggered by pressing Ctrl + Space.
+
+You can generate reaction mass-action rate laws if the cursor is at the rate law section of the
+reaction, e.g.
+
+`J7: Acetyladehyde + NADH -> NAD + $ethanol; `
+                                            ^ here
+
+If the rate law completion item is not already selected when the completion is triggered, you can
+type "mass action" to filter the completion results. Once the desired completion item is highlighted
+press `Enter` to perform the completion.
+
+Autocomplete inserts a code snippet for you, with the option to change the names of the generated
+parameter names. You can type in whatever name you want, and then press `tab` to cycle to the next
+generated name.
+
+Note that the reversibility of the reaction, namely the use of `->` or `=>` is accounted for. If
+you are using `=>`, the reaction will be detected as reversible, and the generated rate law will
+reflect that.
+
+### Definitions
+Hover over any variable name with your cursor to see its type and, if applicable, its annotation
+link.
+
+Click on the name while pressing `ctrl` will bring you to the location where it is declared; if it 
+is not explicitly declared, where it is assigned a value; otherwise, its first apperance.
+
 ## Planned Features
 * Better annotations UI flow (add "loading" to title when doing requests; more information in
 selection items, maybe even use tabular format.)
 * For language support features, see [Stibium](https://github.com/evilnose/stibium).
 
-## Requirements
+## Dev Requirements
 Python == 3.6, `node` & `npm`, andVSCode >= 1.52.0 is required.
 Why exactly Python 3.6? When building, we tell
 `pip` to copy all the local Python dependencies to `pythonFiles`, which is bundled with the

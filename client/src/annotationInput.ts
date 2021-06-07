@@ -232,6 +232,9 @@ export class MultiStepInput {
     }
 
     async onQueryResults(result) {
+        // TODO display a banner saying 'no results' if there aren't any results
+        // Or display a progress bar when querying, just so that the user can distinguish
+        // loading vs. no results
         if (this.current && this.current.step === 2) {
             if (this.instanceOfQuickPick(this.current)) {
                 if (result.error) {

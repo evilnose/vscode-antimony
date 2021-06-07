@@ -25,7 +25,7 @@ class AntCodeLensProvider implements CodeLensProvider {
 			let c: Command = {
 				title: 'BioIDE Help Page',
 				command: 'vscode.open',
-				arguments: [Uri.parse('https://github.com/evilnose/vscode-antimony#bioidek-vscode-extension')],
+				arguments: [Uri.parse('https://github.com/evilnose/vscode-antimony#usage')],
 			}
 			let codeLens = new CodeLens(topOfDocument, c)
 			return [codeLens];

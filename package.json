@@ -1,15 +1,31 @@
 {
-	"name": "bio-idek",
+	"name": "bio-ide",
+	"displayName": "BioIDE",
 	"description": "Language extension for Antimony",
 	"author": "Gary Geng",
 	"publisher": "sauro-lab",
 	"repository": {
 		"type": "git",
-		"url": "TBD"
+		"url": "https://github.com/evilnose/vscode-antimony"
 	},
 	"version": "0.0.1",
-	"categories": [],
+	"categories": [
+		"Programming Languages",
+		"Snippets",
+		"Other"
+	],
 	"contributes": {
+		"configuration": {
+			"title": "BioIDE",
+			"properties": {
+				"bio-ide.pythonInterpreter": {
+					"type": "string",
+					"default": "python",
+					"scope": "machine",
+					"description": "The Python interpreter (>= 3.6) used to power the language backend. Either a full path or a name (e.g. 'python36')."
+				}
+			}
+		},
 		"commands": [
 			{
 				"command": "antimony.createAnnotationDialog",
@@ -66,7 +82,7 @@
 	],
 	"main": "./dist/extension",
 	"scripts": {
-		"vscode:prepublish": "webpack --mode production",
+		"vscode:prepublish": "webpack --mode development",
 		"webpack": "webpack --mode development",
 		"webpack-dev": "webpack --mode development --watch",
 		"test-compile": "webpack --mode development && npx tsc -b",

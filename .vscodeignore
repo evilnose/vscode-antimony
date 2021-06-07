@@ -28,7 +28,6 @@ venv
 
 # Build files
 *.vsix
-**/*.map
 **/*.pyc
 node_modules
 .lark-cache

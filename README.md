@@ -16,7 +16,8 @@ The below features are currently supported:
 
 ## Installing
 This extension is still in development and is not yet published in the VSCode Marketplace. To
-manually install, first download the release binary `bio-ide-0.0.1.vsix`. Then, to install the
+manually install, first download the release binary
+[bio-ide-0.0.1.vsix](https://github.com/evilnose/vscode-antimony/releases/download/v0.0.1-alpha/bio-ide-0.0.1.vsix). Then, to install the
 extension:
 
 * Press `ctrl+shift+P` (or `cmd+shift+P` on Mac) to bring up the Command Palette

@@ -1,6 +1,6 @@
 {
 	"name": "bio-idek-client",
-	"description": "VSCode Client of BioIDEK",
+	"description": "VSCode Client of BioIDE",
 	"author": "Gary Geng",
 	"version": "0.0.1",
 	"publisher": "vscode",

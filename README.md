@@ -1,4 +1,4 @@
-# BioIDEK VSCode Extension
+# BioIDE VSCode Extension
 This is a VSCode extension for the Antimony language. The backend used for parsing and analyzing 
 Antimony is [Stibium](https://github.com/evilnose/stibium).
 

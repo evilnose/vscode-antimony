@@ -2,6 +2,8 @@
 
 set success=0
 
+rm -rf ./pythonFiles/lib/python
+
 python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \
     --no-cache-dir --implementation py --no-deps --upgrade -r ./all-requirements.txt && success=1
     

@@ -1,4 +1,7 @@
-'''Aggregation of webservices required by the extension.'''
+'''Aggregation of webservices required by the extension.
+
+Author: Gary Geng
+'''
 
 from .bioservices.chebi import ChEBI
 from .bioservices.uniprot import UniProt
@@ -15,6 +18,7 @@ class NetworkError(Exception):
 
 
 class WebServices:
+    '''Wrapper class that allows querying a couple of Bio webservices for annotation'''
     def __init__(self):
         self.chebi = None
         self.uniprot = None

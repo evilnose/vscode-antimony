@@ -1,29 +1,13 @@
 """Temporary single-file server implementation.
 
-NOTE: need to think about way to deal with models in the future.
-Idea: first try to correct the line. If that is not possible, ignore it. if it is has something
-to do with brackets, e.g. start_model start_model, then do something intelligent like add end_model
-before the second start_model.
-Also: look at Jedi docs for inspiration
-
-NOTE: still probably need dummy tokens, and a way to preserve the context
-short-term TODO list
-* definition
-* handle models in error recovery
-* display syntax error
-* uniprot
-* syntax highlighting?
-
-NOTE: idea for optimization: for whatever change made in a range, only re-parse items in that range.
-But if the change crosses model boundaries, need to extend the changed range to encompass the model
-as well. Should be a good enough optimization for now.
+Author: Gary Geng
 """
 import os
 import sys
 
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
+sys.path.insert(0, os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
 
 # Temporary, before both packages are published
 sys.path.append(os.path.join(EXTENSION_ROOT, "stibium_src"))
@@ -58,6 +42,7 @@ services = WebServices()
 
 
 def to_diagnostic(issue: Issue):
+    '''Convert the Stibium Issue object to a pygls Diagnostic object'''
     severity = DiagnosticSeverity.Error
     if issue.severity == IssueSeverity.Warning:
         severity = DiagnosticSeverity.Warning
@@ -197,7 +182,8 @@ def query_species(ls: LanguageServer, args):
 
 
 @server.command('antimony.getAnnotated')
-def mark_annotations(ls: LanguageServer, args):
+def get_annotated(ls: LanguageServer, args):
+    '''Return the list of annotated names as ranges'''
     text = args[0]
     antfile = AntFile('', text)
     qnames = antfile.analyzer.table.get_all_qnames()

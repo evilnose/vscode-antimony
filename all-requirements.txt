@@ -18,6 +18,5 @@ requests-cache==0.5.2
 six==1.15.0
 suds-jurko==0.6
 urllib3==1.26.4
-# If this fails, use Python 3.6
-dataclasses==0.8
+# dataclasses==0.8
 # ./stibium-src

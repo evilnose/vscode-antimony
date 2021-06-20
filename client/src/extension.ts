@@ -1,3 +1,8 @@
+/**
+ * The main extension file.
+ * 
+ * Author: Gary Geng
+ */
 import { execPromise } from './utils';
 import * as path from 'path';
 import {
@@ -17,8 +22,10 @@ let curPythonInterp: string | null = null;
 let lastChangeInterp = 0;
 
 
+// Provides the CodeLens link to the usage guide if the file is empty.
 class AntCodeLensProvider implements CodeLensProvider {
 	async provideCodeLenses(document: TextDocument): Promise<CodeLens[]> {
+		// Only provide CodeLens if file is antimony and is empty
 		if (document.languageId === 'antimony' && !document.getText().trim()) {
 			const topOfDocument = new Range(0, 0, 0, 0);
 
@@ -35,10 +42,11 @@ class AntCodeLensProvider implements CodeLensProvider {
 	}
 }
 
-// HACK returns 0 if fine, 1 if Python version is too low, or 2 if the process failed.
+// Function that verifies if the given Python interpreter is valid.
+// returns 0 if fine, 1 if Python version is too low, or 2 if the process failed.
 async function verifyPythonInterp(path: string) {
 	try {
-		const result = await execPromise(`"${path}" -c "import sys; print(sys.version_info >= (3, 6))"`);
+		const result = await execPromise(`"${path}" -c "import sys; print(sys.version_info >= (3, 7))"`);
 		if (result['stdout'].trim() === 'True') {
 			return 0;
 		}
@@ -48,12 +56,13 @@ async function verifyPythonInterp(path: string) {
 	}
 }
 
+// Helper that gets the Python path from settings
 function getPythonInterpSetting(): string {
 	const config = workspace.getConfiguration('bio-ide');
 	return config.get('pythonInterpreter');
 }
 
-// start the language server client
+// Start the language server client
 async function startLSClient(context: ExtensionContext) {
 	curPythonInterp = getPythonInterpSetting();
 
@@ -61,7 +70,7 @@ async function startLSClient(context: ExtensionContext) {
 	if (error !== 0) {
 		let errMessage: string;
 		if (error === 1) {
-			errMessage = `Failed to launch language server: "${curPythonInterp}" is not Python 3.6+`;
+			errMessage = `Failed to launch language server: "${curPythonInterp}" is not Python 3.7+`;
 		} else {
 			errMessage = `Failed to launch language server: Unable to run "${curPythonInterp}"`;
 		}
@@ -101,9 +110,6 @@ async function startLSClient(context: ExtensionContext) {
 }
 
 export async function activate(context: ExtensionContext) {
-	// TODO allow the user to manually specify an interpreter to use, possibly leveraging the
-	// Python language extension. See https://code.visualstudio.com/api/references/vscode-api#extensions
-	// TODO this might be python3
 	startLSClient(context);
 
 	context.subscriptions.push(
@@ -112,6 +118,8 @@ export async function activate(context: ExtensionContext) {
 
 	decorateDocument(window.activeTextEditor?.document);
 	workspace.onDidChangeConfiguration(async (e) => {
+		// restart the language server using the new Python interpreter, if the related
+		// setting was changed
 		if (!e.affectsConfiguration('bio-ide')) {
 			return;
 		}
@@ -131,6 +139,7 @@ export async function activate(context: ExtensionContext) {
 			await startLSClient(context);
 		}, 3000);
 	})
+
 	const docSelector = {
 		language: 'antimony',
 		scheme: 'file',
@@ -148,6 +157,7 @@ export async function activate(context: ExtensionContext) {
 	window.onDidChangeActiveTextEditor(async e => {
 		decorateDocument(e?.document)
 	});
+	// underline color should change once the color theme changes (dark/light theme)
 	window.onDidChangeActiveColorTheme(() => decorateDocument(window.activeTextEditor?.document));
 }
 
@@ -219,6 +229,7 @@ const annotDecorTypeLight = window.createTextEditorDecorationType({
 	borderWidth: '1px',
 });
 
+// underline all annotated names
 async function decorateDocument(doc: TextDocument | undefined) {
 	if (!doc || !client) {
 		return;

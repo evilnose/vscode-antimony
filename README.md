@@ -86,18 +86,24 @@ selection items, maybe even use tabular format.)
 * For language support features, see [Stibium](https://github.com/evilnose/stibium).
 
 ## Dev Requirements
-Python == 3.6, `node` & `npm`, andVSCode >= 1.52.0 is required.
-Why exactly Python 3.6? When building, we tell
-`pip` to copy all the local Python dependencies to `pythonFiles`, which is bundled with the
-extension. The dependencies are pure Python so they should work with Python 3.6+ no matter which
-Python `pip` belongs to. But the package `dataclasses` can only be installed by a Python 3.6 `pip`,
-and that's why a local Python 3.6 is needed. As a note, `dataclasses` ships with Python 3.7, but
-for Python 3.6 it comes as a PyPI package. For some reason it is not added to `__future__`, but oh
-well.
+Python >= 3.7, `node` & `npm`, andVSCode >= 1.52.0 is required.
 
-Note that Python 3.6 is required for bundling, but any above 3.6 is fine for local development.
-Also note that for now Stibium has not been published as a PyPI package, so the local submodule
-is required. In the future, it should be added as a line in `requirements.txt`.
+## What About Python 3.6?
+Making this extension work for Python 3.6 is a bit convoluted due to the usage of the
+`dataclass` package. 
+
+When building, we tell `pip` to copy all the local Python dependencies to `pythonFiles`,
+which is bundled with the extension. The dependencies are pure Python so they should work with
+Python 3.6+ no matter which Python `pip` belongs to. The problem: `dataclass` ships with 
+Python 3.7+ but comes as a PyPI package for Python 3.6. Then, if we install `dataclass` into
+`pythonFiles`, a Python 3.7+ installation will use that instead of the built-in `dataclass`
+package, causing issues. But if we don't install `dataclass`, Python 3.6 doesn't work.
+
+In short, the issue is that Python 3.6 and 3.7+ require different sets of packages.
+
+In the future, if support for Python 3.6 is needed, we can install the `dataclass` package to
+a separate directory in `pythonFiles`, and then prepend it to `sys.path` only if we can verify that
+the current Python version is 3.6.
 
 ## Building
 * If running first time, run `npm install`.

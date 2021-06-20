@@ -22,7 +22,7 @@
 					"type": "string",
 					"default": "python",
 					"scope": "machine",
-					"description": "The Python interpreter (>= 3.6) used to power the language backend. Either a full path or a name (e.g. 'python36')."
+					"description": "The Python interpreter (>= 3.7) used to power the language backend. Either a full path or a name (e.g. 'python36')."
 				}
 			}
 		},

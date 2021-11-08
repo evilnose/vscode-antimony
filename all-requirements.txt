@@ -1,0 +1,22 @@
+# Generated requirements with all dependencies. This is for installing pure-Python packages, which
+# requires all dependencies to be listed.
+appdirs==1.4.4
+certifi==2020.12.5
+chardet==4.0.0
+colorama==0.4.4
+colorlog==4.8.0
+easydev==0.11.0
+idna==2.10
+git+git://github.com/lark-parser/lark.git@5b8c04ca83b9#egg=lark_parser
+# lark-parser==0.11.2
+libChEBIpy==1.0.10
+pexpect==4.8.0
+ptyprocess==0.7.0
+pygls==0.9.1
+requests==2.25.1
+requests-cache==0.5.2
+six==1.15.0
+suds-jurko==0.6
+urllib3==1.26.4
+# dataclasses==0.8
+# ./stibium-src

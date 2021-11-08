@@ -1,0 +1,162 @@
+{
+  "scopeName": "source.antimony",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#code" }
+  ],
+  "repository": {
+		"comments": {
+			"patterns": [
+				{
+					"captures": {
+						"0": {
+							"name": "punctuation.definition.comment.antimony"
+						}
+					},
+					"match": "/\\*\\*/",
+					"name": "comment.block.empty.antimony"
+				},
+				{
+					"include": "#comments-inline"
+				}
+			]
+		},
+		"comments-inline": {
+			"patterns": [
+				{
+					"begin": "/\\*",
+					"captures": {
+						"0": {
+							"name": "punctuation.definition.comment.antimony"
+						}
+					},
+					"end": "\\*/",
+					"name": "comment.block.antimony"
+				},
+				{
+					"begin": "(^[ \\t]+)?(?=//|#)",
+					"beginCaptures": {
+						"1": {
+							"name": "punctuation.whitespace.comment.leading.antimony"
+						}
+					},
+					"end": "(?!\\G)",
+					"patterns": [
+						{
+							"begin": "//",
+							"beginCaptures": {
+								"0": {
+									"name": "punctuation.definition.comment.antimony"
+								}
+							},
+							"end": "\\n",
+							"name": "comment.line.double-slash.java"
+						},
+						{
+							"begin": "#",
+							"beginCaptures": {
+								"0": {
+									"name": "punctuation.definition.comment.antimony"
+								}
+							},
+							"end": "\\n",
+							"name": "comment.line.number-sign.antimony"
+						}
+					]
+				}
+			]
+		},
+    "code": {
+      "patterns": [
+        { "include": "#string-literal" },
+        { "include": "#keywords" },
+        { "include": "#reaction-name" },
+        { "include": "#operators" },
+        { "include": "#numbers" }
+      ]
+    },
+    "string-literal": {
+      "name": "string.quoted.double.antimony",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.antimony",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "match": "=>|->",
+          "name": "punctuation.separator.arrow.antimony"
+        },
+        {
+          "match": "=",
+          "name": "keyword.operator.assignment.antimony"
+        },
+        {
+          "match": "\\-|\\+|\\*|\\/|\\^",
+          "name": "keyword.operator.arithmetic.antimony"
+        },
+        {
+					"match": ";",
+					"name": "punctuation.terminator.antimony"
+				},
+        {
+					"match": ":",
+					"name": "punctuation.separator.reaction.antimony"
+				},
+        {
+          "match": "\\$",
+          "name": "storage.modifier.antimony"
+        }
+      ]
+    },
+    "keywords": {
+			"patterns": [
+				{
+					"match": "\\b(?:identity)\\b",
+					"name": "keyword.operator.assignment.annotation.antimony"
+				},
+				{
+					"match": "\\b(?:const|var)\\b",
+					"name": "storage.modifier.antimony"
+				},
+				{
+					"match": "\\b(?:species|formula|compartment)\\b",
+					"name": "support.type.antimony"
+				},
+				{
+					"match": "\\b(?:in)\\b",
+					"name": "keyword.operator.compartment.antimony"
+				}
+			]
+    },
+    "reaction-name": {
+			"patterns": [
+				{
+					"match": "^\\s*([a-zA-Z_][a-zA-Z_0-9]*):",
+					"captures": {
+						"1": {
+							"name": "support.class.antimony"
+						}
+					}
+				}
+			]
+    },
+    "numbers": {
+			"patterns": [
+				{
+					"match": "(?x)\n  (?<! \\w)(?:\n    (?:\n      \\.[0-9]+\n      |\n      [0-9]+ \\. [0-9]+\n      |\n      [0-9]+ \\.\n    ) (?: [eE][+-]?[0-9]+ )?\n    |\n    [0-9]+ (?: [eE][+-]?[0-9]+ )\n  )\n",
+					"name": "constant.numeric.float.antimony"
+				},
+				{
+					"match": "(?x)\n  (?<![\\w\\.])(?:\n      [0-9]+|\n      0 ([0-9]+)(?![eE\\.])\n  )\n",
+					"name": "constant.numeric.decimal.antimony"
+				}
+			]
+		}
+  }
+}

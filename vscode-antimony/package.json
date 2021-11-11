@@ -2,12 +2,13 @@
 	"name": "vscode-antimony",
 	"displayName": "vscode-antimony",
 	"description": "VSCode extension for the Antimony language.",
+	"author": "Steve Ma",
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.62.0"
 	},
 	"categories": [
-		"Other"
+		"Programming Languages"
 	],
 	"activationEvents": [
 		"onCommand:vscode-antimony.helloWorld"
@@ -18,6 +19,19 @@
 			{
 				"command": "vscode-antimony.helloWorld",
 				"title": "Hello World"
+			}
+		],
+		"languages": [
+			{
+				"id": "antimony",
+				"extensions": [
+					".ant"
+				],
+				"aliases": [
+					"Antimony",
+					"ant"
+				],
+				"configuration": "./language-configuration.json"
 			}
 		]
 	},

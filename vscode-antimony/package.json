@@ -11,14 +11,15 @@
 		"Programming Languages"
 	],
 	"activationEvents": [
-		"onCommand:vscode-antimony.helloWorld"
+		"onLanguage:antimony",
+		"onCommand:createAnnotationDialog"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "vscode-antimony.helloWorld",
-				"title": "Hello World"
+				"command": "antimony.createAnnotationDialog",
+				"title": "Create Annotation"
 			}
 		],
 		"languages": [
@@ -33,7 +34,17 @@
 				],
 				"configuration": "./language-configuration.json"
 			}
-		]
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "antimony.createAnnotationDialog",
+					"title": "Create Annotation",
+					"group": "1_modification",
+					"when": "editorLangId == antimony"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

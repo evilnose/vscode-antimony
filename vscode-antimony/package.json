@@ -2,7 +2,7 @@
 	"name": "vscode-antimony",
 	"displayName": "vscode-antimony",
 	"description": "VSCode extension for the Antimony language.",
-	"author": "Steve Ma",
+	"author": "Steve Ma, Joseph Hellerstein, Gary Geng",
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.62.0"
@@ -16,6 +16,17 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"configuration": {
+			"title": "vscode-antimony",
+			"properties": {
+				"vscode-antimonye.pythonInterpreter": {
+					"type": "string",
+					"default": "python",
+					"scope": "machine",
+					"description": "The Python interpreter (>= 3.7) used to power the language backend. Either a full path or a name (e.g. 'python36')."
+				}
+			}
+		},
 		"commands": [
 			{
 				"command": "antimony.createAnnotationDialog",

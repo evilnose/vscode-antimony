@@ -4,16 +4,57 @@ exports.deactivate = exports.activate = void 0;
 const vscode = require("vscode");
 const utils = require("./utils/utils");
 const path = require("path");
+const node_1 = require("vscode-languageclient/node");
 // for debugging
 let debug = vscode.window.createOutputChannel("Debug");
 debug.show();
 let client = null;
 let pythonInterpreter = null;
+let lastChangeInterp = 0;
 function activate(context) {
     // start the language server
     startLanguageServer(context);
+    vscode.workspace.onDidChangeConfiguration(async (e) => {
+        // restart the language server using the new Python interpreter, if the related
+        // setting was changed
+        if (!e.affectsConfiguration('vscode-antimony')) {
+            return;
+        }
+        let curTime = Date.now();
+        lastChangeInterp = curTime;
+        // delay restarting the client by 3 seconds. i.e. if any other changes were made in 3
+        // seconds, then don't do the earlier change
+        setTimeout(async () => {
+            if (curTime !== lastChangeInterp) {
+                return;
+            }
+            // python interpreter changed. restart language client
+            if (client) {
+                client.stop();
+                client = null;
+            }
+            await startLanguageServer(context);
+        }, 3000);
+    });
     // create annotations
     context.subscriptions.push(vscode.commands.registerCommand('antimony.createAnnotationDialog', (...args) => createAnnotationDialog(context, args)));
+    // language config for CodeLens
+    const docSelector = {
+        language: 'antimony',
+        scheme: 'file',
+    };
+    let codeLensProviderDisposable = vscode.languages.registerCodeLensProvider(docSelector, new AntCodeLensProvider());
+    context.subscriptions.push(codeLensProviderDisposable);
+    // TODO: implement color schema
+    // vscode.workspace.onDidSaveTextDocument(decorateDocument);
+    // vscode.workspace.onDidOpenTextDocument((doc: vscode.TextDocument) => {
+    // 	decorateDocument(doc);
+    // });
+    // vscode.window.onDidChangeActiveTextEditor(async e => {
+    // 	decorateDocument(e?.document)
+    // });
+    // // underline color should change once the color theme changes (dark/light theme)
+    // vscode.window.onDidChangeActiveColorTheme(() => decorateDocument(window.activeTextEditor?.document));
 }
 exports.activate = activate;
 async function createAnnotationDialog(context, args) {
@@ -53,8 +94,20 @@ async function startLanguageServer(context) {
         return;
     }
     // create language client and launch server
-    const pythonMain = context.asAbsolutePath(path.join('server', 'main.py'));
-    debug.append(pythonMain);
+    const pythonMain = context.asAbsolutePath(path.join('src', 'server', 'main.py'));
+    const args = [pythonMain];
+    // Add debug options here if needed
+    const serverOptions = { command: pythonInterpreter, args };
+    const clientOptions = {
+        documentSelector: [
+            { scheme: "file", language: "antimony" },
+        ],
+    };
+    // Create the language client and start the client.
+    client = new node_1.LanguageClient('AntimonyLanguage', 'Antimony Language Server', serverOptions, clientOptions);
+    // Start the client. This will also launch the server
+    const clientDisposable = client.start();
+    context.subscriptions.push(clientDisposable);
 }
 // getting python interpretor
 function getPythonInterpreter() {
@@ -72,6 +125,23 @@ async function verifyInterpreter(path) {
     }
     catch (e) {
         return 2;
+    }
+}
+// Provides the CodeLens link to the usage guide if the file is empty.
+class AntCodeLensProvider {
+    async provideCodeLenses(document) {
+        // Only provide CodeLens if file is antimony and is empty
+        if (document.languageId === 'antimony' && !document.getText().trim()) {
+            const topOfDocument = new vscode.Range(0, 0, 0, 0);
+            let c = {
+                title: 'BioIDE Help Page',
+                command: 'vscode.open',
+                arguments: [vscode.Uri.parse('https://github.com/evilnose/vscode-antimony#usage')],
+            };
+            let codeLens = new vscode.CodeLens(topOfDocument, c);
+            return [codeLens];
+        }
+        return [];
     }
 }
 //# sourceMappingURL=extension.js.map

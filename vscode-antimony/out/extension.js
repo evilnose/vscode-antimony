@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deactivate = exports.activate = void 0;
 const vscode = require("vscode");
 const utils = require("./utils/utils");
+const path = require("path");
 // for debugging
 let debug = vscode.window.createOutputChannel("Debug");
 debug.show();
@@ -37,11 +38,27 @@ async function startLanguageServer(context) {
     pythonInterpreter = getPythonInterpreter();
     // verify the interpreter
     const error = await verifyInterpreter(pythonInterpreter);
+    if (error !== 0) {
+        let errMessage;
+        if (error === 1) {
+            errMessage = `Failed to launch language server: "${pythonInterpreter}" is not Python 3.7+`;
+        }
+        else {
+            errMessage = `Failed to launch language server: Unable to run "${pythonInterpreter}"`;
+        }
+        const choice = await vscode.window.showErrorMessage(errMessage, 'Edit in settings');
+        if (choice === 'Edit in settings') {
+            await vscode.commands.executeCommand('workbench.action.openSettings', 'vscode-antimony.pythonInterpreter');
+        }
+        return;
+    }
+    // create language client and launch server
+    const pythonMain = context.asAbsolutePath(path.join('server', 'main.py'));
+    debug.append(pythonMain);
 }
 // getting python interpretor
 function getPythonInterpreter() {
-    const config = vscode.workspace.getConfiguration('bio-ide');
-    // using non-null asseetion operator, assuming that the return value is not undefined
+    const config = vscode.workspace.getConfiguration('vscode-antimony');
     return config.get('pythonInterpreter');
 }
 // verify python interpeter

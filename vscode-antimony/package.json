@@ -19,7 +19,7 @@
 		"configuration": {
 			"title": "vscode-antimony",
 			"properties": {
-				"vscode-antimonye.pythonInterpreter": {
+				"vscode-antimony.pythonInterpreter": {
 					"type": "string",
 					"default": "python",
 					"scope": "machine",

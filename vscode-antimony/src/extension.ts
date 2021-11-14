@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import * as utils from './utils/utils';
+import * as path from 'path';
 import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
 	TransportKind
 } from 'vscode-languageclient/node';
-import { ChildProcess } from "child_process";
 
 // for debugging
 let debug = vscode.window.createOutputChannel("Debug");
@@ -58,17 +58,21 @@ async function startLanguageServer(context: vscode.ExtensionContext) {
 		}
 		const choice = await vscode.window.showErrorMessage(errMessage, 'Edit in settings');
 		if (choice === 'Edit in settings') {
-			await vscode.commands.executeCommand('workbench.action.openSettings', 'bio-ide.pythonInterpreter');
+			await vscode.commands.executeCommand('workbench.action.openSettings', 'vscode-antimony.pythonInterpreter');
 		}
 		return;
 	}
+	// create language client and launch server
+	const pythonMain = context.asAbsolutePath(
+		path.join('server', 'main.py')
+	);
+	debug.append(pythonMain);
 }
 
 // getting python interpretor
 function getPythonInterpreter(): string {
-	const config = vscode.workspace.getConfiguration('bio-ide');
-	// using non-null asseetion operator, assuming that the return value is not undefined
-	return config.get('pythonInterpreter')!;
+	const config = vscode.workspace.getConfiguration('vscode-antimony');
+	return config.get('pythonInterpreter');
 }
 
 // verify python interpeter

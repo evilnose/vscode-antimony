@@ -70,7 +70,7 @@ async function createAnnotationDialog(context, args) {
     const selection = vscode.window.activeTextEditor.selection;
     // get the selected text
     const selectedText = vscode.window.activeTextEditor.document.getText(selection);
-    const initialEntity = selectedText || '{entityName}';
+    const initialEntity = selectedText || 'entityName';
     let initialQuery;
     // get current file
     if (args.length == 2) {

@@ -1,0 +1,16 @@
+.vscode
+.vscode-test
+**/*.vsix
+
+py36
+py37
+__pycache__
+pythonFiles/lib/python/**
+
+temp
+node_modules
+client/out
+dist
+**/*.log
+.lark-cache
+

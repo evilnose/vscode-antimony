@@ -1,0 +1,83 @@
+
+var_name : ["$"] NAME
+in_comp : "in" var_name
+namemaybein : var_name [in_comp]
+
+empty:
+reaction_name : namemaybein ":"
+reaction : [reaction_name] species_list ARROW [species_list] ";" sum [in_comp]
+    | [reaction_name] [species_list] ARROW species_list ";" sum [in_comp]
+species_list : species ("+" species)*
+species : [NUMBER] ["$"] NAME
+ARROW : "->"
+    | "=>"
+
+assignment : namemaybein "=" sum
+
+annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
+ANNOT_KEYWORD: "identity" | "hasPart"
+
+
+declaration : decl_modifiers decl_item ("," decl_item)*
+decl_modifiers : VAR_MODIFIER
+    | TYPE_MODIFIER
+    | VAR_MODIFIER TYPE_MODIFIER
+decl_item : namemaybein [decl_assignment]
+decl_assignment : "=" sum
+
+VAR_MODIFIER: /\b(var|const)\b/
+TYPE_MODIFIER: /\b(species|compartment|formula)\b/
+
+?sum : product
+    | sum "+" product
+    | sum "-" product
+
+?product : power
+    | product "*" power
+    | product "/" power
+
+?power: atom
+    | power "^" atom
+
+?atom : NUMBER
+    | var_name
+    | "-" atom
+    | "+" atom
+    | "(" sum ")"
+
+
+// optimizations possible when there are multiple empty lines
+// example: https://docs.python.org/3/reference/grammar.html
+// Now note that NEWLINE is already doing that, but ";" is not
+?simple_stmt : [small_stmt] (";" | NEWLINE)
+?small_stmt : reaction
+    | assignment
+    | declaration
+    | annotation
+
+
+// For some reason we need to have at least one suite in the model, even if it is just
+// a newline or a semicolon
+model : ("model" | "module") NAME simple_stmt+ "end"
+
+COMMENT: "/*" /(.|\n)*/ "*/"
+    | "#" /.*/
+    | "//" /.*/
+
+
+// TODO rename to 'file'
+root : (simple_stmt | model)*
+
+
+// negative lookahead to avoid matching keywords (note the word boundaries)
+NAME : /(?!\b(var|const|compartment|species|formula)\b)/ CNAME
+
+
+%import common.CNAME
+%import common.NUMBER
+%import common.WS
+%import common.WS_INLINE
+%import common.NEWLINE
+%import common.ESCAPED_STRING
+%ignore WS_INLINE
+%ignore COMMENT

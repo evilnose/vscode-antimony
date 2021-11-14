@@ -7,6 +7,7 @@ import {
 	ServerOptions,
 	TransportKind
 } from 'vscode-languageclient/node';
+import { multiStepInput } from './annotationInput';
 
 // for debugging
 let debug = vscode.window.createOutputChannel("Debug");
@@ -77,6 +78,20 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 		return;
 	}
 	await client.onReady();
+	// dialog for annotation
+	const selection = vscode.window.activeTextEditor.selection
+	// get the selected text
+	const selectedText = vscode.window.activeTextEditor.document.getText(selection);
+	const initialEntity = selectedText || '{entityName}';
+	let initialQuery;
+	// get current file
+	if (args.length == 2) {
+		initialQuery = args[1];
+	} else {
+		initialQuery = selectedText;
+	}
+	const selectedItem = await multiStepInput(context, initialQuery);
+	await insertAnnotation(selectedItem, initialEntity);
 }
 
 export function deactivate(): Thenable<void> | undefined {
@@ -167,4 +182,15 @@ class AntCodeLensProvider implements vscode.CodeLensProvider {
 
 		return [];
 	}
+}
+
+async function insertAnnotation(selectedItem, entityName) {
+	const entity = selectedItem.entity;
+	const id = entity['id'];
+	const prefix = entity['prefix'];
+	const snippetText = `\n\${1:${entityName}} identity "http://identifiers.org/${prefix}/${id}"\n`;
+	const snippetStr = new vscode.SnippetString(snippetText);
+	const doc = vscode.window.activeTextEditor.document;
+	const pos = doc.lineAt(doc.lineCount - 1).range.end;
+	vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
 }

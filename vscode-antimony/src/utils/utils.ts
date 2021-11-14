@@ -30,3 +30,7 @@ export function execPromise(command: string) {
         })
     });
 }
+
+export function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}

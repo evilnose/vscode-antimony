@@ -5,6 +5,7 @@ const vscode = require("vscode");
 const utils = require("./utils/utils");
 const path = require("path");
 const node_1 = require("vscode-languageclient/node");
+const annotationInput_1 = require("./annotationInput");
 // for debugging
 let debug = vscode.window.createOutputChannel("Debug");
 debug.show();
@@ -65,6 +66,21 @@ async function createAnnotationDialog(context, args) {
         return;
     }
     await client.onReady();
+    // dialog for annotation
+    const selection = vscode.window.activeTextEditor.selection;
+    // get the selected text
+    const selectedText = vscode.window.activeTextEditor.document.getText(selection);
+    const initialEntity = selectedText || '{entityName}';
+    let initialQuery;
+    // get current file
+    if (args.length == 2) {
+        initialQuery = args[1];
+    }
+    else {
+        initialQuery = selectedText;
+    }
+    const selectedItem = await (0, annotationInput_1.multiStepInput)(context, initialQuery);
+    await insertAnnotation(selectedItem, initialEntity);
 }
 function deactivate() {
     if (!client) {
@@ -143,5 +159,15 @@ class AntCodeLensProvider {
         }
         return [];
     }
+}
+async function insertAnnotation(selectedItem, entityName) {
+    const entity = selectedItem.entity;
+    const id = entity['id'];
+    const prefix = entity['prefix'];
+    const snippetText = `\n\${1:${entityName}} identity "http://identifiers.org/${prefix}/${id}"\n`;
+    const snippetStr = new vscode.SnippetString(snippetText);
+    const doc = vscode.window.activeTextEditor.document;
+    const pos = doc.lineAt(doc.lineCount - 1).range.end;
+    vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
 }
 //# sourceMappingURL=extension.js.map

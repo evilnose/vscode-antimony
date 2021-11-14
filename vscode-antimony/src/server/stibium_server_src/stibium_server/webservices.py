@@ -3,8 +3,11 @@
 Author: Gary Geng
 '''
 
-from .bioservices.chebi import ChEBI
-from .bioservices.uniprot import UniProt
+# local
+# from .bioservices.chebi import ChEBI
+# from .bioservices.uniprot import UniProt
+
+from bioservices import *
 
 from io import StringIO
 from urllib.error import URLError

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.execPromise = exports.pythonInterpreterError = void 0;
+exports.sleep = exports.execPromise = exports.pythonInterpreterError = void 0;
 const vscode = require("vscode");
 const cp = require("child_process");
 let debug = vscode.window.createOutputChannel("Debug1");
@@ -31,4 +31,8 @@ function execPromise(command) {
     });
 }
 exports.execPromise = execPromise;
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+exports.sleep = sleep;
 //# sourceMappingURL=utils.js.map

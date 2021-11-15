@@ -31,7 +31,7 @@ import time
 
 
 # TODO remove this for production
-logging.basicConfig(filename='bio-idek.log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.DEBUG)
 
 
 '''=====Server-related Code===='''

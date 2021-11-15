@@ -98,6 +98,7 @@ export function deactivate(): Thenable<void> | undefined {
 	if (!client) {
 		return undefined;
 	}
+	// shut down the language client
 	return client.stop();
 }
 

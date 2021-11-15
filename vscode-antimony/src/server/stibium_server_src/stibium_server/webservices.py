@@ -7,7 +7,8 @@ Author: Gary Geng
 # from .bioservices.chebi import ChEBI
 # from .bioservices.uniprot import UniProt
 
-from bioservices import *
+from bioservices import ChEBI
+from bioservices import UniProt
 
 from io import StringIO
 from urllib.error import URLError

@@ -86,6 +86,7 @@ function deactivate() {
     if (!client) {
         return undefined;
     }
+    // shut down the language client
     return client.stop();
 }
 exports.deactivate = deactivate;

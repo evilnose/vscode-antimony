@@ -104,27 +104,15 @@
             "patterns": [
                 {
                     "match": "=>|->",
-                    "name": "punctuation.separator.arrow.antimony"
+                    "name": "symbol.transform"
                 },
                 {
-                    "match": "=",
-                    "name": "keyword.operator.assignment.antimony"
+                    "match": "=|:=",
+                    "name": "symbol.assign"
                 },
                 {
                     "match": "\\-|\\+|\\*|\\/|\\^",
-                    "name": "keyword.operator.arithmetic.antimony"
-                },
-                {
-                    "match": ";",
-                    "name": "punctuation.terminator.antimony"
-                },
-                {
-                    "match": ":",
-                    "name": "punctuation.separator.reaction.antimony"
-                },
-                {
-                    "match": "\\$",
-                    "name": "storage.modifier.antimony"
+                    "name": "symbol.operator"
                 }
             ]
         },
@@ -132,19 +120,31 @@
             "patterns": [
                 {
                     "match": "\\b(?:identity)\\b",
-                    "name": "keyword.operator.assignment.annotation.antimony"
+                    "name": "type.annotation"
                 },
                 {
-                    "match": "\\b(?:const|var)\\b",
-                    "name": "storage.modifier.antimony"
+                    "match": "\\b(?:const)\\b",
+                    "name": "type.const"
                 },
                 {
-                    "match": "\\b(?:species|formula|compartment)\\b",
-                    "name": "support.type.antimony"
+                    "match": "\\b(?:var)\\b",
+                    "name": "type.var"
                 },
                 {
-                    "match": "\\b(?:in)\\b",
-                    "name": "keyword.operator.compartment.antimony"
+                    "match": "\\b(?:species)\\b",
+                    "name": "type.species"
+                },
+                {
+                    "match": "\\b(?:function|model|end)\\b",
+                    "name": "type.functionmodel"
+                },
+                {
+                    "match": "\\b(?:compartment)\\b",
+                    "name": "type.compartment"
+                },
+                {
+                    "match": "\\b(?:in|at|import)\\b",
+                    "name": "type.keywords"
                 }
             ]
         },

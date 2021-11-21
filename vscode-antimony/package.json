@@ -55,7 +55,14 @@
 					"when": "editorLangId == antimony"
 				}
 			]
-		}
+		},
+		"grammars": [
+			{
+				"language": "antimony",
+				"scopeName": "source.antimony",
+				"path": "./src/syntax/antimony.tmLanguage.json"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

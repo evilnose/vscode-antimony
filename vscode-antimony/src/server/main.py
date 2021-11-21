@@ -7,15 +7,13 @@ import sys
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
-# Temporary, before both packages are published
-sys.path.append(os.path.join(EXTENSION_ROOT, "server", "stibium_src"))
-sys.path.append(os.path.join(EXTENSION_ROOT, "server", "stibium_server_src"))
+sys.path.append(os.path.join(EXTENSION_ROOT, "server", "stibium"))
 
 from stibium.api import AntCompletion, AntCompletionKind
 from stibium.types import Issue, IssueSeverity
 
-from stibium_server.utils import AntFile, pygls_range, sb_position, get_antfile, sb_range
-from stibium_server.webservices import NetworkError, WebServices
+from bioservices_server.utils import AntFile, pygls_range, sb_position, get_antfile, sb_range
+from bioservices_server.webservices import NetworkError, WebServices
 
 import logging
 from dataclasses import dataclass

@@ -61,7 +61,12 @@
 				"language": "antimony",
 				"scopeName": "source.antimony",
 				"path": "./src/syntax/antimony.tmLanguage.json"
-			}
+			},
+			{
+				"path": "./src/syntax/injection.json",
+				"scopeName": "todo-comment.injection",
+				"injectTo": ["source.antimony"]
+			  }
 		]
 	},
 	"scripts": {

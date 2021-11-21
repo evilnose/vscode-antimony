@@ -171,9 +171,9 @@ class AntCodeLensProvider implements vscode.CodeLensProvider {
 		// Only provide CodeLens if file is antimony and is empty
 		if (document.languageId === 'antimony' && !document.getText().trim()) {
 			const topOfDocument = new vscode.Range(0, 0, 0, 0);
-
+			// TODO: change the link
 			let c: vscode.Command = {
-				title: 'BioIDE Help Page',
+				title: 'vscode-antimony Help Page',
 				command: 'vscode.open',
 				arguments: [vscode.Uri.parse('https://github.com/evilnose/vscode-antimony#usage')],
 			}

@@ -1,0 +1,67 @@
+#### comments ####
+# testing single-line comments
+
+// testing single-line comments
+
+/* Testing multi-line comments
+testing multi-line comments */
+
+// TODO: testing double-slash TODO
+
+# TODO: testing number-sign TODO
+
+/* 
+TODO: testing multi-line TODO 
+*/
+
+#### species ####
+species s = 4
+// error check TODO: check if parameter/species is initialized?
+S1 -> S2; k1*S1
+
+#### parameters ####
+p = 3
+
+#### compartments ####
+// error check TODO: check if parameters exist in scope
+compartment c = 5
+compartment cytoplasm = 1.5, mitochondria = 2.6
+const S1 in mitochondria
+
+#### const ####
+const S1;
+
+#### var ####
+var species S4;
+
+#### events ####
+// error check TODO: check if parameters exist in scope
+at (x>5): y=3, x=r+2
+
+#### function/model ####
+// error check TODO: 
+// 1. check if parameter exists in scope
+// 2. check for unused parameters (warning)
+function quadratic(x, a, b, c)
+  a*x^2 + b*x + c
+end
+
+// error check TODO:
+// 1. check if parameter exists in scope
+// 2. check if function exists in scope
+model quad1
+  S3 := quadratic(s1, k1, k2, k3);
+end
+
+#### assignment rule ####
+// error check TODO: check if each parameter exists in the scope
+Ptot := P1 + P2 + PE;
+
+#### Annotations ####
+// error check TODO: check if entity exists
+s identity "http://identifiers.org/chebi/CHEBI:76"
+S1 identity "http://identifiers.org/chebi/CHEBI:16313"
+
+#### import ####
+// error check TODO: check if file exists
+import "models1.txt"

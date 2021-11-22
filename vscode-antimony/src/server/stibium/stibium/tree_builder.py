@@ -16,7 +16,7 @@ from stibium.ant_types import (Annotation, ArithmeticExpr, Assignment, Atom, Dec
                                Power, Product, Reaction, ReactionName,
                                SimpleStmt, Species, SpeciesList, StringLiteral,
                                Sum, TreeNode, TrunkNode, TypeModifier, VarModifier,
-                               VarName)
+                               VarName, Model, SimpleStmtList)
 from stibium.symbols import AbstractScope, BaseScope
 from stibium.types import ASTNode, SrcRange, SymbolType, Variability
 from stibium.utils import get_tree_range, get_token_range
@@ -52,11 +52,13 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'product': Product,
     'power': Power,
     'atom': Atom,
+    'model': Model,
+    'simple_stmt_list': SimpleStmtList,
 }
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',
-             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH'}
-KEYWORDS = {'ANNOT_KEYWORD', 'IN'}
+             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ"}
+KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'END', 'MODEL'}
 
 for name in OPERATORS:
     TREE_MAP[name] = Operator
@@ -73,13 +75,11 @@ def transform_tree(tree: Optional[Union[Tree, str]]):
         # assert isinstance(tree, Token)
         tree = cast(Token, tree)
         cls = TREE_MAP[tree.type]
-        logging.debug("AAAA " + str(cls))
         # assert issubclass(cls, LeafNode)
         return cls(get_token_range(tree), tree.value)  # type: ignore
     else:
         cls = TREE_MAP[tree.data]
         # assert issubclass(cls, TrunkNode)
-
         children = tuple(transform_tree(child) for child in tree.children)
 
         # special handling for DeclModifiers. For consistency, we always store two children, even

@@ -466,11 +466,17 @@ class SimpleStmt(TrunkNode):
         return self.children[0]
 
 
+@dataclass
+class SimpleStmtList(TrunkNode):
+    children: Tuple[SimpleStmt, ...] = field(repr=False)
+
 # TODO
 @dataclass
 class Model(TrunkNode):
+    children: Tuple[Keyword, VarName, SimpleStmtList, Keyword] = field(repr=False)
+
     def get_name(self):
-        assert False, 'Not implemented'
+        return self.children[1]
 
 
 @dataclass

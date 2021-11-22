@@ -74,7 +74,7 @@ class AntimonyParser:
         tree: Tree
         root_puppet = get_puppet(self.parser, 'root', text)
         tree = self._parse_with_puppet(root_puppet, recoverable, text)
-
+        logging.debug(str(tree))
         # If text is empty, this tree would not have line or columns
         if len(tree.children) == 0:
             tree.meta.line = 1
@@ -129,7 +129,6 @@ class AntimonyParser:
                 token = Token.new_borrow_pos(
                     '$END', '', token) if token else Token('$END', '', 0, 1, 1)  # type: ignore
                 token_callback(token)
-
                 tree = state.feed_token(token, True)
 
                 # remove the dummy tokens

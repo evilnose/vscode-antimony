@@ -17,7 +17,7 @@ TODO: testing multi-line TODO
 #### species ####
 species s = 4
 // error check TODO: check if parameter/species is initialized?
-S1 -> S2; k1*S1
+s -> S2; k1*S1
 
 #### parameters ####
 p = 3
@@ -34,24 +34,31 @@ const S1;
 #### var ####
 var species S4;
 
+#### reaction ####
+J0: S + E -> SE; k1*k2*S*E - k2*ES;
+
 #### events ####
 // error check TODO: check if parameters exist in scope
-at (x>5): y=3, x=r+2
+// at (x>5): y=3, x=r+2
 
 #### function/model ####
 // error check TODO: 
 // 1. check if parameter exists in scope
 // 2. check for unused parameters (warning)
-function quadratic(x, a, b, c)
-  a*x^2 + b*x + c
-end
+// function quadratic(x, a, b, c)
+//   a*x^2 + b*x + c
+// end
 
 // error check TODO:
 // 1. check if parameter exists in scope
 // 2. check if function exists in scope
+species S3 = 0;
+
 model quad1
   S3 := quadratic(s1, k1, k2, k3);
 end
+
+S3 := quadratic(s1, k1, k2, k3);
 
 #### assignment rule ####
 // error check TODO: check if each parameter exists in the scope

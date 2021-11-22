@@ -120,6 +120,9 @@ class AntTreeAnalyzer:
                 lines.add(issue.range.start.line)
 
     def resolve_qname(self, qname: QName):
+        logging.debug("resolve_qname")
+        logging.debug(qname)
+        logging.debug(self.table.get(qname))
         return self.table.get(qname)
 
     def get_all_names(self) -> Set[str]:

@@ -150,6 +150,14 @@ class AntFile:
 
     def goto(self, position: SrcPosition):
         symbols, range_ = self.symbols_at(position)
+        if not symbols and position.column - 1 >= 0:
+            position = SrcPosition(position.line, position.column - 1)
+            symbols, range_ = self.symbols_at(position)
+            if not symbols:
+                position = SrcPosition(position.line, position.column + 1)
+                symbols, range_ = self.symbols_at(position)
+        logging.debug("goto")
+        logging.debug(symbols)
         if not symbols:
             return [], range_
 

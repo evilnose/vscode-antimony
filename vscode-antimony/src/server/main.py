@@ -104,13 +104,21 @@ def hover(params: TextDocumentPositionParams):
 #### GOTO DEFINITION ####
 @server.feature(DEFINITION)
 def definition(params):
-    text_doc = server.workspace.get_document(params.textDocument.uri)
-    antfile = get_antfile(text_doc)
-    srclocations, range_ = antfile.goto(sb_position(params.position))
+    global antfile_cache
+    if antfile_cache is None:
+        text_doc = server.workspace.get_document(params.textDocument.uri)
+        antfile_cache = get_antfile(text_doc)
+    logging.debug("position")
+    logging.debug(params.position)
+    srclocations, range_ = antfile_cache.goto(sb_position(params.position))
+    logging.debug("srclocations")
+    logging.debug(srclocations)
     definitions = [Location(
         loc.path,
         pygls_range(loc.range)) for loc in srclocations]
     # If no definitions, return None
+    logging.debug("definitions")
+    logging.debug(definitions)
     return definitions or None
 
 #### helper and util ####

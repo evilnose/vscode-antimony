@@ -175,7 +175,8 @@ class Operator(LeafNode):
 
 @dataclass
 class Keyword(LeafNode):
-    pass
+    def get_str(self):
+        return self.text[1:-1]
 
 
 @dataclass
@@ -484,6 +485,9 @@ class Function(TrunkNode):
     def get_name(self):
         assert False, 'Not implemented'
 
+@dataclass
+class End(LeafNode):
+    pass
 
 @dataclass
 class FileNode(TrunkNode):

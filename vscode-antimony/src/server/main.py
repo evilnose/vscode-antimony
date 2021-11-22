@@ -107,7 +107,6 @@ def definition(params):
     text_doc = server.workspace.get_document(params.textDocument.uri)
     antfile = get_antfile(text_doc)
     srclocations, range_ = antfile.goto(sb_position(params.position))
-
     definitions = [Location(
         loc.path,
         pygls_range(loc.range)) for loc in srclocations]

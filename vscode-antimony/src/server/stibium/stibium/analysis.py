@@ -1,6 +1,6 @@
 
 import logging
-from stibium.ant_types import Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable
 
@@ -38,7 +38,6 @@ def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
         else:
             # Didn't find it
             return None
-
     # can't have nested models/functions
     assert not (model is not None and func is not None)
     if model:
@@ -47,7 +46,6 @@ def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
         scope = FunctionScope(str(func))
     else:
         scope = BaseScope()
-
     return QName(scope, node)
 
 
@@ -61,11 +59,29 @@ class AntTreeAnalyzer:
                 continue
             if isinstance(child, ErrorNode):
                 continue
+            if isinstance(child, Model):
+                scope = ModelScope(str(child.get_name()))
+                for cchild in child.children:
+                    if isinstance(cchild, ErrorToken):
+                        continue
+                    if isinstance(cchild, ErrorNode):
+                        continue
+                    if isinstance(cchild, SimpleStmtList):
+                        for st in cchild.children:
+                            stmt = st.get_stmt()
+                            if stmt is None:
+                                continue
+                            {
+                                'Reaction': self.handle_reaction,
+                                'Assignment': self.handle_assignment,
+                                'Declaration': self.handle_declaration,
+                                'Annotation': self.handle_annotation,
+                            }[stmt.__class__.__name__](scope, stmt)
+                            self.handle_child_incomp(scope, stmt)
             if isinstance(child, SimpleStmt):
                 stmt = child.get_stmt()
                 if stmt is None:
                     continue
-
                 {
                     'Reaction': self.handle_reaction,
                     'Assignment': self.handle_assignment,

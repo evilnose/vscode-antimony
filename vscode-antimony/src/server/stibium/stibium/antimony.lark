@@ -61,7 +61,9 @@ simple_stmt_list : simple_stmt+
 
 // For some reason we need to have at least one suite in the model, even if it is just
 // a newline or a semicolon
-model : ("model" | "module") NAME simple_stmt_list "end"
+model : ("model" | "module") NAME simple_stmt_list END
+
+END : "end"
 
 COMMENT: "/*" /(.|\n)*/ "*/"
     | "#" /.*/

@@ -1,5 +1,6 @@
 '''Classes for working with and storing symbols.
 '''
+import logging
 from stibium.ant_types import Annotation, Name, TreeNode
 from .types import ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
 

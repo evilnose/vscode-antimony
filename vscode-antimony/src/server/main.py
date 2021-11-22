@@ -3,7 +3,7 @@ Author: Gary Geng
 """
 import os
 import sys
-
+import filecmp
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
@@ -34,6 +34,27 @@ logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.
 server = LanguageServer()
 services = WebServices()
 
+antfile_cache = None
+
+#### Annotations ####
+@server.command('antimony.getAnnotated')
+def get_annotated(ls: LanguageServer, args):
+    '''Return the list of annotated names as ranges'''
+    text = args[0]
+    antfile = AntFile('', text)
+    qnames = antfile.analyzer.table.get_all_qnames()
+    annotated = [q for q in qnames if antfile.get_annotations(q)]
+    ranges = [pygls_range(a.name.range) for a in annotated]
+    range_objs = [
+        {
+            'line': r.start.line,
+            'column': r.start.character,
+            'end_line': r.end.line,
+            'end_column': r.end.character,
+            } for r in ranges
+    ]
+    return range_objs
+
 @server.thread()
 @server.command('antimony.sendQuery')
 def query_species(ls: LanguageServer, args):
@@ -57,24 +78,42 @@ def query_species(ls: LanguageServer, args):
             'error': 'Connection Error!'
         }
 
+#### Hover for displaying information ####
+@server.feature(HOVER)
+def hover(params: TextDocumentPositionParams):
+    global antfile_cache
+    if antfile_cache is None:
+        text_doc = server.workspace.get_document(params.textDocument.uri)
+        antfile_cache = get_antfile(text_doc)
+        
+    symbols, range_ = antfile_cache.symbols_at(sb_position(params.position))
+    if not symbols:
+        return None
 
-@server.command('antimony.getAnnotated')
-def get_annotated(ls: LanguageServer, args):
-    '''Return the list of annotated names as ranges'''
-    text = args[0]
-    antfile = AntFile('', text)
-    qnames = antfile.analyzer.table.get_all_qnames()
-    annotated = [q for q in qnames if antfile.get_annotations(q)]
-    ranges = [pygls_range(a.name.range) for a in annotated]
-    range_objs = [
-        {
-            'line': r.start.line,
-            'column': r.start.character,
-            'end_line': r.end.line,
-            'end_column': r.end.character,
-            } for r in ranges
-    ]
-    return range_objs
+    assert range_ is not None
+
+    # TODO fix the interface
+    sym = symbols[0]
+    text = sym.help_str()
+    contents = MarkupContent(MarkupKind.Markdown, text)
+    return Hover(
+        contents=contents,
+        range=pygls_range(range_),
+    )
+
+#### helper and util ####
+@server.thread()
+@server.feature(TEXT_DOCUMENT_DID_CHANGE)
+def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
+    # re-generate parse tree
+    global antfile_cache
+    text_doc = server.workspace.get_document(params.textDocument.uri)
+    antfile_cache = get_antfile(text_doc)
+
+
+@server.feature(TEXT_DOCUMENT_DID_SAVE)
+def did_save(ls, params: DidSaveTextDocumentParams):
+    pass
 
 
 if __name__ == '__main__':

@@ -153,7 +153,7 @@ class AntFile:
             return [], range_
 
         return [SrcLocation(
-            to_uri(self.path),  # TODO might be other files when we add cross-file functionalities
+            to_uri(self.path),  # TODO: might be other files when we add cross-file functionalities
             sym.def_name().range,
         ) for sym in symbols], range_
 

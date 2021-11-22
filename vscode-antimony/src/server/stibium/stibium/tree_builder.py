@@ -2,6 +2,7 @@
 
 # Helper classes to hold name structures
 
+import logging
 from typing import Callable, Dict, Optional, Type, TypeVar, Union, cast
 
 from lark.lexer import Token
@@ -31,7 +32,6 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'ESCAPED_STRING': StringLiteral,
     'ANNOT_KEYWORD': Keyword,
     'SEMICOLON': Operator,
-    # TODO need to add more operators
     'error_node': ErrorNode,
     'root': FileNode,
     'simple_stmt': SimpleStmt,
@@ -48,12 +48,10 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'decl_assignment': DeclAssignment,
     'decl_modifiers': DeclModifiers,
     'annotation': Annotation,
-    # TODO decl_modifiers need special handling
     'sum': Sum,
     'product': Product,
     'power': Power,
     'atom': Atom,
-    # TODO more
 }
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',
@@ -75,7 +73,7 @@ def transform_tree(tree: Optional[Union[Tree, str]]):
         # assert isinstance(tree, Token)
         tree = cast(Token, tree)
         cls = TREE_MAP[tree.type]
-
+        logging.debug("AAAA " + str(cls))
         # assert issubclass(cls, LeafNode)
         return cls(get_token_range(tree), tree.value)  # type: ignore
     else:

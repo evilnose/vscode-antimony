@@ -92,7 +92,6 @@ def hover(params: TextDocumentPositionParams):
 
     assert range_ is not None
 
-    # TODO fix the interface
     sym = symbols[0]
     text = sym.help_str()
     contents = MarkupContent(MarkupKind.Markdown, text)

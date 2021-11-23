@@ -16,7 +16,7 @@ from stibium.ant_types import (Annotation, ArithmeticExpr, Assignment, Atom, Dec
                                Power, Product, Reaction, ReactionName,
                                SimpleStmt, Species, SpeciesList, StringLiteral,
                                Sum, TreeNode, TrunkNode, TypeModifier, VarModifier,
-                               VarName, Model, SimpleStmtList, End)
+                               VarName, Model, SimpleStmtList, End, Function, Parameters)
 from stibium.symbols import AbstractScope, BaseScope
 from stibium.types import ASTNode, SrcRange, SymbolType, Variability
 from stibium.utils import get_tree_range, get_token_range
@@ -54,12 +54,14 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'atom': Atom,
     'model': Model,
     'simple_stmt_list': SimpleStmtList,
+    'function': Function,
     'END': End,
+    'parameters': Parameters,
 }
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',
              'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ"}
-KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL'}
+KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL', 'FUNCTION'}
 
 for name in OPERATORS:
     TREE_MAP[name] = Operator

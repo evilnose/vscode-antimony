@@ -63,6 +63,11 @@ simple_stmt_list : simple_stmt+
 // a newline or a semicolon
 model : ("model" | "module") NAME simple_stmt_list END
 
+// Function
+function : "function" NAME "(" parameters? ")" NEWLINE sum NEWLINE END
+
+parameters : NAME ("," NAME)*
+
 END : "end"
 
 COMMENT: "/*" /(.|\n)*/ "*/"
@@ -71,11 +76,11 @@ COMMENT: "/*" /(.|\n)*/ "*/"
 
 
 // TODO rename to 'file'
-root : (simple_stmt | model)*
+root : (simple_stmt | model | function)*
 
 
 // negative lookahead to avoid matching keywords (note the word boundaries)
-NAME : /(?!\b(var|const|compartment|species|formula)\b)/ CNAME
+NAME : /(?!\b(var|const|compartment|species|formula|function|end|model)\b)/ CNAME
 
 
 %import common.CNAME

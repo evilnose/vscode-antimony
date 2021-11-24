@@ -45,9 +45,9 @@ J0: S + E -> SE; k1*k2*S*E - k2*ES;
 // error check TODO: 
 // 1. check if parameter exists in scope
 // 2. check for unused parameters (warning)
-// function quadratic(x, a, b, c)
-//   a*x^2 + b*x + c
-// end
+function quadratic(x, a, b, c, unused)
+  a*x^2 + b*x + c
+end
 
 // error check TODO:
 // 1. check if parameter exists in scope
@@ -55,10 +55,19 @@ J0: S + E -> SE; k1*k2*S*E - k2*ES;
 species S3 = 0;
 
 model quad1
-  S3 := quadratic(s1, k1, k2, k3);
+  species s = 4
+  s -> S2; k1*S1
 end
 
-S3 := quadratic(s1, k1, k2, k3);
+// modular model
+model side_reaction(S, k1, unused)
+  J0: S + E -> SE; k1*k2*S*E - k2*ES;
+  E = 3;
+  SE = E+S;
+  k2 = 0.4;
+end
+
+// S3 := quadratic(s1, k1, k2, k3);
 
 #### assignment rule ####
 // error check TODO: check if each parameter exists in the scope

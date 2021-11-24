@@ -481,20 +481,27 @@ class Model(TrunkNode):
 
 @dataclass
 class Parameters(TrunkNode):
-    def get_name(self):
-        return cast(Name, self.children[0])
 
     def get_items(self):
-        items = self.children[1::2]
+        items = self.children[0::2]
         return cast(List[Name], items)
+
+@dataclass
+class ModularModel(TrunkNode):
+    children: Tuple[Keyword, VarName, Operator, Parameters, Operator, 
+                    SimpleStmtList, Keyword] = field(repr=False)
+
+    def get_name(self):
+        return self.children[1]
 
 
 @dataclass
 class Function(TrunkNode):
-    children: Tuple[Keyword, VarName, Parameters, ArithmeticExpr, Keyword] = field(repr=False)
+    children: Tuple[Keyword, VarName, Operator, Parameters, Operator, Newline, 
+                    ArithmeticExpr, Keyword] = field(repr=False)
 
     def get_name(self):
-        assert self.children[1]
+        return self.children[1]
 
 @dataclass
 class End(LeafNode):

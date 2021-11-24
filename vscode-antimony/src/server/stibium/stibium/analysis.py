@@ -1,8 +1,8 @@
 
 import logging
-from stibium.ant_types import SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
-from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable
+from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
 from typing import Any, List, Optional, Set, cast
@@ -20,6 +20,7 @@ def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
     node: TreeNode = root
     model: Optional[Name] = None
     func: Optional[Name] = None
+    mmodel: Optional[Name] = None
     while not isinstance(node, LeafNode):
         if isinstance(node, Model):
             assert model is None
@@ -27,6 +28,9 @@ def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
         elif isinstance(node, Function):
             assert func is None
             func = node.get_name()
+        elif isinstance(node, ModularModel):
+            assert mmodel is None
+            mmodel = node.get_name()
 
         for child in node.children:
             if child is None:
@@ -44,6 +48,8 @@ def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
         scope = ModelScope(str(model))
     elif func:
         scope = FunctionScope(str(func))
+    elif mmodel:
+        scope = ModularModelScope(str(mmodel))
     else:
         scope = BaseScope()
     return QName(scope, node)
@@ -78,6 +84,38 @@ class AntTreeAnalyzer:
                                 'Annotation': self.handle_annotation,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
+            if isinstance(child, ModularModel):
+                scope = ModularModelScope(str(child.get_name()))
+                for cchild in child.children:
+                    if isinstance(cchild, ErrorToken):
+                        continue
+                    if isinstance(cchild, ErrorNode):
+                        continue
+                    if isinstance(cchild, SimpleStmtList):
+                        for st in cchild.children:
+                            stmt = st.get_stmt()
+                            if stmt is None:
+                                continue
+                            {
+                                'Reaction': self.handle_reaction,
+                                'Assignment': self.handle_assignment,
+                                'Declaration': self.handle_declaration,
+                                'Annotation': self.handle_annotation,
+                            }[stmt.__class__.__name__](scope, stmt)
+                            self.handle_child_incomp(scope, stmt)
+                    if isinstance(cchild, Parameters):
+                        self.handle_parameters(scope, cchild)
+            if isinstance(child, Function):
+                scope = FunctionScope(str(child.get_name()))
+                for cchild in child.children:
+                    if isinstance(cchild, ErrorToken):
+                        continue
+                    if isinstance(cchild, ErrorNode):
+                        continue
+                    if isinstance(cchild, ArithmeticExpr):
+                        self.handle_arith_expr(scope, cchild)
+                    if isinstance(cchild, Parameters):
+                        self.handle_parameters(scope, cchild)
             if isinstance(child, SimpleStmt):
                 stmt = child.get_stmt()
                 if stmt is None:
@@ -217,7 +255,13 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
-
+    
+    def handle_parameters(self, scope: AbstractScope, parameters: Parameters):
+        for parameter in parameters.get_items():
+            qname = QName(scope, parameter)
+            logging.debug("AAAA")
+            logging.debug(str(qname))
+            self.table.insert(qname, SymbolType.Parameter)
 
 # def get_ancestors(node: ASTNode):
 #     ancestors = list()

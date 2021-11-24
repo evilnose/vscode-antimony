@@ -47,6 +47,20 @@ class ModelScope(AbstractScope):
     def __hash__(self):
         return hash(('model', self.name))
 
+class ModularModelScope(AbstractScope):
+    '''The scope for statements in declared models.'''
+    def __init__(self, name: str):
+        self.name = name
+
+    def __eq__(self, other):
+        if not isinstance(other, ModularModelScope):
+            return NotImplemented
+        
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(('modular_model', self.name))
+
 
 class FunctionScope(AbstractScope):
     '''The scope for statements in functions.'''

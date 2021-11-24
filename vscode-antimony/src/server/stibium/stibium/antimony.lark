@@ -63,6 +63,9 @@ simple_stmt_list : simple_stmt+
 // a newline or a semicolon
 model : ("model" | "module") NAME simple_stmt_list END
 
+// Modular Model
+modular_model : "model" NAME "(" parameters? ")" simple_stmt_list END
+
 // Function
 function : "function" NAME "(" parameters? ")" NEWLINE sum NEWLINE END
 
@@ -76,7 +79,7 @@ COMMENT: "/*" /(.|\n)*/ "*/"
 
 
 // TODO rename to 'file'
-root : (simple_stmt | model | function)*
+root : (simple_stmt | model | function | modular_model)*
 
 
 // negative lookahead to avoid matching keywords (note the word boundaries)

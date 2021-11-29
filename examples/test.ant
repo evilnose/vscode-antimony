@@ -89,9 +89,11 @@ S1 identity "http://identifiers.org/chebi/CHEBI:16313"
 #### Units ####
 x = 40 substance;
 species z = 40 grams;
-
+species zz = 40 micromole;
+species zzz = 40 10e-6 mole / liter;
 // compound units
 unit micromole = 10e-6 mole / liter;
-// unit substance = 1e-6 mole;
-// x = 40 foo/3 seconds;
-// z has substance;
+unit substance = 1e-6 mole;
+// this should be a unit, not a parameter
+x = 40 foo/3 seconds;
+z has substance;

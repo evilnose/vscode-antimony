@@ -1,6 +1,6 @@
 
 import logging
-from stibium.ant_types import Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -84,6 +84,8 @@ class AntTreeAnalyzer:
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.handle_annotation,
+                                'UnitDeclaration': self.handle_unit_declaration,
+                                'UnitAssignment' : self.handle_unit_assignment,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
             if isinstance(child, ModularModel):
@@ -103,6 +105,8 @@ class AntTreeAnalyzer:
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.handle_annotation,
+                                'UnitDeclaration': self.handle_unit_declaration,
+                                'UnitAssignment' : self.handle_unit_assignment,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
                     if isinstance(cchild, Parameters):
@@ -127,6 +131,8 @@ class AntTreeAnalyzer:
                     'Assignment': self.handle_assignment,
                     'Declaration': self.handle_declaration,
                     'Annotation': self.handle_annotation,
+                    'UnitDeclaration': self.handle_unit_declaration,
+                    'UnitAssignment' : self.handle_unit_assignment,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
         
@@ -254,6 +260,15 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
+    
+    def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
+        varname = unitdec.get_var_name().get_name()
+        unit_sum = unitdec.get_unit_sum()
+        # TODO: later?
+    
+    def handle_unit_assignment(self, scope: AbstractScope, unitdec: UnitDeclaration):
+        # TODO: later?
+        pass
     
     def handle_parameters(self, scope: AbstractScope, parameters: Parameters):
         for parameter in parameters.get_items():

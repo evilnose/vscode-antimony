@@ -12,7 +12,7 @@ species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
-assignment : namemaybein ("=" | AEQ) sum [unit]
+assignment : namemaybein ("=" | AEQ) sum [unit_sum]
 
 AEQ : ":="
 
@@ -25,9 +25,24 @@ decl_modifiers : VAR_MODIFIER
     | TYPE_MODIFIER
     | VAR_MODIFIER TYPE_MODIFIER
 decl_item : namemaybein [decl_assignment]
-decl_assignment : "=" sum [unit]
+decl_assignment : "=" sum [unit_sum]
+
+// unit
+// builtin_unit : ("liter" | "mole" | "second" | "item" | "meter" | "liters" | "moles" | "seconds" | "items" | "meters")
 
 unit : NAME
+
+unit_declaration : "unit" var_name "=" unit_sum
+unit_sum : unit_sum "*" unit_atom
+        | unit_sum "/" unit_atom
+        | unit_sum "^" unit_atom
+        | unit_atom
+unit_atom : NUMBER NAME
+        | NAME
+        // | NUMBER builtin_unit
+        | "(" unit_sum ")"
+
+unit_assignment : var_name "has" unit_sum
 
 VAR_MODIFIER: /\b(var|const)\b/
 TYPE_MODIFIER: /\b(species|compartment|formula)\b/
@@ -58,6 +73,8 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
     | assignment
     | declaration
     | annotation
+    | unit_declaration
+    | unit_assignment
 
 simple_stmt_list : simple_stmt+
 
@@ -85,8 +102,8 @@ root : (simple_stmt | model | function | modular_model)*
 
 
 // negative lookahead to avoid matching keywords (note the word boundaries)
+// NAME : /(?!\b(var|const|compartment|species|formula|function|end|model|litre|mole|second|item|meter|litres|moles|seconds|"items"|"meters")\b)/ CNAME
 NAME : /(?!\b(var|const|compartment|species|formula|function|end|model)\b)/ CNAME
-
 
 %import common.CNAME
 %import common.NUMBER

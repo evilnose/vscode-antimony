@@ -126,19 +126,15 @@ class Symbol:
         if self.value_node is not None and self.value_node.get_value() is not None \
             and isinstance(self.value_node.get_value(), Number):
             if isinstance(self.value_node, Assignment) and self.value_node.get_type() is not None:
-                logging.debug("AAAA")
-                logging.debug(self.value_node.get_type())
                 ret = '```\n({}) {}\n{}\n```'.format(
                     self.type, self.name, 
-                    "Initialized Value: " + self.value_node.get_value().text + " " + 
-                    self.value_node.get_type().text[0].text)
-            if isinstance(self.value_node, DeclItem) and self.value_node.get_decl_assignment().get_type() is not None:
-                logging.debug("BBBB")
-                logging.debug(self.value_node.get_decl_assignment().get_type())
+                    "Initialized Value: " + self.value_node.get_value().text + " (" + 
+                    self.value_node.get_type().get_str() + ")")
+            elif isinstance(self.value_node, DeclItem) and self.value_node.get_decl_assignment().get_type() is not None:
                 ret = '```\n({}) {}\n{}\n```'.format(
                     self.type, self.name, 
-                    "Initialized Value: " + self.value_node.get_value().text + " " + 
-                    self.value_node.get_decl_assignment().get_type().text[0].text)
+                    "Initialized Value: " + self.value_node.get_value().text + " (" + 
+                    self.value_node.get_decl_assignment().get_type().get_str() + ")")
             else:
                 ret = '```\n({}) {}\n{}\n```'.format(
                     self.type, self.name, 
@@ -216,7 +212,7 @@ class SymbolTable:
     def get(self, qname: QName) -> List[Symbol]:
         leaf_table = self._leaf_table(qname.scope)
         name = qname.name.text
-        if name in leaf_table:
+        if isinstance(name, str) and name in leaf_table:
             return [leaf_table[name]]
         else:
             return []

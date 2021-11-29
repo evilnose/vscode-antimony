@@ -1,6 +1,6 @@
 
 import logging
-from stibium.ant_types import UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -267,8 +267,19 @@ class AntTreeAnalyzer:
         # TODO: later?
     
     def handle_unit_assignment(self, scope: AbstractScope, unitdec: UnitDeclaration):
-        # TODO: later?
-        pass
+        varname = unitdec.get_var_name().get_name()
+        unit_sum = unitdec.get_unit_sum()
+        symbols = self.table.get(QName(scope, varname))
+        if symbols:
+            sym = symbols[0]
+            value_node = sym.value_node
+            if isinstance(value_node, Assignment):
+                value_node.children = (value_node.children[0], value_node.children[1], value_node.children[2], unit_sum)
+            elif isinstance(value_node, DeclItem):
+                decl_assignment = value_node.children[1]
+                decl_assignment.children = (decl_assignment.children[0], decl_assignment.children[1], unit_sum)
+            print("AAAAA")
+            print(sym)
     
     def handle_parameters(self, scope: AbstractScope, parameters: Parameters):
         for parameter in parameters.get_items():

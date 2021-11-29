@@ -94,6 +94,7 @@ species zzz = 40 10e-6 mole / liter;
 // compound units
 unit micromole = 10e-6 mole / liter;
 unit substance = 1e-6 mole;
-// this should be a unit, not a parameter
 x = 40 foo/3 seconds;
+// um.. probably a warning but this changes the unit
 z has substance;
+zzzz has substance;

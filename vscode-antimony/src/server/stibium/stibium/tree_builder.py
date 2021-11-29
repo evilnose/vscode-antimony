@@ -8,7 +8,7 @@ from typing import Callable, Dict, Optional, Type, TypeVar, Union, cast
 from lark.lexer import Token
 from lark.tree import Tree
 
-from stibium.ant_types import (Annotation, ArithmeticExpr, Assignment, Atom, DeclModifiers,
+from stibium.ant_types import (Unit, Annotation, ArithmeticExpr, Assignment, Atom, DeclModifiers,
                                Declaration, DeclAssignment,
                                DeclItem, ErrorNode, ErrorToken,
                                FileNode, InComp, Keyword, LeafNode, NameMaybeIn,
@@ -58,6 +58,7 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'END': End,
     'parameters': Parameters,
     'modular_model': ModularModel,
+    'unit': Unit,
 }
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',

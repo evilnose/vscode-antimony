@@ -3,6 +3,7 @@
 import logging
 from stibium.ant_types import Annotation, Name, TreeNode
 from .types import ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
+from .ant_types import DeclItem, Assignment, Number
 
 import abc
 from collections import defaultdict, namedtuple
@@ -83,7 +84,6 @@ class QName:
     scope: AbstractScope
     name: Name
 
-
 class Symbol:
     '''A generic Symbol.
 
@@ -123,7 +123,29 @@ class Symbol:
     def help_str(self):
         # TODO this is very basic right now. Need to create new Symbol classes for specific types
         # and get better data displayed here.
-        ret = '```\n({}) {}\n```'.format(self.type, self.name)
+        if self.value_node is not None and self.value_node.get_value() is not None \
+            and isinstance(self.value_node.get_value(), Number):
+            if isinstance(self.value_node, Assignment) and self.value_node.get_type() is not None:
+                logging.debug("AAAA")
+                logging.debug(self.value_node.get_type())
+                ret = '```\n({}) {}\n{}\n```'.format(
+                    self.type, self.name, 
+                    "Initialized Value: " + self.value_node.get_value().text + " " + 
+                    self.value_node.get_type().text[0].text)
+            if isinstance(self.value_node, DeclItem) and self.value_node.get_decl_assignment().get_type() is not None:
+                logging.debug("BBBB")
+                logging.debug(self.value_node.get_decl_assignment().get_type())
+                ret = '```\n({}) {}\n{}\n```'.format(
+                    self.type, self.name, 
+                    "Initialized Value: " + self.value_node.get_value().text + " " + 
+                    self.value_node.get_decl_assignment().get_type().text[0].text)
+            else:
+                ret = '```\n({}) {}\n{}\n```'.format(
+                    self.type, self.name, 
+                    "Initialized Value: " + self.value_node.get_value().text)
+        else:
+            ret = '```\n({}) {}\n```'.format(self.type, self.name)
+    
         if self.annotations:
             # add the first annotation
             ret += '\n\n***\n\n{}'.format(self.annotations[0].get_uri())
@@ -196,7 +218,8 @@ class SymbolTable:
         name = qname.name.text
         if name in leaf_table:
             return [leaf_table[name]]
-        return []
+        else:
+            return []
 
     def insert(self, qname: QName, typ: SymbolType, decl_node: TreeNode = None,
                value_node: TreeNode = None):

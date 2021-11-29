@@ -87,14 +87,16 @@ def hover(params: TextDocumentPositionParams):
         antfile_cache = get_antfile(text_doc)
 
     symbols, range_ = antfile_cache.symbols_at(sb_position(params.position))
+
     if not symbols:
         return None
-
+    
     assert range_ is not None
 
     sym = symbols[0]
     text = sym.help_str()
     contents = MarkupContent(MarkupKind.Markdown, text)
+
     return Hover(
         contents=contents,
         range=pygls_range(range_),
@@ -107,17 +109,11 @@ def definition(params):
     if antfile_cache is None:
         text_doc = server.workspace.get_document(params.textDocument.uri)
         antfile_cache = get_antfile(text_doc)
-    logging.debug("position")
-    logging.debug(params.position)
     srclocations, range_ = antfile_cache.goto(sb_position(params.position))
-    logging.debug("srclocations")
-    logging.debug(srclocations)
     definitions = [Location(
         loc.path,
         pygls_range(loc.range)) for loc in srclocations]
     # If no definitions, return None
-    logging.debug("definitions")
-    logging.debug(definitions)
     return definitions or None
 
 #### helper and util ####

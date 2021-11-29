@@ -159,6 +159,8 @@ class Name(LeafNode):
     def check_rep(self):
         assert bool(self.text)
 
+class Unit(LeafNode):
+    pass
 
 class Number(LeafNode, ArithmeticExpr):
     def get_value(self):
@@ -330,7 +332,7 @@ class Reaction(TrunkNode):
 
 @dataclass
 class Assignment(TrunkNode):
-    children: Tuple[NameMaybeIn, Operator, ArithmeticExpr] = field(repr=False)
+    children: Tuple[NameMaybeIn, Operator, ArithmeticExpr, Optional[Unit]] = field(repr=False)
 
     def get_maybein(self):
         return self.children[0]
@@ -343,6 +345,9 @@ class Assignment(TrunkNode):
 
     def get_value(self):
         return self.children[2]
+    
+    def get_type(self):
+        return self.children[3]
 
 
 @dataclass
@@ -396,10 +401,13 @@ class DeclModifiers(TrunkNode):
 
 @dataclass
 class DeclAssignment(TrunkNode):
-    children: Tuple[Operator, ArithmeticExpr] = field(repr=False)
+    children: Tuple[Operator, ArithmeticExpr, Optional[Unit]] = field(repr=False)
 
     def get_value(self):
         return self.children[1]
+
+    def get_type(self):
+        return self.children[2]
 
 
 @dataclass

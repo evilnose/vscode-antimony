@@ -12,7 +12,7 @@ species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
-assignment : namemaybein ("=" | AEQ) sum
+assignment : namemaybein ("=" | AEQ) sum [unit]
 
 AEQ : ":="
 
@@ -25,7 +25,9 @@ decl_modifiers : VAR_MODIFIER
     | TYPE_MODIFIER
     | VAR_MODIFIER TYPE_MODIFIER
 decl_item : namemaybein [decl_assignment]
-decl_assignment : "=" sum
+decl_assignment : "=" sum [unit]
+
+unit : NAME
 
 VAR_MODIFIER: /\b(var|const)\b/
 TYPE_MODIFIER: /\b(species|compartment|formula)\b/
@@ -92,5 +94,6 @@ NAME : /(?!\b(var|const|compartment|species|formula|function|end|model)\b)/ CNAM
 %import common.WS_INLINE
 %import common.NEWLINE
 %import common.ESCAPED_STRING
+%import common.WORD
 %ignore WS_INLINE
 %ignore COMMENT

@@ -21,6 +21,7 @@ def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
     model: Optional[Name] = None
     func: Optional[Name] = None
     mmodel: Optional[Name] = None
+    
     while not isinstance(node, LeafNode):
         if isinstance(node, Model):
             assert model is None
@@ -42,6 +43,7 @@ def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
         else:
             # Didn't find it
             return None
+
     # can't have nested models/functions
     assert not (model is not None and func is not None)
     if model:
@@ -158,9 +160,6 @@ class AntTreeAnalyzer:
                 lines.add(issue.range.start.line)
 
     def resolve_qname(self, qname: QName):
-        logging.debug("resolve_qname")
-        logging.debug(qname)
-        logging.debug(self.table.get(qname))
         return self.table.get(qname)
 
     def get_all_names(self) -> Set[str]:
@@ -259,8 +258,6 @@ class AntTreeAnalyzer:
     def handle_parameters(self, scope: AbstractScope, parameters: Parameters):
         for parameter in parameters.get_items():
             qname = QName(scope, parameter)
-            logging.debug("AAAA")
-            logging.debug(str(qname))
             self.table.insert(qname, SymbolType.Parameter)
 
 # def get_ancestors(node: ASTNode):

@@ -156,8 +156,6 @@ class AntFile:
             if not symbols:
                 position = SrcPosition(position.line, position.column + 1)
                 symbols, range_ = self.symbols_at(position)
-        logging.debug("goto")
-        logging.debug(symbols)
         if not symbols:
             return [], range_
 

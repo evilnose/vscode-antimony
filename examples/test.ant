@@ -28,8 +28,12 @@ compartment c = 5
 compartment cytoplasm = 1.5, mitochondria = 2.6
 const S1 in mitochondria
 
+const species S11 in comp2;
+
 #### const ####
 const S1;
+
+const S222;
 
 #### var ####
 var species S4;
@@ -80,4 +84,14 @@ S1 identity "http://identifiers.org/chebi/CHEBI:16313"
 
 #### import ####
 // error check TODO: check if file exists
-import "models1.txt"
+// import "models1.txt"
+
+#### Units ####
+x = 40 substance;
+species z = 40 grams;
+
+// compound units
+unit micromole = 10e-6 mole / liter;
+// unit substance = 1e-6 mole;
+// x = 40 foo/3 seconds;
+// z has substance;

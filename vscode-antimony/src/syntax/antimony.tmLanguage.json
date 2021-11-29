@@ -127,6 +127,10 @@
                     "name": "type.const"
                 },
                 {
+                    "match": "\\b(?:unit)\\b",
+                    "name": "type.unit"
+                },
+                {
                     "match": "\\b(?:var)\\b",
                     "name": "type.var"
                 },
@@ -143,7 +147,7 @@
                     "name": "type.compartment"
                 },
                 {
-                    "match": "\\b(?:in|at|import)\\b",
+                    "match": "\\b(?:in|at|import|has)\\b",
                     "name": "type.keywords"
                 }
             ]

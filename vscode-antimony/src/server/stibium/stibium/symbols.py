@@ -2,7 +2,7 @@
 '''
 import logging
 from stibium.ant_types import Annotation, Name, TreeNode
-from .types import ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
+from .types import OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
 from .ant_types import Function, DeclItem, Assignment, ModularModel, Number
 
 import abc
@@ -199,15 +199,20 @@ class SymbolTable:
 
     def __init__(self):
         self._table = defaultdict(dict)
-        self._issues = list()
+        self._error = list()
+        self._warning = list()
         self._qnames = list()
 
     def _leaf_table(self, scope: AbstractScope):
         return self._table[scope]
 
     @property
-    def issues(self):
-        return self._issues
+    def error(self):
+        return self._error
+
+    @property
+    def warning(self):
+        return self._warning
 
     def get_all_names(self):
         '''Get all the unique names in the table as a set (outside of scope) '''
@@ -282,13 +287,13 @@ class SymbolTable:
         leaf_table = self._leaf_table(qname.scope)
         name = qname.name.text
         if name not in leaf_table:
-            # TODO use a different Symbol class for other symbols
+            # first time parsing, insert directly in the table
             sym = VarSymbol(name, typ, qname.name)
             leaf_table[name] = sym
         else:
+            # variable already exists
             sym = leaf_table[name]
             old_type = sym.type
-
             if typ.derives_from(old_type):
                 # new type is valid and narrower
                 sym.type = typ
@@ -299,34 +304,20 @@ class SymbolTable:
             else:
                 old_range = sym.type_name.range
                 new_range = qname.name.range
-                self._issues.append(IncompatibleType(old_type, old_range, typ, new_range))
+                if value_node is not None:
+                    self._error.append(IncompatibleType(old_type, old_range, typ, value_node.range))
+                else:
+                    self._error.append(IncompatibleType(old_type, old_range, typ, new_range))
                 return
-
-        # TODO improve decl_name/decl_node behavior
-        # Overriding declaration should generally be
-        # fine, unless the previous type was erased. But type errors are already accounted for.
-        # So, the only case where maybe a warning could be raised, is declarations with no additional
-        # information, e.g. var species a; species a; But that shouldn't be high priority.
-        # Also of course, we don't want to overwrite the previous decl_node entirely as we're doing
-        # right now. Consider "const a; species a"
-        # Override the declaration
-        if decl_node is not None:
-            decl_name = qname.name
-            if sym.decl_name is not None:
-                old_range = sym.decl_name.range
-                new_range = decl_name.range
-                # Overriding previous declaration
-                # issues.append(ObscuredDeclaration(old_range, new_range, decl_name.text))
-            sym.decl_node = decl_node
-            sym.decl_name = decl_name
-
+        # warning: overriding previous assignment
         if value_node is not None:
             value_name = qname.name
             if sym.value_node is not None:
                 old_range = sym.value_node.range
                 new_range = value_node.range
                 # Overriding previous declaration
-                self._issues.append(ObscuredValue(old_range, new_range, value_name.text))
+                self._warning.append(ObscuredValue(old_range, new_range, value_name.text))
+                self._warning.append(OverrodeValue(new_range, old_range, value_name.text))
             sym.value_node = value_node
 
     def insert_annotation(self, qname: QName, node: Annotation):

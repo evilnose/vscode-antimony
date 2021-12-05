@@ -1,0 +1,17 @@
+# ERROR: overriding previous definition (type)
+species s = 4
+compartment s = 5
+
+# WARNING: overriding previous definition (value)
+species a = 4
+species a = 5
+
+b = 3
+b = 4
+
+var c = 3
+c = 4
+
+# ERROR: referencing undefined variables in kinetics law
+S1 -> S2; k1*S1*K3
+k1 = 3

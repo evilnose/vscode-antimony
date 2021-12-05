@@ -1,7 +1,7 @@
 
 import logging
 from stibium.ant_types import DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
-from .types import ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -138,34 +138,11 @@ class AntTreeAnalyzer:
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
         
-        self.semantic_issues = self.table.issues
-        self.syntax_issues = list()
-        self._record_syntax_issues()
-
-    def _record_syntax_issues(self):
-        lines = set()
-        for node in self.root.children:
-            if node is None:
-                continue
-            issue = None
-            # isinstance() is too slow here
-            if type(node) == ErrorToken:
-                node = cast(ErrorToken, node)
-                if node.text.strip() == '':
-                    # this must be an unexpected newline
-                    issue = UnexpectedNewlineIssue(node.range.start)
-                else:
-                    issue = UnexpectedTokenIssue(node.range, node.text)
-            elif type(node) == ErrorNode:
-                node = cast(ErrorNode, node)
-                last_leaf = node.last_leaf()
-                if last_leaf and last_leaf.next is None:
-                    issue = UnexpectedEOFIssue(last_leaf.range)
-
-            # only one issue per line
-            if issue and issue.range.start.line not in lines:
-                self.syntax_issues.append(issue)
-                lines.add(issue.range.start.line)
+        # get list of errors from the symbol table
+        self.error = self.table.error
+        # get list of warnings
+        self.warning = self.table.warning
+        self.check_parse_tree(self.root)
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
@@ -175,8 +152,56 @@ class AntTreeAnalyzer:
         return self.table.get_all_names()
 
     def get_issues(self) -> List[Issue]:
-        # no deepcopy because issues should be frozen
-        return (self.semantic_issues + self.syntax_issues).copy()
+        return (self.warning + self.error).copy()
+    
+    def check_parse_tree(self, root, scope=BaseScope()):
+        # 1. check rate laws:
+        #   1.1 referencing undefined parameters
+        # 2. syntax issue when parsing the grammar
+        #   Note: this could be due to partially implemented grammar at this moment
+        lines = set()
+        for node in root.children:
+            if node is None:
+                continue
+            issue = None
+            if type(node) == Function:
+                self.check_parse_tree(node, FunctionScope(str(node.get_name())))
+            if type(node) == ModularModel:
+                self.check_parse_tree(node, ModularModelScope(str(node.get_name())))
+            # 2. syntax issue when parsing the grammar
+            if type(node) == ErrorToken:
+                node = cast(ErrorToken, node)
+                if node.text.strip() == '':
+                    # this must be an unexpected newline
+                    issue = UnexpectedNewlineIssue(node.range.start)
+                else:
+                    issue = UnexpectedTokenIssue(node.range, node.text)
+            # 2. syntax issue when parsing the grammar
+            elif type(node) == ErrorNode:
+                node = cast(ErrorNode, node)
+                last_leaf = node.last_leaf()
+                if last_leaf and last_leaf.next is None:
+                    issue = UnexpectedEOFIssue(last_leaf.range)
+            #   1.1 referencing undefined parameters
+            elif type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
+                reaction = node.get_stmt()
+                rate_law = reaction.get_rate_law()
+                self.check_rate_law(rate_law, scope)
+            # only one issue per line
+            if issue and issue.range.start.line not in lines:
+                self.warning.append(issue)
+                lines.add(issue.range.start.line)
+
+    def check_rate_law(self, rate_law, scope):
+        count = 0
+        for leaf in rate_law.scan_leaves():
+            if count % 2 == 0:
+                text = leaf.text
+                sym = self.table.get(QName(scope, leaf))
+                val = sym[0].value_node
+                if val is None and sym[0].type != SymbolType.Species:
+                    self.error.append(RefUndefined(leaf.range, text))
+            count += 1
 
     def get_unique_name(self, prefix: str):
         return self.table.get_unique_name(prefix)
@@ -206,14 +231,9 @@ class AntTreeAnalyzer:
         name = reaction.get_name()
         if name is not None:
             self.table.insert(QName(scope, name), SymbolType.Reaction, reaction)
-        # else:
-        #     reaction_name = self.table.get_unique_name('_J', scope)
-        #     reaction_range = get_tree_range(tree)
-        #     reaction_token = tree.children[3]
 
         for species in chain(reaction.get_reactants(), reaction.get_products()):
             self.table.insert(QName(scope, species.get_name()), SymbolType.Species)
-
         self.handle_arith_expr(scope, reaction.get_rate_law())
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):

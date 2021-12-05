@@ -35,6 +35,8 @@ server = LanguageServer()
 services = WebServices()
 
 antfile_cache = None
+uri = None
+
 
 #### Annotations ####
 @server.command('antimony.getAnnotated')
@@ -82,8 +84,10 @@ def query_species(ls: LanguageServer, args):
 @server.feature(HOVER)
 def hover(params: TextDocumentPositionParams):
     global antfile_cache
-    if antfile_cache is None:
+    global uri
+    if antfile_cache is None or uri is None or uri != params.textDocument.uri:
         text_doc = server.workspace.get_document(params.textDocument.uri)
+        uri = params.textDocument.uri
         antfile_cache = get_antfile(text_doc)
 
     symbols, range_ = antfile_cache.symbols_at(sb_position(params.position))
@@ -106,9 +110,11 @@ def hover(params: TextDocumentPositionParams):
 @server.feature(DEFINITION)
 def definition(params):
     global antfile_cache
-    if antfile_cache is None:
+    global uri
+    if antfile_cache is None or uri is None or uri != params.textDocument.uri:
         text_doc = server.workspace.get_document(params.textDocument.uri)
         antfile_cache = get_antfile(text_doc)
+        uri = params.textDocument.uri
     srclocations, range_ = antfile_cache.goto(sb_position(params.position))
     definitions = [Location(
         loc.path,
@@ -116,19 +122,73 @@ def definition(params):
     # If no definitions, return None
     return definitions or None
 
+#### ERROR DETECTION ####
+def _publish_diagnostics(cur_uri: str) -> AntFile:
+    global antfile_cache
+    global uri
+    if antfile_cache is None or uri is None or uri != cur_uri:
+        text_doc = server.workspace.get_document(cur_uri)
+        antfile_cache = get_antfile(text_doc)
+        uri = cur_uri
+
+    errors = antfile_cache.get_issues()
+    # logging.debug("Logging errors: ")
+    # logging.debug(str(errors))
+    diagnostics = [to_diagnostic(e) for e in errors]
+    server.publish_diagnostics(uri, diagnostics)
+    return antfile_cache
+
+def to_diagnostic(issue: Issue):
+    '''Convert the Stibium Issue object to a pygls Diagnostic object'''
+    severity = DiagnosticSeverity.Error
+    if issue.severity == IssueSeverity.Warning:
+        severity = DiagnosticSeverity.Warning
+
+    return Diagnostic(
+        range=pygls_range(issue.range),
+        message=issue.message,
+        severity=severity
+    )
+
 #### helper and util ####
+@server.feature(TEXT_DOCUMENT_DID_OPEN)
+def did_open(ls: LanguageServer, params: DidOpenTextDocumentParams):
+    """Text document did open notification."""
+    antfile = _publish_diagnostics(params.textDocument.uri)
+
+lock = threading.Lock()
+latest_millis = 0
+
 @server.thread()
 @server.feature(TEXT_DOCUMENT_DID_CHANGE)
 def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
+    global latest_millis
     # re-generate parse tree
     global antfile_cache
+    global uri
     text_doc = server.workspace.get_document(params.textDocument.uri)
     antfile_cache = get_antfile(text_doc)
+    uri = params.textDocument.uri
+
+    def callback(millis):
+        with lock:
+            if millis < latest_millis:
+                return
+            assert millis == latest_millis
+        _publish_diagnostics(params.textDocument.uri)
+
+    cur_millis = int(time.time() * 1000)
+
+    with lock:
+        latest_millis = max(cur_millis, latest_millis)
+
+    t = threading.Timer(0.5, lambda: callback(cur_millis))
+    t.start()
 
 
 @server.feature(TEXT_DOCUMENT_DID_SAVE)
 def did_save(ls, params: DidSaveTextDocumentParams):
-    pass
+    antfile = _publish_diagnostics(params.textDocument.uri)
 
 
 if __name__ == '__main__':

@@ -146,13 +146,19 @@ class IncompatibleType(Issue):
         self.old_range = old_range
         self.new_type = new_type
         self.new_range = new_range
-        self.message = ("Type '{new_type}' is incompatible with type '{old_type}' indicated on "
+        self.message = ("Unable to set the type to '{new_type}' because it is already set to be the incompatible type '{old_type}' on"
                         "line {old_line}:{old_column}").format(
             new_type=new_type,
             old_type=old_type,
             old_line=old_range.start.line,
             old_column=old_range.start.column,
         )
+
+class RefUndefined(Issue):
+    def __init__(self, range, val): 
+        super().__init__(range, IssueSeverity.Error)
+        self.val = val
+        self.message = ("Parameter '{}' missing value assignment").format(val)
 
 
 class ObscuredDeclaration(Issue):
@@ -161,7 +167,7 @@ class ObscuredDeclaration(Issue):
         self.old_range = old_range
         self.new_range = new_range
         self.name = name
-        self.message = ("Declaration '{name}' is obscured by a declaration of the same name on "
+        self.message = ("Declaration '{name}' is being overridden by a declaration of the same name on "
                         "line {new_line}:{new_column}").format(
             name=name,
             new_line=new_range.start.line,
@@ -175,7 +181,20 @@ class ObscuredValue(Issue):
         self.old_range = old_range
         self.new_range = new_range
         self.name = name
-        self.message = ("Value assignment to '{name}' is obscured by a later assignment on "
+        self.message = ("Value assignment to '{name}' is being overridden by a later assignment on "
+                        "line {new_line}:{new_column}").format(
+            name=name,
+            new_line=new_range.start.line,
+            new_column=new_range.start.column,
+        )
+
+class OverrodeValue(Issue):
+    def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
+        super().__init__(old_range, IssueSeverity.Warning)
+        self.old_range = old_range
+        self.new_range = new_range
+        self.name = name
+        self.message = ("Value assignment to '{name}' is overriding previous assignment on "
                         "line {new_line}:{new_column}").format(
             name=name,
             new_line=new_range.start.line,

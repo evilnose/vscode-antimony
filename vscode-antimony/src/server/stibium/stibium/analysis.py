@@ -1,6 +1,6 @@
 
 import logging
-from stibium.ant_types import DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -142,7 +142,7 @@ class AntTreeAnalyzer:
         self.error = self.table.error
         # get list of warnings
         self.warning = self.table.warning
-        self.check_parse_tree(self.root)
+        self.check_parse_tree(self.root, BaseScope())
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
@@ -154,7 +154,7 @@ class AntTreeAnalyzer:
     def get_issues(self) -> List[Issue]:
         return (self.warning + self.error).copy()
     
-    def check_parse_tree(self, root, scope=BaseScope()):
+    def check_parse_tree(self, root, scope):
         # 1. check rate laws:
         #   1.1 referencing undefined parameters
         # 2. syntax issue when parsing the grammar
@@ -164,10 +164,12 @@ class AntTreeAnalyzer:
             if node is None:
                 continue
             issue = None
+            if type(node) == Model:
+                self.check_parse_tree(node.get_stmt_list(), ModelScope(str(node.get_name())))
             if type(node) == Function:
-                self.check_parse_tree(node, FunctionScope(str(node.get_name())))
+                self.check_parse_tree_function(node, FunctionScope(str(node.get_name())))
             if type(node) == ModularModel:
-                self.check_parse_tree(node, ModularModelScope(str(node.get_name())))
+                self.check_parse_tree_mmodel(node, ModularModelScope(str(node.get_name())))
             # 2. syntax issue when parsing the grammar
             if type(node) == ErrorToken:
                 node = cast(ErrorToken, node)
@@ -192,14 +194,70 @@ class AntTreeAnalyzer:
                 self.warning.append(issue)
                 lines.add(issue.range.start.line)
 
-    def check_rate_law(self, rate_law, scope):
+    def check_parse_tree_function(self, function, scope):
+        # check the expression
+        params = function.get_params()
+        if params == None:
+            return
+        params = params.get_items()
+        expr = function.get_expr()
+        self.check_expr(params, expr)
+
+    def check_expr(self, params, expr):
+        for child in expr.children:
+            if child is None or isinstance(child, Operator) or isinstance(child, Number):
+                continue
+            if isinstance(child, VarName):
+                name = child.get_name()
+                if name not in params:
+                    self.error.append(RefUndefined(name.range, name.text))
+            elif child.children != None:
+                self.check_expr(params, child)
+          
+    def check_parse_tree_mmodel(self, mmodel, scope):
+        lines = set()
+        stmt_list = mmodel.get_stmt_list()
+        params = mmodel.get_params()
+        if params == None:
+            params = set()
+        else:
+            params = set(params.get_items())
+        for node in stmt_list.children:
+            if node is None:
+                continue
+            issue = None
+            # 2. syntax issue when parsing the grammar
+            if type(node) == ErrorToken:
+                node = cast(ErrorToken, node)
+                if node.text.strip() == '':
+                    # this must be an unexpected newline
+                    issue = UnexpectedNewlineIssue(node.range.start)
+                else:
+                    issue = UnexpectedTokenIssue(node.range, node.text)
+            # 2. syntax issue when parsing the grammar
+            elif type(node) == ErrorNode:
+                node = cast(ErrorNode, node)
+                last_leaf = node.last_leaf()
+                if last_leaf and last_leaf.next is None:
+                    issue = UnexpectedEOFIssue(last_leaf.range)
+            #   1.1 referencing undefined parameters
+            elif type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
+                reaction = node.get_stmt()
+                rate_law = reaction.get_rate_law()
+                self.check_rate_law(rate_law, scope, params)
+            # only one issue per line
+            if issue and issue.range.start.line not in lines:
+                self.warning.append(issue)
+                lines.add(issue.range.start.line)
+
+    def check_rate_law(self, rate_law, scope, params=set()):
         count = 0
         for leaf in rate_law.scan_leaves():
             if count % 2 == 0:
                 text = leaf.text
                 sym = self.table.get(QName(scope, leaf))
                 val = sym[0].value_node
-                if val is None and sym[0].type != SymbolType.Species:
+                if val is None and sym[0].type != SymbolType.Species and leaf not in params:
                     self.error.append(RefUndefined(leaf.range, text))
             count += 1
 
@@ -312,7 +370,10 @@ class AntTreeAnalyzer:
 
     def handle_mmodel(self, mmodel):
         # find all type information
-        params = mmodel.get_params().get_items()
+        if mmodel.get_params() is not None:
+            params = mmodel.get_params().get_items()
+        else:
+            params = []
         scope = scope = ModularModelScope(str(mmodel.get_name()))
         parameters = []
         for name in params:

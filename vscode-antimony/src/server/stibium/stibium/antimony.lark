@@ -83,10 +83,10 @@ simple_stmt_list : simple_stmt+
 model : ("model" | "module") NAME simple_stmt_list END
 
 // Modular Model
-modular_model : "model" NAME "(" parameters? ")" simple_stmt_list END
+modular_model : "model" NAME "(" [parameters] ")" simple_stmt_list END
 
 // Function
-function : "function" NAME "(" parameters? ")" NEWLINE sum NEWLINE END
+function : "function" NAME "(" [parameters] ")" NEWLINE sum NEWLINE END
 
 parameters : NAME ("," NAME)*
 

@@ -160,6 +160,12 @@ class Name(LeafNode):
     def check_rep(self):
         assert bool(self.text)
 
+    def __eq__(self, other):
+        return self.text == other.text
+    
+    def __hash__(self):
+        return hash(self.text)
+
 class Number(LeafNode, ArithmeticExpr):
     def get_value(self):
         return float(self.text)
@@ -534,6 +540,9 @@ class Model(TrunkNode):
 
     def get_name(self):
         return self.children[1]
+    
+    def get_stmt_list(self):
+        return self.children[2]
 
 @dataclass
 class Parameters(TrunkNode):
@@ -544,7 +553,7 @@ class Parameters(TrunkNode):
 
 @dataclass
 class ModularModel(TrunkNode):
-    children: Tuple[Keyword, VarName, Operator, Parameters, Operator, 
+    children: Tuple[Keyword, VarName, Operator, Optional[Parameters], Operator, 
                     SimpleStmtList, Keyword] = field(repr=False)
 
     def get_name(self):
@@ -555,11 +564,14 @@ class ModularModel(TrunkNode):
 
     def get_params(self):
         return self.children[3]
+    
+    def get_stmt_list(self):
+        return self.children[5]
 
 
 @dataclass
 class Function(TrunkNode):
-    children: Tuple[Keyword, VarName, Operator, Parameters, Operator, Newline, 
+    children: Tuple[Keyword, VarName, Operator, Optional[Parameters], Operator, Newline, 
                     ArithmeticExpr, Keyword] = field(repr=False)
 
     def get_name(self):
@@ -570,6 +582,9 @@ class Function(TrunkNode):
     
     def get_params(self):
         return self.children[3]
+    
+    def get_expr(self):
+        return self.children[6]
 
 # Unit
 @dataclass

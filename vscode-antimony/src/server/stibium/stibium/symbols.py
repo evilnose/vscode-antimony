@@ -3,7 +3,7 @@
 import logging
 from stibium.ant_types import Annotation, Name, TreeNode
 from .types import ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
-from .ant_types import Function, DeclItem, Assignment, Number
+from .ant_types import Function, DeclItem, Assignment, ModularModel, Number
 
 import abc
 from collections import defaultdict, namedtuple
@@ -121,15 +121,28 @@ class Symbol:
         return self.decl_name or self.value_node or self.type_name
 
     def help_str(self):
-        if isinstance(self, FuncSymbol):
+        if isinstance(self, MModelSymbol):
+            name = self.type_name.get_name_str()
+            ret = '```\n{}'.format(name) + "("
+            for index, param in enumerate(self.parameters):
+                if not param:
+                    ret += ")"
+                    return ret
+                # TODO: add type
+                type = param[0].type
+                ret += str(type) + ": " + param[0].name
+                if index != len(self.parameters) - 1:
+                    ret += ", "
+            ret += ")```"
+        elif isinstance(self, FuncSymbol):
             name = self.type_name.get_name_str()
             params = self.type_name.get_params().get_items()
-            ret = '```\n{}```'.format(name) + "("
+            ret = '```\n{}'.format(name) + "("
             for index, param in enumerate(params):
                 ret += param.text
                 if index != len(params) - 1:
                     ret += ", "
-            ret += ")"
+            ret += ")```"
         elif self.value_node is not None and self.value_node.get_value() is not None \
             and isinstance(self.value_node.get_value(), Number):
             if isinstance(self.value_node, Assignment) and self.value_node.get_type() is not None:
@@ -163,8 +176,19 @@ class VarSymbol(Symbol):
 
 class FuncSymbol(Symbol):
     '''
-    Synbol for func
+    Symbol for func
     '''
+
+class MModelSymbol(Symbol):
+    '''
+    Symbol for modular model
+    '''
+    parameters: List[VarSymbol]
+
+    def __init__(self, name: str, typ: SymbolType, type_name: Name,
+            parameters):
+        Symbol.__init__(self, name, type, type_name)
+        self.parameters = parameters
 
 # TODO allow the same scope and name to map to multiple symbols, since antimony allows
 # models and variables to have the same name
@@ -234,6 +258,15 @@ class SymbolTable:
         self._qnames.append(qname)
         name = qname.name.get_name().text
         sym = FuncSymbol(name, type, qname.name)
+        leaf_table = self._leaf_table(qname.scope)
+        leaf_table[name] = sym
+
+    def insert_mmodel(self, qname: QName, typ: SymbolType, parameters, decl_node: TreeNode = None,
+               value_node: TreeNode = None):
+        assert qname.name is not None
+        self._qnames.append(qname)
+        name = qname.name.get_name().text
+        sym = MModelSymbol(name, type, qname.name, parameters=parameters)
         leaf_table = self._leaf_table(qname.scope)
         leaf_table[name] = sym
 

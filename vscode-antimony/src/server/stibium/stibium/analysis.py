@@ -111,6 +111,7 @@ class AntTreeAnalyzer:
                             self.handle_child_incomp(scope, stmt)
                     if isinstance(cchild, Parameters):
                         self.handle_parameters(scope, cchild)
+                self.handle_mmodel(child)
             if isinstance(child, Function):
                 scope = FunctionScope(str(child.get_name()))
                 self.handle_function(child)
@@ -288,6 +289,18 @@ class AntTreeAnalyzer:
     def handle_function(self, function):
         self.table.insert_function(QName(BaseScope(), function), SymbolType.Function)
         self.table.insert_function(QName(FunctionScope(str(function.get_name())), function), SymbolType.Function)
+
+    def handle_mmodel(self, mmodel):
+        # find all type information
+        params = mmodel.get_params().get_items()
+        scope = scope = ModularModelScope(str(mmodel.get_name()))
+        parameters = []
+        for name in params:
+            # get symbols
+            qname = self.resolve_qname(QName(scope, name))
+            parameters.append(qname)
+        self.table.insert_mmodel(QName(BaseScope(), mmodel), SymbolType.ModularModel, parameters)
+        self.table.insert_mmodel(QName(ModularModelScope(str(mmodel.get_name())), mmodel), SymbolType.ModularModel, parameters)
 
 # def get_ancestors(node: ASTNode):
 #     ancestors = list()

@@ -203,6 +203,7 @@ class SymbolType(Enum):
     Model = 'model'
     Function = 'function'
     Unit = 'unit'
+    ModularModel = 'mmodel'
 
     # Subtype of VARIABLE. Also known as "formula"
     Parameter = 'parameter'

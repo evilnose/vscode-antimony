@@ -59,7 +59,7 @@ end
 species S3 = 0;
 
 model quad1
-  species s = 4
+  // species s = 4
   s -> S2; k1*S1
 end
 
@@ -71,7 +71,7 @@ model side_reaction(S, k1, unused)
   k2 = 0.4;
 end
 
-// S3 := quadratic(s1, k1, k2, k3);
+S3 := quadratic(s1, k1, k2, k3);
 
 #### assignment rule ####
 // error check TODO: check if each parameter exists in the scope
@@ -81,6 +81,7 @@ Ptot := P1 + P2 + PE;
 // error check TODO: check if entity exists
 s identity "http://identifiers.org/chebi/CHEBI:76"
 S1 identity "http://identifiers.org/chebi/CHEBI:16313"
+z identity "http://identifiers.org/chebi/CHEBI:16313"
 
 #### import ####
 // error check TODO: check if file exists
@@ -97,4 +98,5 @@ unit substance = 1e-6 mole;
 x = 40 foo/3 seconds;
 // um.. probably a warning but this changes the unit
 z has substance;
+z = 20;
 zzzz has substance;

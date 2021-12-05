@@ -113,6 +113,7 @@ class AntTreeAnalyzer:
                         self.handle_parameters(scope, cchild)
             if isinstance(child, Function):
                 scope = FunctionScope(str(child.get_name()))
+                self.handle_function(child)
                 for cchild in child.children:
                     if isinstance(cchild, ErrorToken):
                         continue
@@ -278,13 +279,15 @@ class AntTreeAnalyzer:
             elif isinstance(value_node, DeclItem):
                 decl_assignment = value_node.children[1]
                 decl_assignment.children = (decl_assignment.children[0], decl_assignment.children[1], unit_sum)
-            print("AAAAA")
-            print(sym)
     
     def handle_parameters(self, scope: AbstractScope, parameters: Parameters):
         for parameter in parameters.get_items():
             qname = QName(scope, parameter)
             self.table.insert(qname, SymbolType.Parameter)
+    
+    def handle_function(self, function):
+        self.table.insert_function(QName(BaseScope(), function), SymbolType.Function)
+        self.table.insert_function(QName(FunctionScope(str(function.get_name())), function), SymbolType.Function)
 
 # def get_ancestors(node: ASTNode):
 #     ancestors = list()

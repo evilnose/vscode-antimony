@@ -558,6 +558,12 @@ class Function(TrunkNode):
 
     def get_name(self):
         return self.children[1]
+    
+    def get_name_str(self):
+        return self.children[1].text
+    
+    def get_params(self):
+        return self.children[3]
 
 # Unit
 @dataclass

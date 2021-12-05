@@ -3,7 +3,7 @@
 import logging
 from stibium.ant_types import Annotation, Name, TreeNode
 from .types import ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
-from .ant_types import DeclItem, Assignment, Number
+from .ant_types import Function, DeclItem, Assignment, Number
 
 import abc
 from collections import defaultdict, namedtuple
@@ -121,9 +121,16 @@ class Symbol:
         return self.decl_name or self.value_node or self.type_name
 
     def help_str(self):
-        # TODO this is very basic right now. Need to create new Symbol classes for specific types
-        # and get better data displayed here.
-        if self.value_node is not None and self.value_node.get_value() is not None \
+        if isinstance(self, FuncSymbol):
+            name = self.type_name.get_name_str()
+            params = self.type_name.get_params().get_items()
+            ret = '```\n{}```'.format(name) + "("
+            for index, param in enumerate(params):
+                ret += param.text
+                if index != len(params) - 1:
+                    ret += ", "
+            ret += ")"
+        elif self.value_node is not None and self.value_node.get_value() is not None \
             and isinstance(self.value_node.get_value(), Number):
             if isinstance(self.value_node, Assignment) and self.value_node.get_type() is not None:
                 ret = '```\n({}) {}\n{}\n```'.format(
@@ -154,6 +161,10 @@ class VarSymbol(Symbol):
     TODO account for variability
     '''
 
+class FuncSymbol(Symbol):
+    '''
+    Synbol for func
+    '''
 
 # TODO allow the same scope and name to map to multiple symbols, since antimony allows
 # models and variables to have the same name
@@ -217,6 +228,15 @@ class SymbolTable:
         else:
             return []
 
+    def insert_function(self, qname: QName, typ: SymbolType, decl_node: TreeNode = None,
+               value_node: TreeNode = None):
+        assert qname.name is not None
+        self._qnames.append(qname)
+        name = qname.name.get_name().text
+        sym = FuncSymbol(name, type, qname.name)
+        leaf_table = self._leaf_table(qname.scope)
+        leaf_table[name] = sym
+
     def insert(self, qname: QName, typ: SymbolType, decl_node: TreeNode = None,
                value_node: TreeNode = None):
         '''Insert a variable symbol into the symbol table.'''
@@ -226,7 +246,6 @@ class SymbolTable:
         # successfully added.
         assert qname.name is not None
         self._qnames.append(qname)
-
         leaf_table = self._leaf_table(qname.scope)
         name = qname.name.text
         if name not in leaf_table:

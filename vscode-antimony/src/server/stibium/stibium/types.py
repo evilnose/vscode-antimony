@@ -160,6 +160,12 @@ class RefUndefined(Issue):
         self.val = val
         self.message = ("Parameter '{}' missing value assignment").format(val)
 
+class UnusedParameter(Issue):
+    def __init__(self, range, val): 
+        super().__init__(range, IssueSeverity.Warning)
+        self.val = val
+        self.message = ("Parameter '{}' defined but not used").format(val)
+
 
 class ObscuredDeclaration(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):

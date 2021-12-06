@@ -1,7 +1,7 @@
 
 import logging
 from stibium.ant_types import Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
-from .types import RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -76,6 +76,10 @@ class AntTreeAnalyzer:
                         continue
                     if isinstance(cchild, SimpleStmtList):
                         for st in cchild.children:
+                            if isinstance(st, ErrorToken):
+                                continue
+                            if isinstance(st, ErrorNode):
+                                continue
                             stmt = st.get_stmt()
                             if stmt is None:
                                 continue
@@ -97,6 +101,10 @@ class AntTreeAnalyzer:
                         continue
                     if isinstance(cchild, SimpleStmtList):
                         for st in cchild.children:
+                            if isinstance(st, ErrorToken):
+                                continue
+                            if isinstance(st, ErrorNode):
+                                continue
                             stmt = st.get_stmt()
                             if stmt is None:
                                 continue
@@ -125,6 +133,10 @@ class AntTreeAnalyzer:
                     if isinstance(cchild, Parameters):
                         self.handle_parameters(scope, cchild)
             if isinstance(child, SimpleStmt):
+                if isinstance(child, ErrorToken):
+                    continue
+                if isinstance(child, ErrorNode):
+                    continue
                 stmt = child.get_stmt()
                 if stmt is None:
                     continue
@@ -157,6 +169,7 @@ class AntTreeAnalyzer:
     def check_parse_tree(self, root, scope):
         # 1. check rate laws:
         #   1.1 referencing undefined parameters
+        #   1.2 unused parameters in function/mmodel
         # 2. syntax issue when parsing the grammar
         #   Note: this could be due to partially implemented grammar at this moment
         lines = set()
@@ -167,8 +180,12 @@ class AntTreeAnalyzer:
             if type(node) == Model:
                 self.check_parse_tree(node.get_stmt_list(), ModelScope(str(node.get_name())))
             if type(node) == Function:
+                #   1.1 referencing undefined parameters
+                #   1.2 unused parameters in function
                 self.check_parse_tree_function(node, FunctionScope(str(node.get_name())))
             if type(node) == ModularModel:
+                #   1.1 referencing undefined parameters
+                #   1.2 unused parameters in mmodel
                 self.check_parse_tree_mmodel(node, ModularModelScope(str(node.get_name())))
             # 2. syntax issue when parsing the grammar
             if type(node) == ErrorToken:
@@ -201,21 +218,32 @@ class AntTreeAnalyzer:
             return
         params = params.get_items()
         expr = function.get_expr()
-        self.check_expr(params, expr)
+        used = self.check_expr_undefined(params, expr)
+        self.check_param_unused(used, params)
 
-    def check_expr(self, params, expr):
+    def check_expr_undefined(self, params, expr):
+        used = set()
+        #   1.1 referencing undefined parameters
         for child in expr.children:
             if child is None or isinstance(child, Operator) or isinstance(child, Number):
                 continue
             if isinstance(child, VarName):
                 name = child.get_name()
+                used.add(name)
                 if name not in params:
                     self.error.append(RefUndefined(name.range, name.text))
             elif child.children != None:
-                self.check_expr(params, child)
+                used = set.union(used, self.check_expr_undefined(params, child))
+        return used
+    
+    def check_param_unused(self, used, params):
+        for param in params:
+            if param not in used:
+                self.warning.append(UnusedParameter(param.range, param.text))
           
     def check_parse_tree_mmodel(self, mmodel, scope):
         lines = set()
+        used = set()
         stmt_list = mmodel.get_stmt_list()
         params = mmodel.get_params()
         if params == None:
@@ -244,22 +272,26 @@ class AntTreeAnalyzer:
             elif type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
                 reaction = node.get_stmt()
                 rate_law = reaction.get_rate_law()
-                self.check_rate_law(rate_law, scope, params)
+                used = set.union(used, self.check_rate_law(rate_law, scope, params))
             # only one issue per line
             if issue and issue.range.start.line not in lines:
                 self.warning.append(issue)
                 lines.add(issue.range.start.line)
+        self.check_param_unused(used, params)
 
     def check_rate_law(self, rate_law, scope, params=set()):
         count = 0
+        used = set()
         for leaf in rate_law.scan_leaves():
             if count % 2 == 0:
                 text = leaf.text
+                used.add(leaf)
                 sym = self.table.get(QName(scope, leaf))
                 val = sym[0].value_node
                 if val is None and sym[0].type != SymbolType.Species and leaf not in params:
                     self.error.append(RefUndefined(leaf.range, text))
             count += 1
+        return used
 
     def get_unique_name(self, prefix: str):
         return self.table.get_unique_name(prefix)

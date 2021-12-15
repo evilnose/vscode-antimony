@@ -261,10 +261,29 @@ class SymbolTable:
                value_node: TreeNode = None):
         assert qname.name is not None
         self._qnames.append(qname)
-        name = qname.name.get_name().text
-        sym = FuncSymbol(name, type, qname.name)
         leaf_table = self._leaf_table(qname.scope)
-        leaf_table[name] = sym
+        name = qname.name.get_name().text
+        if name not in leaf_table:
+            sym = FuncSymbol(name, typ, qname.name)
+            leaf_table[name] = sym
+        else:
+            # variable already exists
+            sym = leaf_table[name]
+            old_type = sym.type
+            if typ.derives_from(old_type):
+                # new type is valid and narrower
+                sym.type = typ
+                sym.type_name = qname.name
+            elif old_type.derives_from(typ):
+                # legal, but useless information
+                pass
+            else:
+                old_range = sym.type_name.range
+                new_range = qname.name.get_name().range
+                self._error.append(IncompatibleType(old_type, old_range, typ, new_range))
+                self._error.append(IncompatibleType(old_type, new_range, typ, old_range))
+                return
+        
 
     def insert_mmodel(self, qname: QName, typ: SymbolType, parameters, decl_node: TreeNode = None,
                value_node: TreeNode = None):
@@ -306,8 +325,10 @@ class SymbolTable:
                 new_range = qname.name.range
                 if value_node is not None:
                     self._error.append(IncompatibleType(old_type, old_range, typ, value_node.range))
+                    self._error.append(IncompatibleType(old_type, value_node.range, typ, old_range))
                 else:
                     self._error.append(IncompatibleType(old_type, old_range, typ, new_range))
+                    self._error.append(IncompatibleType(old_type, new_range, typ, old_type))
                 return
         # warning: overriding previous assignment
         if value_node is not None:
@@ -319,6 +340,17 @@ class SymbolTable:
                 self._warning.append(ObscuredValue(old_range, new_range, value_name.text))
                 self._warning.append(OverrodeValue(new_range, old_range, value_name.text))
             sym.value_node = value_node
+        elif decl_node is not None:
+            decl_name = qname.name
+            if sym.decl_node is not None:
+                old_range = sym.decl_node.range
+                new_range = decl_node.range
+                # Overriding previous declaration
+                self._warning.append(ObscuredValue(old_range, new_range, decl_name.text))
+                self._warning.append(OverrodeValue(new_range, old_range, decl_name.text))
+            sym.decl_node = decl_node
+            sym.decl_name = decl_name
+
 
     def insert_annotation(self, qname: QName, node: Annotation):
         leaf_table = self._leaf_table(qname.scope)

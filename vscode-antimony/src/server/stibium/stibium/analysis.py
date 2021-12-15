@@ -280,17 +280,15 @@ class AntTreeAnalyzer:
         self.check_param_unused(used, params)
 
     def check_rate_law(self, rate_law, scope, params=set()):
-        count = 0
         used = set()
         for leaf in rate_law.scan_leaves():
-            if count % 2 == 0:
+            if isinstance(leaf, Name):
                 text = leaf.text
                 used.add(leaf)
                 sym = self.table.get(QName(scope, leaf))
                 val = sym[0].value_node
                 if val is None and sym[0].type != SymbolType.Species and leaf not in params:
                     self.error.append(RefUndefined(leaf.range, text))
-            count += 1
         return used
 
     def get_unique_name(self, prefix: str):

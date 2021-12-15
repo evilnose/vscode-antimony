@@ -188,7 +188,13 @@ def did_change(ls: LanguageServer, params: DidChangeTextDocumentParams):
 
 @server.feature(TEXT_DOCUMENT_DID_SAVE)
 def did_save(ls, params: DidSaveTextDocumentParams):
-    antfile = _publish_diagnostics(params.textDocument.uri)
+    # re-generate parse tree
+    global antfile_cache
+    global uri
+    text_doc = server.workspace.get_document(params.textDocument.uri)
+    antfile_cache = get_antfile(text_doc)
+    uri = params.textDocument.uri
+    _publish_diagnostics(params.textDocument.uri)
 
 
 if __name__ == '__main__':

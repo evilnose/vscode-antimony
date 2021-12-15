@@ -16,6 +16,7 @@ TODO: testing multi-line TODO
 
 #### species ####
 species s = 4
+species g
 // error check TODO: check if parameter/species is initialized?
 s -> S2; k1*S1
 
@@ -26,6 +27,7 @@ p = 3
 // error check TODO: check if parameters exist in scope
 compartment c = 5
 compartment cytoplasm = 1.5, mitochondria = 2.6
+compartment xxxxx
 const S1 in mitochondria
 
 const species S11 in comp2;

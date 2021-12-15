@@ -26,6 +26,8 @@ model side_reaction
     k4 = 2
 end
 
+d = 2
+
 function quadratic(x, a, b, c, unused)
   a*x^2 + b*x + c + d
 end

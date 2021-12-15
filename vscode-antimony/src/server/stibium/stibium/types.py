@@ -194,6 +194,20 @@ class ObscuredValue(Issue):
             new_column=new_range.start.column,
         )
 
+class RedefinedFunction(Issue):
+    def __init__(self, old_range, name, new_range):
+        super().__init__(new_range, IssueSeverity.Error)
+        self.old_range = old_range
+        self.name = name
+        self.new_range = new_range
+        self.message = ("Cannot define '{name}' as a new function because it is already a defined function on"
+                        "line {old_line}:{old_column}").format(
+            name=name,
+            old_line=old_range.start.line,
+            old_column=old_range.start.column,
+        )
+
+
 class OverrodeValue(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
         super().__init__(old_range, IssueSeverity.Warning)

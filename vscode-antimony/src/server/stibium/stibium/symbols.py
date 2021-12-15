@@ -2,7 +2,7 @@
 '''
 import logging
 from stibium.ant_types import Annotation, Name, TreeNode
-from .types import OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
+from .types import RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
 from .ant_types import Function, DeclItem, Assignment, ModularModel, Number
 
 import abc
@@ -271,18 +271,18 @@ class SymbolTable:
             sym = leaf_table[name]
             old_type = sym.type
             if typ.derives_from(old_type):
+                old_range = sym.type_name.range
                 # new type is valid and narrower
                 sym.type = typ
                 sym.type_name = qname.name
-            elif old_type.derives_from(typ):
-                # legal, but useless information
-                pass
+                # error
+                new_range = qname.name.get_name().range
+                self._error.append(RedefinedFunction(old_range, name, new_range))
             else:
                 old_range = sym.type_name.range
                 new_range = qname.name.get_name().range
                 self._error.append(IncompatibleType(old_type, old_range, typ, new_range))
                 self._error.append(IncompatibleType(old_type, new_range, typ, old_range))
-                return
         
 
     def insert_mmodel(self, qname: QName, typ: SymbolType, parameters, decl_node: TreeNode = None,

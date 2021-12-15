@@ -1,8 +1,8 @@
-J1: S1 -> S2;  k1*S1;
+// J1: S1 -> S2;  k1*S1;
 
-// function J1(x, a, b, c)
-//     a*x^2 + b*x + c
-// end
+function J1(x, a, b, c)
+    a*x^2 + b*x + c
+end
 
 function J1(x, a, b, c)
     a*x^2 + b*x + c

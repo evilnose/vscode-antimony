@@ -75,7 +75,7 @@ end
 
 A: side_reaction(S1, k4)
 
-S3 := quadratic(s1, k1, k2, k3);
+S43 := quadratic(s1, k1, k2, k3);
 
 #### assignment rule ####
 // error check TODO: check if each parameter exists in the scope

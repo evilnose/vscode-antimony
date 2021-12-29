@@ -607,6 +607,29 @@ class Function(TrunkNode):
     def get_expr(self):
         return self.children[6]
 
+@dataclass
+class FunctionCall(TrunkNode):
+    children: Tuple[NameMaybeIn, Operator, VarName, Operator, 
+                Optional[Parameters], Operator] = field(repr=False)
+    
+    def get_maybein(self):
+        return self.children[0]
+
+    def get_name(self):
+        return self.get_maybein().get_var_name().get_name()
+    
+    def get_function_name(self):
+        return self.children[2]
+    
+    def get_function_name_str(self):
+        return self.children[2].text
+
+    def get_params(self):
+        return self.children[4]
+    
+    def get_value(self):
+        return None
+
 # Unit
 @dataclass
 class BuiltinUnit(TrunkNode):

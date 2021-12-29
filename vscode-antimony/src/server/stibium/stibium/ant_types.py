@@ -568,6 +568,19 @@ class ModularModel(TrunkNode):
     def get_stmt_list(self):
         return self.children[5]
 
+@dataclass
+class ModularModelCall(TrunkNode):
+    children: Tuple[NameMaybeIn, Operator, VarName, Operator, 
+                Optional[Parameters], Operator] = field(repr=False)
+    
+    def get_name(self):
+        return self.children[0]
+    
+    def get_mmodel_name(self):
+        return self.children[2]
+
+    def get_params(self):
+        return self.children[4]
 
 @dataclass
 class Function(TrunkNode):

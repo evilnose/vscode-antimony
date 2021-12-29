@@ -132,8 +132,6 @@ def _publish_diagnostics(cur_uri: str) -> AntFile:
         uri = cur_uri
 
     errors = antfile_cache.get_issues()
-    # logging.debug("Logging errors: ")
-    # logging.debug(str(errors))
     diagnostics = [to_diagnostic(e) for e in errors]
     server.publish_diagnostics(uri, diagnostics)
     return antfile_cache

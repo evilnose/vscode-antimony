@@ -44,6 +44,8 @@ unit_atom : NUMBER NAME
 
 unit_assignment : var_name "has" unit_sum
 
+mmodel_call : namemaybein ":" NAME "(" [parameters] ")"
+
 VAR_MODIFIER: /\b(var|const)\b/
 TYPE_MODIFIER: /\b(species|compartment|formula)\b/
 
@@ -75,6 +77,7 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
     | annotation
     | unit_declaration
     | unit_assignment
+    | mmodel_call
 
 simple_stmt_list : simple_stmt+
 

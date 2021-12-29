@@ -166,7 +166,7 @@ async function insertAnnotation(selectedItem, entityName) {
     const entity = selectedItem.entity;
     const id = entity['id'];
     const prefix = entity['prefix'];
-    const snippetText = `\n\${1:${entityName}} identity "http://identifiers.org/${prefix}/${id}"\n`;
+    const snippetText = `\n\n\${1:${entityName}} identity "http://identifiers.org/${prefix}/${id}"`;
     const snippetStr = new vscode.SnippetString(snippetText);
     const doc = vscode.window.activeTextEditor.document;
     const pos = doc.lineAt(doc.lineCount - 1).range.end;

@@ -3,7 +3,7 @@
 import logging
 from stibium.ant_types import Annotation, Name, TreeNode
 from .types import RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
-from .ant_types import Function, DeclItem, Assignment, ModularModel, Number
+from .ant_types import Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall
 
 import abc
 from collections import defaultdict, namedtuple

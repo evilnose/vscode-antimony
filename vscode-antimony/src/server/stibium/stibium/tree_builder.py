@@ -16,7 +16,7 @@ from stibium.ant_types import (UnitAssignment, BuiltinUnit, UnitAtom, UnitSum, U
                                Power, Product, Reaction, ReactionName,
                                SimpleStmt, Species, SpeciesList, StringLiteral,
                                Sum, TreeNode, TrunkNode, TypeModifier, VarModifier,
-                               VarName, Model, SimpleStmtList, End, Function, Parameters, ModularModel)
+                               VarName, Model, SimpleStmtList, End, Function, Parameters, ModularModel, ModularModelCall)
 from stibium.symbols import AbstractScope, BaseScope
 from stibium.types import ASTNode, SrcRange, SymbolType, Variability
 from stibium.utils import get_tree_range, get_token_range
@@ -63,6 +63,7 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'unit_atom' : UnitAtom,
     'builtin_unit' : BuiltinUnit,
     'unit_assignment' : UnitAssignment,
+    'mmodel_call' : ModularModelCall,
 }
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',

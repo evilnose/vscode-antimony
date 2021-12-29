@@ -1,0 +1,27 @@
+# This creates a model 'side_reaction', exposing the variables 'S' and 'k1':
+model side_reaction(S, k1)
+  J0: S + E -> SE; k1*k2*S*E - k2*ES;
+  E = 3;
+  SE = E+S;
+  k2 = 0.4;
+end
+
+# In this model, 'side_reaction' is imported twice:
+model full_pathway
+    -> S1; k1
+  S1 -> S2; k2*S1
+  S2 ->   ; k3*S2
+  compartment ccc = 3
+  
+  A in ccc: side_reaction(S1, k4)
+  B: side_reaction(S2, k5)
+
+  S1 = 0
+  S2 = 0
+  k1 = 0.3
+  k2 = 2.3
+  k3 = 3.5
+  k4 = 0.0004
+  k5 = 1
+
+end

@@ -570,17 +570,25 @@ class ModularModel(TrunkNode):
 
 @dataclass
 class ModularModelCall(TrunkNode):
-    children: Tuple[NameMaybeIn, Operator, VarName, Operator, 
+    children: Tuple[Optional[ReactionName], VarName, Operator, 
                 Optional[Parameters], Operator] = field(repr=False)
     
     def get_name(self):
-        return self.children[0]
+        if self.children[0] is None:
+            return None
+        return self.children[0].get_name()
     
     def get_mmodel_name(self):
-        return self.children[2]
+        return self.children[1]
+    
+    def get_mmodel_name_str(self):
+        return self.children[1].text
 
     def get_params(self):
-        return self.children[4]
+        return self.children[3]
+    
+    def get_value(self):
+        return None
 
 @dataclass
 class Function(TrunkNode):

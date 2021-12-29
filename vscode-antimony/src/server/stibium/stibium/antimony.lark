@@ -44,7 +44,7 @@ unit_atom : NUMBER NAME
 
 unit_assignment : var_name "has" unit_sum
 
-mmodel_call : namemaybein ":" NAME "(" [parameters] ")"
+mmodel_call : [reaction_name] NAME "(" [parameters] ")"
 
 VAR_MODIFIER: /\b(var|const)\b/
 TYPE_MODIFIER: /\b(species|compartment|formula)\b/

@@ -1,6 +1,6 @@
 
 import logging
-from stibium.ant_types import NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -92,6 +92,7 @@ class AntTreeAnalyzer:
                                 'UnitAssignment' : self.handle_unit_assignment,
                                 'ModularModelCall' : self.handle_mmodel_call,
                                 'FunctionCall' : self.handle_function_call,
+                                'VariableIn' : self.handle_variable_in,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
             if isinstance(child, ModularModel):
@@ -119,6 +120,7 @@ class AntTreeAnalyzer:
                                 'UnitAssignment' : self.handle_unit_assignment,
                                 'ModularModelCall' : self.handle_mmodel_call,
                                 'FunctionCall' : self.handle_function_call,
+                                'VariableIn' : self.handle_variable_in,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
                     if isinstance(cchild, Parameters):
@@ -153,6 +155,7 @@ class AntTreeAnalyzer:
                     'UnitAssignment' : self.handle_unit_assignment,
                     'ModularModelCall' : self.handle_mmodel_call,
                     'FunctionCall' : self.handle_function_call,
+                    'VariableIn' : self.handle_variable_in,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
         
@@ -213,7 +216,8 @@ class AntTreeAnalyzer:
                                                type(node.get_stmt()) == Assignment or \
                                                type(node.get_stmt()) == Declaration or \
                                                type(node.get_stmt()) == ModularModelCall or \
-                                               type(node.get_stmt()) == FunctionCall):
+                                               type(node.get_stmt()) == FunctionCall or \
+                                               type(node.get_stmt()) == VariableIn):
                 if type(node.get_stmt()) == Declaration:
                     for item in node.get_stmt().get_items():
                         maybein = item.get_maybein()
@@ -223,6 +227,12 @@ class AntTreeAnalyzer:
                             if compt[0].value_node is None:
                                 # 3. add warning
                                 self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+                elif type(node.get_stmt()) == VariableIn:
+                    comp = node.get_stmt().get_incomp().get_comp()
+                    compt = self.table.get(QName(scope, comp.get_name()))
+                    if compt[0].value_node is None:
+                        # 3. add warning
+                        self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
                 else:
                     maybein = node.get_stmt().get_maybein()
                     if maybein is not None and maybein.is_in_comp():
@@ -308,7 +318,8 @@ class AntTreeAnalyzer:
                                                type(node.get_stmt()) == Assignment or \
                                                type(node.get_stmt()) == Declaration or \
                                                type(node.get_stmt()) == ModularModelCall or \
-                                               type(node.get_stmt()) == FunctionCall):
+                                               type(node.get_stmt()) == FunctionCall or \
+                                               type(node.get_stmt()) == VariableIn):
                 if type(node.get_stmt()) == Declaration:
                     for item in node.get_stmt().get_items():
                         maybein = item.get_maybein()
@@ -318,6 +329,12 @@ class AntTreeAnalyzer:
                             if compt[0].value_node is None:
                                 # 3. add warning
                                 self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+                elif type(node.get_stmt()) == VariableIn:
+                    comp = node.get_stmt().get_incomp().get_comp()
+                    compt = self.table.get(QName(scope, comp.get_name()))
+                    if compt[0].value_node is None:
+                        # 3. add warning
+                        self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
                 else:
                     maybein = node.get_stmt().get_maybein()
                     if maybein is not None and maybein.is_in_comp():
@@ -453,6 +470,12 @@ class AntTreeAnalyzer:
     def handle_function_call(self, scope: AbstractScope, function_call: FunctionCall):
         self.table.insert(QName(scope, function_call.get_name()), SymbolType.Parameter,
                     value_node=function_call)
+    
+    def handle_variable_in(self, scope: AbstractScope, variable_in: VariableIn):
+        name = variable_in.get_name().get_name()
+        comp = variable_in.get_incomp().get_comp()
+        self.table.insert(QName(scope, name), SymbolType.Variable, decl_node=variable_in)
+
 
     def handle_parameters(self, scope: AbstractScope, parameters: Parameters):
         for parameter in parameters.get_items():

@@ -527,8 +527,18 @@ class UnitAssignment(TrunkNode):
         return self.children[2]
 
 @dataclass
+class VariableIn(TrunkNode):
+    children: Tuple[VarName, InComp] = field(repr=False)
+
+    def get_name(self):
+        return self.children[0]
+    
+    def get_incomp(self):
+        return self.children[1]
+
+@dataclass
 class SimpleStmt(TrunkNode):
-    children: Tuple[Union[Reaction, Assignment, Declaration, Annotation, UnitDeclaration, UnitAssignment], Union[Operator, Newline]] = field(repr=False)
+    children: Tuple[Union[Reaction, Assignment, Declaration, Annotation, UnitDeclaration, UnitAssignment, VariableIn], Union[Operator, Newline]] = field(repr=False)
 
     def get_stmt(self):
         return self.children[0]
@@ -538,7 +548,7 @@ class SimpleStmt(TrunkNode):
 class SimpleStmtList(TrunkNode):
     children: Tuple[SimpleStmt, ...] = field(repr=False)
 
-# TODO
+
 @dataclass
 class Model(TrunkNode):
     children: Tuple[Keyword, VarName, SimpleStmtList, Keyword] = field(repr=False)

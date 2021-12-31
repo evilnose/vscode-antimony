@@ -82,6 +82,7 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
     | unit_assignment
     | mmodel_call
     | function_call
+    | variable_in
 
 simple_stmt_list : simple_stmt+
 
@@ -96,6 +97,8 @@ modular_model : "model" NAME "(" [parameters] ")" simple_stmt_list END
 function : "function" NAME "(" [parameters] ")" NEWLINE sum NEWLINE END
 
 parameters : NAME ("," NAME)*
+
+variable_in : var_name in_comp
 
 END : "end"
 

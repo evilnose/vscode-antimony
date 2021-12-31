@@ -2,8 +2,8 @@
 '''
 import logging
 from stibium.ant_types import Annotation, Name, TreeNode
-from .types import RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
-from .ant_types import Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall
+from .types import ObscuredValueCompartment, RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
+from .ant_types import VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall
 
 import abc
 from collections import defaultdict, namedtuple
@@ -346,8 +346,12 @@ class SymbolTable:
                 old_range = sym.decl_node.range
                 new_range = decl_node.range
                 # Overriding previous declaration
-                self._warning.append(ObscuredValue(old_range, new_range, decl_name.text))
-                self._warning.append(OverrodeValue(new_range, old_range, decl_name.text))
+                if isinstance(decl_node, VariableIn):
+                    self._warning.append(ObscuredValueCompartment(old_range, new_range, decl_name.text))
+                    self._warning.append(ObscuredValueCompartment(new_range, old_range, decl_name.text))
+                else:
+                    self._warning.append(ObscuredValue(old_range, new_range, decl_name.text))
+                    self._warning.append(OverrodeValue(new_range, old_range, decl_name.text))
             sym.decl_node = decl_node
             sym.decl_name = decl_name
 

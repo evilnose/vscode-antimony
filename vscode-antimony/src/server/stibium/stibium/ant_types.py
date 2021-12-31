@@ -198,9 +198,6 @@ def _flat_unit_sum(current, end, unit_sum):
         return _flat_unit_sum(0, len(child.children) - 1, child) + _flat_unit_sum(current + 1, end, unit_sum)
     elif isinstance(child, UnitAtom):
         return _flat_unit_atom(child) + _flat_unit_sum(current + 1, end, unit_sum)
-    else:
-        logging.debug("AAAA")
-        logging.debug(child)
 
 def _flat_unit_atom(unit_atom):
     if isinstance(unit_atom.children[0], Number):

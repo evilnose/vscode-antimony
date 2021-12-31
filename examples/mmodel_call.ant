@@ -17,7 +17,7 @@ model full_pathway
   S2 in cc
   s3 in ccc
   A in ccc: side_reaction(S1, k4)
-  B: side_reaction(S2, k5)
+  B: side_reactions(S2, k5)
 
   S1 = 0
   S2 = 0

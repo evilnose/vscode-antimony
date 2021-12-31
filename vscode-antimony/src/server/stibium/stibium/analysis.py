@@ -1,7 +1,7 @@
 
 import logging
 from stibium.ant_types import VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
-from .types import UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -182,11 +182,11 @@ class AntTreeAnalyzer:
         # 2. syntax issue when parsing the grammar
         #   Note: this could be due to partially implemented grammar at this moment
         # 3. referencing undefined compartment
+        # 4. calling undefined function/modular model
         lines = set()
         for node in root.children:
             if node is None:
                 continue
-            issue = None
             if type(node) == Model:
                 self.check_parse_tree(node.get_stmt_list(), ModelScope(str(node.get_name())))
             if type(node) == Function:
@@ -202,17 +202,17 @@ class AntTreeAnalyzer:
                 node = cast(ErrorToken, node)
                 if node.text.strip() == '':
                     # this must be an unexpected newline
-                    issue = UnexpectedNewlineIssue(node.range.start)
+                    self.error.append(UnexpectedNewlineIssue(node.range.start))
                 else:
-                    issue = UnexpectedTokenIssue(node.range, node.text)
+                    self.error.append(UnexpectedTokenIssue(node.range, node.text))
             # 2. syntax issue when parsing the grammar
             elif type(node) == ErrorNode:
                 node = cast(ErrorNode, node)
                 last_leaf = node.last_leaf()
                 if last_leaf and last_leaf.next is None:
-                    issue = UnexpectedEOFIssue(last_leaf.range)
+                    self.error.append(UnexpectedEOFIssue(last_leaf.range))
             # 3. 
-            elif type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
+            if type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
                                                type(node.get_stmt()) == Assignment or \
                                                type(node.get_stmt()) == Declaration or \
                                                type(node.get_stmt()) == ModularModelCall or \
@@ -242,14 +242,21 @@ class AntTreeAnalyzer:
                             # 3. add warning
                             self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
             #   1.1 referencing undefined parameters
-            elif type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
+            if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
                 reaction = node.get_stmt()
                 rate_law = reaction.get_rate_law()
                 self.check_rate_law(rate_law, scope)
-            # only one issue per line
-            if issue and issue.range.start.line not in lines:
-                self.warning.append(issue)
-                lines.add(issue.range.start.line)
+            # 4. 
+            if type(node) == SimpleStmt and type(node.get_stmt()) == ModularModelCall:
+                mmodel_name = node.get_stmt().get_mmodel_name()
+                mmodel = self.table.get(QName(BaseScope(), mmodel_name))
+                if len(mmodel) == 0:
+                    self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
+            if type(node) == SimpleStmt and type(node.get_stmt()) == FunctionCall:
+                function_name = node.get_stmt().get_function_name()
+                function = self.table.get(QName(BaseScope(), function_name))
+                if len(function) == 0:
+                    self.error.append(UninitFunction(function_name.range, function_name.text))
 
     def check_parse_tree_function(self, function, scope):
         # check the expression
@@ -293,28 +300,27 @@ class AntTreeAnalyzer:
         for node in stmt_list.children:
             if node is None:
                 continue
-            issue = None
             # 2. syntax issue when parsing the grammar
             if type(node) == ErrorToken:
                 node = cast(ErrorToken, node)
                 if node.text.strip() == '':
                     # this must be an unexpected newline
-                    issue = UnexpectedNewlineIssue(node.range.start)
+                    self.error.append(UnexpectedNewlineIssue(node.range.start))
                 else:
-                    issue = UnexpectedTokenIssue(node.range, node.text)
+                    self.error.append(UnexpectedTokenIssue(node.range, node.text))
             # 2. syntax issue when parsing the grammar
             elif type(node) == ErrorNode:
                 node = cast(ErrorNode, node)
                 last_leaf = node.last_leaf()
                 if last_leaf and last_leaf.next is None:
-                    issue = UnexpectedEOFIssue(last_leaf.range)
+                    self.error.append(UnexpectedEOFIssue(last_leaf.range))
             #   1.1 referencing undefined parameters
             elif type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
                 reaction = node.get_stmt()
                 rate_law = reaction.get_rate_law()
                 used = set.union(used, self.check_rate_law(rate_law, scope, params))
             # 3. 
-            elif type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
+            if type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
                                                type(node.get_stmt()) == Assignment or \
                                                type(node.get_stmt()) == Declaration or \
                                                type(node.get_stmt()) == ModularModelCall or \
@@ -343,10 +349,17 @@ class AntTreeAnalyzer:
                         if compt[0].value_node is None:
                             # 3. add warning
                             self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
-            # only one issue per line
-            if issue and issue.range.start.line not in lines:
-                self.warning.append(issue)
-                lines.add(issue.range.start.line)
+            # 4. 
+            if type(node) == SimpleStmt and type(node.get_stmt()) == ModularModelCall:
+                mmodel_name = node.get_stmt().get_mmodel_name()
+                mmodel = self.table.get(QName(BaseScope(), mmodel_name))
+                if len(mmodel) == 0:
+                    self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
+            if type(node) == SimpleStmt and type(node.get_stmt()) == FunctionCall:
+                function_name = node.get_stmt().get_function_name()
+                function = self.table.get(QName(BaseScope(), function_name))
+                if len(function) == 0:
+                    self.error.append(UninitFunction(function_name.range, function_name.text))
         self.check_param_unused(used, params)
 
     def check_rate_law(self, rate_law, scope, params=set()):

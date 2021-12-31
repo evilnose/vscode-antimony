@@ -160,6 +160,18 @@ class RefUndefined(Issue):
         self.val = val
         self.message = ("Parameter '{}' missing value assignment").format(val)
 
+class UninitMModel(Issue):
+    def __init__(self, range, val): 
+        super().__init__(range, IssueSeverity.Error)
+        self.val = val
+        self.message = ("Modular model '{}' not defined").format(val)
+
+class UninitFunction(Issue):
+    def __init__(self, range, val): 
+        super().__init__(range, IssueSeverity.Error)
+        self.val = val
+        self.message = ("Function '{}' not defined").format(val)
+
 class UnusedParameter(Issue):
     def __init__(self, range, val): 
         super().__init__(range, IssueSeverity.Warning)

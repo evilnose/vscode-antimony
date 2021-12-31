@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
+import logging
 from typing import Union
 
 from lark.lexer import Token
@@ -172,6 +173,16 @@ class UninitFunction(Issue):
         self.val = val
         self.message = ("Function '{}' not defined").format(val)
 
+class IncorrectParamNum(Issue):
+    def __init__(self, range, val1, val2): 
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("Incorrect number of parameters, expected {}, given {}").format(val1, val2)
+
+class ParamIncorrectType(Issue):
+    def __init__(self, range, type1, type2): 
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("Incorrect type being passed in, expected {}, given {}").format(type1, type2)
+
 class UnusedParameter(Issue):
     def __init__(self, range, val): 
         super().__init__(range, IssueSeverity.Warning)
@@ -298,6 +309,26 @@ class SymbolType(Enum):
         derives_from_param = self in (SymbolType.Species, SymbolType.Compartment,
                                       SymbolType.Reaction,
                                       SymbolType.Constraint)
+
+        if self in (SymbolType.Species, SymbolType.Compartment,
+                                      SymbolType.Reaction,
+                                      SymbolType.Constraint,
+                                      SymbolType.Parameter) and other not in (SymbolType.Species, 
+                                      SymbolType.Compartment,
+                                      SymbolType.Reaction,
+                                      SymbolType.Constraint,
+                                      SymbolType.Parameter):
+            return False
+        
+        if other in (SymbolType.Species, SymbolType.Compartment,
+                                      SymbolType.Reaction,
+                                      SymbolType.Constraint,
+                                      SymbolType.Parameter) and self not in (SymbolType.Species, 
+                                      SymbolType.Compartment,
+                                      SymbolType.Reaction,
+                                      SymbolType.Constraint,
+                                      SymbolType.Parameter):
+            return False
 
         if other == SymbolType.Variable:
             return derives_from_param or self == SymbolType.Parameter

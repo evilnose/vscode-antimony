@@ -3,7 +3,7 @@ function quadratic(x, a, b, c)
 end
 
 model quad1
-  s1 = 0
+  species s1 = 0
   k1 = 0
   k2 = 0
   k3 = 0

@@ -178,6 +178,12 @@ class FuncSymbol(Symbol):
     '''
     Symbol for func
     '''
+    parameters: List[VarSymbol]
+
+    def __init__(self, name: str, typ: SymbolType, type_name: Name,
+            parameters):
+        Symbol.__init__(self, name, type, type_name)
+        self.parameters = parameters
 
 class MModelSymbol(Symbol):
     '''
@@ -257,14 +263,14 @@ class SymbolTable:
         else:
             return []
 
-    def insert_function(self, qname: QName, typ: SymbolType, decl_node: TreeNode = None,
+    def insert_function(self, qname: QName, typ: SymbolType, parameters, decl_node: TreeNode = None,
                value_node: TreeNode = None):
         assert qname.name is not None
         self._qnames.append(qname)
         leaf_table = self._leaf_table(qname.scope)
         name = qname.name.get_name().text
         if name not in leaf_table:
-            sym = FuncSymbol(name, typ, qname.name)
+            sym = FuncSymbol(name, typ, qname.name, parameters=parameters)
             leaf_table[name] = sym
         else:
             # variable already exists

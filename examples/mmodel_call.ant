@@ -15,8 +15,8 @@ model full_pathway
   species s3 = 0
   species S2 in cc, S1 in ccc
   S2 in cc
-  s3 in ccc
-  A in ccc: side_reaction(S1, k4)
+  s3 in c
+  A in ccc: side_reaction(S1, substance)
   B: side_reactions(S2, k5)
 
   S1 = 0
@@ -26,5 +26,5 @@ model full_pathway
   k3 = 3.5
   k4 = 0.0004
   k5 = 1
-
+  unit substance = 1e-6 mole;
 end

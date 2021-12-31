@@ -1,7 +1,7 @@
 
 import logging
-from stibium.ant_types import FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
-from .types import UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from stibium.ant_types import NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from .types import UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -178,6 +178,7 @@ class AntTreeAnalyzer:
         #   1.2 unused parameters in function/mmodel
         # 2. syntax issue when parsing the grammar
         #   Note: this could be due to partially implemented grammar at this moment
+        # 3. referencing undefined compartment
         lines = set()
         for node in root.children:
             if node is None:
@@ -207,6 +208,29 @@ class AntTreeAnalyzer:
                 last_leaf = node.last_leaf()
                 if last_leaf and last_leaf.next is None:
                     issue = UnexpectedEOFIssue(last_leaf.range)
+            # 3. 
+            elif type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
+                                               type(node.get_stmt()) == Assignment or \
+                                               type(node.get_stmt()) == Declaration or \
+                                               type(node.get_stmt()) == ModularModelCall or \
+                                               type(node.get_stmt()) == FunctionCall):
+                if type(node.get_stmt()) == Declaration:
+                    for item in node.get_stmt().get_items():
+                        maybein = item.get_maybein()
+                        if maybein is not None and maybein.is_in_comp():
+                            comp = maybein.get_comp()
+                            compt = self.table.get(QName(scope, comp.get_name()))
+                            if compt[0].value_node is None:
+                                # 3. add warning
+                                self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+                else:
+                    maybein = node.get_stmt().get_maybein()
+                    if maybein is not None and maybein.is_in_comp():
+                        comp = maybein.get_comp()
+                        compt = self.table.get(QName(scope, comp.get_name()))
+                        if compt[0].value_node is None:
+                            # 3. add warning
+                            self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
             #   1.1 referencing undefined parameters
             elif type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
                 reaction = node.get_stmt()
@@ -279,6 +303,29 @@ class AntTreeAnalyzer:
                 reaction = node.get_stmt()
                 rate_law = reaction.get_rate_law()
                 used = set.union(used, self.check_rate_law(rate_law, scope, params))
+            # 3. 
+            elif type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
+                                               type(node.get_stmt()) == Assignment or \
+                                               type(node.get_stmt()) == Declaration or \
+                                               type(node.get_stmt()) == ModularModelCall or \
+                                               type(node.get_stmt()) == FunctionCall):
+                if type(node.get_stmt()) == Declaration:
+                    for item in node.get_stmt().get_items():
+                        maybein = item.get_maybein()
+                        if maybein is not None and maybein.is_in_comp():
+                            comp = maybein.get_comp()
+                            compt = self.table.get(QName(scope, comp.get_name()))
+                            if compt[0].value_node is None:
+                                # 3. add warning
+                                self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+                else:
+                    maybein = node.get_stmt().get_maybein()
+                    if maybein is not None and maybein.is_in_comp():
+                        comp = maybein.get_comp()
+                        compt = self.table.get(QName(scope, comp.get_name()))
+                        if compt[0].value_node is None:
+                            # 3. add warning
+                            self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
             # only one issue per line
             if issue and issue.range.start.line not in lines:
                 self.warning.append(issue)
@@ -396,7 +443,11 @@ class AntTreeAnalyzer:
                 decl_assignment.children = (decl_assignment.children[0], decl_assignment.children[1], unit_sum)
     
     def handle_mmodel_call(self, scope: AbstractScope, mmodel_call: ModularModelCall):
-        self.table.insert(QName(scope, mmodel_call.get_name()), SymbolType.Parameter,
+        if mmodel_call.get_name() is None:
+            name = mmodel_call.get_mmodel_name()
+        else:
+            name = mmodel_call.get_name()
+        self.table.insert(QName(scope, name), SymbolType.Parameter,
                     value_node=mmodel_call)
         
     def handle_function_call(self, scope: AbstractScope, function_call: FunctionCall):

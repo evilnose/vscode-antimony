@@ -147,7 +147,7 @@ class IncompatibleType(Issue):
         self.new_type = new_type
         self.new_range = new_range
         self.message = ("Unable to set the type to '{new_type}' because it is already set to be the incompatible type '{old_type}' on"
-                        "line {old_line}:{old_column}").format(
+                        " line {old_line}:{old_column}").format(
             new_type=new_type,
             old_type=old_type,
             old_line=old_range.start.line,
@@ -165,6 +165,12 @@ class UnusedParameter(Issue):
         super().__init__(range, IssueSeverity.Warning)
         self.val = val
         self.message = ("Parameter '{}' defined but not used").format(val)
+
+class UninitCompt(Issue):
+    def __init__(self, range, val): 
+        super().__init__(range, IssueSeverity.Warning)
+        self.val = val
+        self.message = ("Compartment '{}' has not been initialized, using default value").format(val)
 
 
 class ObscuredDeclaration(Issue):

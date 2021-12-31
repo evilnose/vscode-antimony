@@ -329,6 +329,11 @@ class Reaction(TrunkNode):
     children: Tuple[Optional[ReactionName], SpeciesList, Operator, SpeciesList, Operator,
                     ArithmeticExpr, Optional[InComp]] = field(repr=False)
 
+    def get_maybein(self):
+        if self.children[0] is None:
+            return None
+        return self.children[0].get_maybein()
+
     def get_name(self):
         if self.children[0] is None:
             return None
@@ -573,6 +578,11 @@ class ModularModelCall(TrunkNode):
     children: Tuple[Optional[ReactionName], VarName, Operator, 
                 Optional[Parameters], Operator] = field(repr=False)
     
+    def get_maybein(self):
+        if self.children[0] is None:
+            return None
+        return self.children[0].get_maybein()
+
     def get_name(self):
         if self.children[0] is None:
             return None

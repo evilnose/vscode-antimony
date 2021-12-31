@@ -328,7 +328,7 @@ class SymbolTable:
                     self._error.append(IncompatibleType(old_type, value_node.range, typ, old_range))
                 else:
                     self._error.append(IncompatibleType(old_type, old_range, typ, new_range))
-                    self._error.append(IncompatibleType(old_type, new_range, typ, old_type))
+                    self._error.append(IncompatibleType(old_type, new_range, typ, old_range))
                 return
         # warning: overriding previous assignment
         if value_node is not None:

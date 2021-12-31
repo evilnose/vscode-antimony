@@ -141,7 +141,6 @@ def to_diagnostic(issue: Issue):
     severity = DiagnosticSeverity.Error
     if issue.severity == IssueSeverity.Warning:
         severity = DiagnosticSeverity.Warning
-
     return Diagnostic(
         range=pygls_range(issue.range),
         message=issue.message,

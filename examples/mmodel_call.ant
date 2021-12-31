@@ -11,8 +11,8 @@ model full_pathway
     -> S1; k1
   S1 -> S2; k2*S1
   S2 ->   ; k3*S2
-  compartment ccc = 3
-  
+  compartment cc = 3
+  species S2 in cc, S1 in ccc
   A in ccc: side_reaction(S1, k4)
   B: side_reaction(S2, k5)
 

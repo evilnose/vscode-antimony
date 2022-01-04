@@ -161,6 +161,12 @@ class RefUndefined(Issue):
         self.val = val
         self.message = ("Parameter '{}' missing value assignment").format(val)
 
+class SpeciesUndefined(Issue):
+    def __init__(self, range, val): 
+        super().__init__(range, IssueSeverity.Warning)
+        self.val = val
+        self.message = ("Species '{}' has not been initialized, using default value").format(val)
+
 class UninitMModel(Issue):
     def __init__(self, range, val): 
         super().__init__(range, IssueSeverity.Error)
@@ -310,6 +316,12 @@ class SymbolType(Enum):
                                       SymbolType.Reaction,
                                       SymbolType.Constraint)
 
+        if other == SymbolType.Variable:
+            return derives_from_param or self == SymbolType.Parameter
+
+        if other == SymbolType.Parameter:
+            return derives_from_param
+
         if self in (SymbolType.Species, SymbolType.Compartment,
                                       SymbolType.Reaction,
                                       SymbolType.Constraint,
@@ -329,12 +341,6 @@ class SymbolType(Enum):
                                       SymbolType.Constraint,
                                       SymbolType.Parameter):
             return False
-
-        if other == SymbolType.Variable:
-            return derives_from_param or self == SymbolType.Parameter
-
-        if other == SymbolType.Parameter:
-            return derives_from_param
 
         return False
 

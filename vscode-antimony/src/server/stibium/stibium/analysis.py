@@ -1,7 +1,7 @@
 
 import logging
 from stibium.ant_types import VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
-from .types import IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -234,6 +234,11 @@ class AntTreeAnalyzer:
                     if compt[0].value_node is None:
                         # 3. add warning
                         self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+                    # also check if the parameter is defined or not
+                    param_name = node.get_stmt().get_name()
+                    matched_param = self.table.get(QName(scope, param_name.get_name()))
+                    if matched_param[0].value_node is None:
+                        self.error.append(RefUndefined(param_name.get_name().range, param_name.get_name_text()))
                 else:
                     maybein = node.get_stmt().get_maybein()
                     if maybein is not None and maybein.is_in_comp():
@@ -247,6 +252,13 @@ class AntTreeAnalyzer:
                 reaction = node.get_stmt()
                 rate_law = reaction.get_rate_law()
                 self.check_rate_law(rate_law, scope)
+                # check if all species have been initialized
+                species_list = reaction.get_reactants() + reaction.get_products()
+                for species in species_list:
+                    species_name = species.get_name()
+                    matched_species = self.table.get(QName(scope, species_name))
+                    if matched_species[0].value_node is None:
+                        self.warning.append(SpeciesUndefined(species.range, species_name))
             # 4. 
             if type(node) == SimpleStmt and type(node.get_stmt()) == ModularModelCall:
                 mmodel_name = node.get_stmt().get_mmodel_name()
@@ -370,6 +382,11 @@ class AntTreeAnalyzer:
                     if compt[0].value_node is None:
                         # 3. add warning
                         self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+                    # also check if the parameter is defined or not
+                    param_name = node.get_stmt().get_name()
+                    matched_param = self.table.get(QName(scope, param_name.get_name()))
+                    if matched_param[0].value_node is None:
+                        self.error.append(RefUndefined(param_name.get_name().range, param_name.get_name_text()))
                 else:
                     maybein = node.get_stmt().get_maybein()
                     if maybein is not None and maybein.is_in_comp():
@@ -429,6 +446,8 @@ class AntTreeAnalyzer:
                 val = sym[0].value_node
                 if val is None and sym[0].type != SymbolType.Species and leaf not in params:
                     self.error.append(RefUndefined(leaf.range, text))
+                if val is None and sym[0].type == SymbolType.Species:
+                    self.warning.append(SpeciesUndefined(leaf.range, text))
         return used
 
     def get_unique_name(self, prefix: str):

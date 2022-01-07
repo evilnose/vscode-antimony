@@ -205,60 +205,11 @@ class AntTreeAnalyzer:
             self.check_undefined_function_mmodel(node, scope)
 
             #   1.1 referencing undefined parameters
-            if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
-                reaction = node.get_stmt()
-                rate_law = reaction.get_rate_law()
-                self.check_rate_law(rate_law, scope)
-                # check if all species have been initialized
-                species_list = []
-                for species in reaction.get_reactants():
-                    species_list.append(species)
-                for species in reaction.get_products():
-                    species_list.append(species)
-                for species in species_list:
-                    species_name = species.get_name()
-                    matched_species = self.table.get(QName(scope, species_name))
-                    if matched_species[0].value_node is None:
-                        self.warning.append(SpeciesUndefined(species.range, species_name))
-            # 4. 
-            if type(node) == SimpleStmt and type(node.get_stmt()) == ModularModelCall:
-                mmodel_name = node.get_stmt().get_mmodel_name()
-                mmodel = self.table.get(QName(BaseScope(), mmodel_name))
-                if len(mmodel) == 0:
-                    self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
-                # 5.
-                else:
-                    call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
-                    if len(mmodel[0].parameters) != len(call_params):
-                        self.error.append(IncorrectParamNum(node.range, len(mmodel[0].parameters), len(call_params)))
-                    else:
-                        for index in range(len(mmodel[0].parameters)):
-                            expec = mmodel[0].parameters[index][0] if len(mmodel[0].parameters[index]) != 0 else None
-                            expec_type = expec.type if expec is not None else None
-                            call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
-                            call_name = self.table.get(QName(scope, call))
-                            call_type = call_name[0].type if len(call_name) != 0 else None
-                            if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
-                                self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
-            if type(node) == SimpleStmt and type(node.get_stmt()) == FunctionCall:
-                function_name = node.get_stmt().get_function_name()
-                function = self.table.get(QName(BaseScope(), function_name))
-                if len(function) == 0:
-                    self.error.append(UninitFunction(function_name.range, function_name.text))
-                # 5.
-                else:
-                    call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
-                    if len(function[0].parameters) != len(call_params):
-                        self.error.append(IncorrectParamNum(node.range, len(function[0].parameters), len(call_params)))
-                    else:
-                        for index in range(len(function[0].parameters)):
-                            expec = function[0].parameters[index][0] if len(function[0].parameters[index]) != 0 else None
-                            expec_type = expec.type if expec is not None else None
-                            call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
-                            call_name = self.table.get(QName(scope, call))
-                            call_type = call_name[0].type if len(call_name) != 0 else None
-                            if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
-                                self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
+            self.check_ref_undef_params(node, scope)
+
+            # 4. and 5.
+            self.check_mmodel_function_calls(node, scope)
+            
 
     def check_parse_tree_function(self, function, scope):
         # check the expression
@@ -304,69 +255,22 @@ class AntTreeAnalyzer:
                 continue
             # 2. syntax issue when parsing the grammar
             self.check_syntax_issues(node)
-            #   1.1 referencing undefined parameters
-            if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
-                reaction = node.get_stmt()
-                rate_law = reaction.get_rate_law()
-                used = set.union(used, self.check_rate_law(rate_law, scope, params))
-            # 3. 
-            self.check_undefined_function_mmodel(node, scope)
             
             #   1.1 referencing undefined parameters
             if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
                 reaction = node.get_stmt()
                 rate_law = reaction.get_rate_law()
-                self.check_rate_law(rate_law, scope)
-                # check if all species have been initialized
-                species_list = []
-                for species in reaction.get_reactants():
-                    species_list.append(species)
-                for species in reaction.get_products():
-                    species_list.append(species)
-                for species in species_list:
-                    species_name = species.get_name()
-                    matched_species = self.table.get(QName(scope, species_name))
-                    if matched_species[0].value_node is None:
-                        self.warning.append(SpeciesUndefined(species.range, species_name))
-            # 4. 
-            if type(node) == SimpleStmt and type(node.get_stmt()) == ModularModelCall:
-                mmodel_name = node.get_stmt().get_mmodel_name()
-                mmodel = self.table.get(QName(BaseScope(), mmodel_name))
-                if len(mmodel) == 0:
-                    self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
-                # 5.
-                else:
-                    call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
-                    if len(mmodel[0].parameters) != len(call_params):
-                        self.error.append(IncorrectParamNum(node.range, len(mmodel[0].parameters), len(call_params)))
-                    else:
-                        for index in range(len(mmodel[0].parameters)):
-                            expec = mmodel[0].parameters[index][0] if len(mmodel[0].parameters[index]) != 0 else None
-                            expec_type = expec.type if expec is not None else None
-                            call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
-                            call_name = self.table.get(QName(scope, call))
-                            call_type = call_name[0].type if len(call_name) != 0 else None
-                            if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
-                                self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
-            if type(node) == SimpleStmt and type(node.get_stmt()) == FunctionCall:
-                function_name = node.get_stmt().get_function_name()
-                function = self.table.get(QName(BaseScope(), function_name))
-                if len(function) == 0:
-                    self.error.append(UninitFunction(function_name.range, function_name.text))
-                # 5.
-                else:
-                    call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
-                    if len(function[0].parameters) != len(call_params):
-                        self.error.append(IncorrectParamNum(node.range, len(function[0].parameters), len(call_params)))
-                    else:
-                        for index in range(len(function[0].parameters)):
-                            expec = function[0].parameters[index][0] if len(function[0].parameters[index]) != 0 else None
-                            expec_type = expec.type if expec is not None else None
-                            call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
-                            call_name = self.table.get(QName(scope, call))
-                            call_type = call_name[0].type if len(call_name) != 0 else None
-                            if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
-                                self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
+                used = set.union(used, self.check_rate_law(rate_law, scope, params))
+
+            # 3. 
+            self.check_undefined_function_mmodel(node, scope)
+
+            #   1.1 referencing undefined parameters
+            self.check_ref_undef_params(node, scope)
+
+            # 4. and 5.
+            self.check_mmodel_function_calls(node, scope)
+
         self.check_param_unused(used, params)
 
     def check_rate_law(self, rate_law, scope, params=set()):
@@ -587,6 +491,64 @@ class AntTreeAnalyzer:
                     if compt[0].value_node is None:
                         # 3. add warning
                         self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+    
+    def check_ref_undef_params(self, node, scope):
+        if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
+            reaction = node.get_stmt()
+            rate_law = reaction.get_rate_law()
+            self.check_rate_law(rate_law, scope)
+            # check if all species have been initialized
+            species_list = []
+            for species in reaction.get_reactants():
+                species_list.append(species)
+            for species in reaction.get_products():
+                species_list.append(species)
+            for species in species_list:
+                species_name = species.get_name()
+                matched_species = self.table.get(QName(scope, species_name))
+                if matched_species[0].value_node is None:
+                    self.warning.append(SpeciesUndefined(species.range, species_name))
+
+    def check_mmodel_function_calls(self, node, scope):
+        # 4. 
+        if type(node) == SimpleStmt and type(node.get_stmt()) == ModularModelCall:
+            mmodel_name = node.get_stmt().get_mmodel_name()
+            mmodel = self.table.get(QName(BaseScope(), mmodel_name))
+            if len(mmodel) == 0:
+                self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
+            # 5.
+            else:
+                call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
+                if len(mmodel[0].parameters) != len(call_params):
+                    self.error.append(IncorrectParamNum(node.range, len(mmodel[0].parameters), len(call_params)))
+                else:
+                    for index in range(len(mmodel[0].parameters)):
+                        expec = mmodel[0].parameters[index][0] if len(mmodel[0].parameters[index]) != 0 else None
+                        expec_type = expec.type if expec is not None else None
+                        call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
+                        call_name = self.table.get(QName(scope, call))
+                        call_type = call_name[0].type if len(call_name) != 0 else None
+                        if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
+                            self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
+        if type(node) == SimpleStmt and type(node.get_stmt()) == FunctionCall:
+            function_name = node.get_stmt().get_function_name()
+            function = self.table.get(QName(BaseScope(), function_name))
+            if len(function) == 0:
+                self.error.append(UninitFunction(function_name.range, function_name.text))
+            # 5.
+            else:
+                call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
+                if len(function[0].parameters) != len(call_params):
+                    self.error.append(IncorrectParamNum(node.range, len(function[0].parameters), len(call_params)))
+                else:
+                    for index in range(len(function[0].parameters)):
+                        expec = function[0].parameters[index][0] if len(function[0].parameters[index]) != 0 else None
+                        expec_type = expec.type if expec is not None else None
+                        call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
+                        call_name = self.table.get(QName(scope, call))
+                        call_type = call_name[0].type if len(call_name) != 0 else None
+                        if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
+                            self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
 
 # def get_ancestors(node: ASTNode):
 #     ancestors = list()

@@ -255,7 +255,7 @@ class AntTreeAnalyzer:
                 continue
             # 2. syntax issue when parsing the grammar
             self.check_syntax_issues(node)
-            
+
             #   1.1 referencing undefined parameters
             if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
                 reaction = node.get_stmt()
@@ -426,7 +426,6 @@ class AntTreeAnalyzer:
         self.table.insert_function(QName(FunctionScope(str(function.get_name())), function), SymbolType.Function, parameters)
 
     def handle_mmodel(self, mmodel):
-        logging.debug("AAAAA")
         # find all type information
         if mmodel.get_params() is not None:
             params = mmodel.get_params().get_items()

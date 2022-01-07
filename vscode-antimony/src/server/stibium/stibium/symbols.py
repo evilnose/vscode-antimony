@@ -336,6 +336,7 @@ class SymbolTable:
                     self._error.append(IncompatibleType(old_type, old_range, typ, new_range))
                     self._error.append(IncompatibleType(old_type, new_range, typ, old_range))
                 return
+
         # warning: overriding previous assignment
         if value_node is not None:
             value_name = qname.name
@@ -348,7 +349,7 @@ class SymbolTable:
             sym.value_node = value_node
         elif decl_node is not None:
             decl_name = qname.name
-            if sym.decl_node is not None:
+            if sym.decl_node is not None and decl_node.get_modifiers is None:
                 old_range = sym.decl_node.range
                 new_range = decl_node.range
                 # Overriding previous declaration

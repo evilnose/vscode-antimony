@@ -1,7 +1,7 @@
 
 import logging
 from stibium.ant_types import IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
-from .types import SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -187,6 +187,7 @@ class AntTreeAnalyzer:
         # 3. referencing undefined compartment
         # 4. calling undefined function/modular model
         # 5. check parameters
+        # 6. check "is" assignment
         lines = set()
         for node in root.children:
             if node is None:
@@ -212,6 +213,10 @@ class AntTreeAnalyzer:
 
             # 4. and 5.
             self.check_mmodel_function_calls(node, scope)
+
+            # 6.
+            if type(node) == SimpleStmt and type(node.get_stmt()) == IsAssignment:
+                self.check_is_assignment(node, scope)
             
 
     def check_parse_tree_function(self, function, scope):
@@ -273,6 +278,10 @@ class AntTreeAnalyzer:
 
             # 4. and 5.
             self.check_mmodel_function_calls(node, scope)
+
+            # 6.
+            if type(node) == SimpleStmt and type(node.get_stmt()) == IsAssignment:
+                self.check_is_assignment(node, scope)
 
         self.check_param_unused(used, params)
 
@@ -554,6 +563,12 @@ class AntTreeAnalyzer:
                         call_type = call_name[0].type if len(call_name) != 0 else None
                         if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
                             self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
+    
+    def check_is_assignment(self, node, scope):
+        name = node.get_stmt().get_var_name()
+        qname = QName(scope, name)
+        if len(self.table.get(qname)) == 0:
+            self.warning.append(VarNotFound(name.range, name))
 
 # def get_ancestors(node: ASTNode):
 #     ancestors = list()

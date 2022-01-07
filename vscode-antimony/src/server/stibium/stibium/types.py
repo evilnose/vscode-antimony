@@ -201,6 +201,12 @@ class UninitCompt(Issue):
         self.val = val
         self.message = ("Compartment '{}' has not been initialized, using default value").format(val)
 
+class VarNotFound(Issue):
+    def __init__(self, range, val): 
+        super().__init__(range, IssueSeverity.Warning)
+        self.val = val
+        self.message = ("Variable '{}' not fount").format(val)
+
 
 class ObscuredDeclaration(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):

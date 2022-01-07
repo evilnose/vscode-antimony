@@ -199,19 +199,8 @@ class AntTreeAnalyzer:
                 #   1.2 unused parameters in mmodel
                 self.check_parse_tree_mmodel(node, ModularModelScope(str(node.get_name())))
             # 2. syntax issue when parsing the grammar
-            if type(node) == ErrorToken:
-                node = cast(ErrorToken, node)
-                if node.text.strip() == '':
-                    # this must be an unexpected newline
-                    self.error.append(UnexpectedNewlineIssue(node.range.start))
-                else:
-                    self.error.append(UnexpectedTokenIssue(node.range, node.text))
-            # 2. syntax issue when parsing the grammar
-            elif type(node) == ErrorNode:
-                node = cast(ErrorNode, node)
-                last_leaf = node.last_leaf()
-                if last_leaf and last_leaf.next is None:
-                    self.error.append(UnexpectedEOFIssue(last_leaf.range))
+            self.check_syntax_issues(node)
+
             # 3. 
             if type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
                                                type(node.get_stmt()) == Assignment or \
@@ -253,7 +242,11 @@ class AntTreeAnalyzer:
                 rate_law = reaction.get_rate_law()
                 self.check_rate_law(rate_law, scope)
                 # check if all species have been initialized
-                species_list = reaction.get_reactants() + reaction.get_products()
+                species_list = []
+                for species in reaction.get_reactants():
+                    species_list.append(species)
+                for species in reaction.get_products():
+                    species_list.append(species)
                 for species in species_list:
                     species_name = species.get_name()
                     matched_species = self.table.get(QName(scope, species_name))
@@ -267,14 +260,14 @@ class AntTreeAnalyzer:
                     self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
                 # 5.
                 else:
-                    call_params = node.get_stmt().get_params().get_items()
+                    call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
                     if len(mmodel[0].parameters) != len(call_params):
                         self.error.append(IncorrectParamNum(node.range, len(mmodel[0].parameters), len(call_params)))
                     else:
                         for index in range(len(mmodel[0].parameters)):
                             expec = mmodel[0].parameters[index][0] if len(mmodel[0].parameters[index]) != 0 else None
                             expec_type = expec.type if expec is not None else None
-                            call = node.get_stmt().get_params().get_items()[index]
+                            call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
                             call_name = self.table.get(QName(scope, call))
                             call_type = call_name[0].type if len(call_name) != 0 else None
                             if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
@@ -286,14 +279,14 @@ class AntTreeAnalyzer:
                     self.error.append(UninitFunction(function_name.range, function_name.text))
                 # 5.
                 else:
-                    call_params = node.get_stmt().get_params().get_items()
+                    call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
                     if len(function[0].parameters) != len(call_params):
                         self.error.append(IncorrectParamNum(node.range, len(function[0].parameters), len(call_params)))
                     else:
                         for index in range(len(function[0].parameters)):
                             expec = function[0].parameters[index][0] if len(function[0].parameters[index]) != 0 else None
                             expec_type = expec.type if expec is not None else None
-                            call = node.get_stmt().get_params().get_items()[index]
+                            call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
                             call_name = self.table.get(QName(scope, call))
                             call_type = call_name[0].type if len(call_name) != 0 else None
                             if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
@@ -342,21 +335,9 @@ class AntTreeAnalyzer:
             if node is None:
                 continue
             # 2. syntax issue when parsing the grammar
-            if type(node) == ErrorToken:
-                node = cast(ErrorToken, node)
-                if node.text.strip() == '':
-                    # this must be an unexpected newline
-                    self.error.append(UnexpectedNewlineIssue(node.range.start))
-                else:
-                    self.error.append(UnexpectedTokenIssue(node.range, node.text))
-            # 2. syntax issue when parsing the grammar
-            elif type(node) == ErrorNode:
-                node = cast(ErrorNode, node)
-                last_leaf = node.last_leaf()
-                if last_leaf and last_leaf.next is None:
-                    self.error.append(UnexpectedEOFIssue(last_leaf.range))
+            self.check_syntax_issues(node)
             #   1.1 referencing undefined parameters
-            elif type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
+            if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
                 reaction = node.get_stmt()
                 rate_law = reaction.get_rate_law()
                 used = set.union(used, self.check_rate_law(rate_law, scope, params))
@@ -395,6 +376,22 @@ class AntTreeAnalyzer:
                         if compt[0].value_node is None:
                             # 3. add warning
                             self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+            #   1.1 referencing undefined parameters
+            if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
+                reaction = node.get_stmt()
+                rate_law = reaction.get_rate_law()
+                self.check_rate_law(rate_law, scope)
+                # check if all species have been initialized
+                species_list = []
+                for species in reaction.get_reactants():
+                    species_list.append(species)
+                for species in reaction.get_products():
+                    species_list.append(species)
+                for species in species_list:
+                    species_name = species.get_name()
+                    matched_species = self.table.get(QName(scope, species_name))
+                    if matched_species[0].value_node is None:
+                        self.warning.append(SpeciesUndefined(species.range, species_name))
             # 4. 
             if type(node) == SimpleStmt and type(node.get_stmt()) == ModularModelCall:
                 mmodel_name = node.get_stmt().get_mmodel_name()
@@ -403,14 +400,14 @@ class AntTreeAnalyzer:
                     self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
                 # 5.
                 else:
-                    call_params = node.get_stmt().get_params().get_items()
+                    call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
                     if len(mmodel[0].parameters) != len(call_params):
                         self.error.append(IncorrectParamNum(node.range, len(mmodel[0].parameters), len(call_params)))
                     else:
                         for index in range(len(mmodel[0].parameters)):
                             expec = mmodel[0].parameters[index][0] if len(mmodel[0].parameters[index]) != 0 else None
                             expec_type = expec.type if expec is not None else None
-                            call = node.get_stmt().get_params().get_items()[index]
+                            call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
                             call_name = self.table.get(QName(scope, call))
                             call_type = call_name[0].type if len(call_name) != 0 else None
                             if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
@@ -422,14 +419,14 @@ class AntTreeAnalyzer:
                     self.error.append(UninitFunction(function_name.range, function_name.text))
                 # 5.
                 else:
-                    call_params = node.get_stmt().get_params().get_items()
+                    call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
                     if len(function[0].parameters) != len(call_params):
                         self.error.append(IncorrectParamNum(node.range, len(function[0].parameters), len(call_params)))
                     else:
                         for index in range(len(function[0].parameters)):
                             expec = function[0].parameters[index][0] if len(function[0].parameters[index]) != 0 else None
                             expec_type = expec.type if expec is not None else None
-                            call = node.get_stmt().get_params().get_items()[index]
+                            call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
                             call_name = self.table.get(QName(scope, call))
                             call_type = call_name[0].type if len(call_name) != 0 else None
                             if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
@@ -589,6 +586,7 @@ class AntTreeAnalyzer:
         self.table.insert_function(QName(FunctionScope(str(function.get_name())), function), SymbolType.Function, parameters)
 
     def handle_mmodel(self, mmodel):
+        logging.debug("AAAAA")
         # find all type information
         if mmodel.get_params() is not None:
             params = mmodel.get_params().get_items()
@@ -602,6 +600,21 @@ class AntTreeAnalyzer:
             parameters.append(qname)
         self.table.insert_mmodel(QName(BaseScope(), mmodel), SymbolType.ModularModel, parameters)
         self.table.insert_mmodel(QName(ModularModelScope(str(mmodel.get_name())), mmodel), SymbolType.ModularModel, parameters)
+
+    def check_syntax_issues(self, node):
+        if type(node) == ErrorToken:
+            node = cast(ErrorToken, node)
+            if node.text.strip() == '':
+                # this must be an unexpected newline
+                self.error.append(UnexpectedNewlineIssue(node.range.start))
+            else:
+                self.error.append(UnexpectedTokenIssue(node.range, node.text))
+        # 2. syntax issue when parsing the grammar
+        elif type(node) == ErrorNode:
+            node = cast(ErrorNode, node)
+            last_leaf = node.last_leaf()
+            if last_leaf and last_leaf.next is None:
+                self.error.append(UnexpectedEOFIssue(last_leaf.range))
 
 # def get_ancestors(node: ASTNode):
 #     ancestors = list()

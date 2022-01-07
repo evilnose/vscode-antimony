@@ -113,7 +113,7 @@ root : (simple_stmt | model | function | modular_model)*
 
 // negative lookahead to avoid matching keywords (note the word boundaries)
 // NAME : /(?!\b(var|const|compartment|species|formula|function|end|model|litre|mole|second|item|meter|litres|moles|seconds|"items"|"meters")\b)/ CNAME
-NAME : /(?!\b(var|const|compartment|species|formula|function|end|model)\b)/ CNAME
+NAME : /(?!\b(var|const|compartment|species|formula|function|end|model)\b)/ ["*"] CNAME
 
 %import common.CNAME
 %import common.NUMBER

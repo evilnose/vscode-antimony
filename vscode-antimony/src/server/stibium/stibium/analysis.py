@@ -202,40 +202,8 @@ class AntTreeAnalyzer:
             self.check_syntax_issues(node)
 
             # 3. 
-            if type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
-                                               type(node.get_stmt()) == Assignment or \
-                                               type(node.get_stmt()) == Declaration or \
-                                               type(node.get_stmt()) == ModularModelCall or \
-                                               type(node.get_stmt()) == FunctionCall or \
-                                               type(node.get_stmt()) == VariableIn):
-                if type(node.get_stmt()) == Declaration:
-                    for item in node.get_stmt().get_items():
-                        maybein = item.get_maybein()
-                        if maybein is not None and maybein.is_in_comp():
-                            comp = maybein.get_comp()
-                            compt = self.table.get(QName(scope, comp.get_name()))
-                            if compt[0].value_node is None:
-                                # 3. add warning
-                                self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
-                elif type(node.get_stmt()) == VariableIn:
-                    comp = node.get_stmt().get_incomp().get_comp()
-                    compt = self.table.get(QName(scope, comp.get_name()))
-                    if compt[0].value_node is None:
-                        # 3. add warning
-                        self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
-                    # also check if the parameter is defined or not
-                    param_name = node.get_stmt().get_name()
-                    matched_param = self.table.get(QName(scope, param_name.get_name()))
-                    if matched_param[0].value_node is None:
-                        self.error.append(RefUndefined(param_name.get_name().range, param_name.get_name_text()))
-                else:
-                    maybein = node.get_stmt().get_maybein()
-                    if maybein is not None and maybein.is_in_comp():
-                        comp = maybein.get_comp()
-                        compt = self.table.get(QName(scope, comp.get_name()))
-                        if compt[0].value_node is None:
-                            # 3. add warning
-                            self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+            self.check_undefined_function_mmodel(node, scope)
+
             #   1.1 referencing undefined parameters
             if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
                 reaction = node.get_stmt()
@@ -342,40 +310,8 @@ class AntTreeAnalyzer:
                 rate_law = reaction.get_rate_law()
                 used = set.union(used, self.check_rate_law(rate_law, scope, params))
             # 3. 
-            if type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
-                                               type(node.get_stmt()) == Assignment or \
-                                               type(node.get_stmt()) == Declaration or \
-                                               type(node.get_stmt()) == ModularModelCall or \
-                                               type(node.get_stmt()) == FunctionCall or \
-                                               type(node.get_stmt()) == VariableIn):
-                if type(node.get_stmt()) == Declaration:
-                    for item in node.get_stmt().get_items():
-                        maybein = item.get_maybein()
-                        if maybein is not None and maybein.is_in_comp():
-                            comp = maybein.get_comp()
-                            compt = self.table.get(QName(scope, comp.get_name()))
-                            if compt[0].value_node is None:
-                                # 3. add warning
-                                self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
-                elif type(node.get_stmt()) == VariableIn:
-                    comp = node.get_stmt().get_incomp().get_comp()
-                    compt = self.table.get(QName(scope, comp.get_name()))
-                    if compt[0].value_node is None:
-                        # 3. add warning
-                        self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
-                    # also check if the parameter is defined or not
-                    param_name = node.get_stmt().get_name()
-                    matched_param = self.table.get(QName(scope, param_name.get_name()))
-                    if matched_param[0].value_node is None:
-                        self.error.append(RefUndefined(param_name.get_name().range, param_name.get_name_text()))
-                else:
-                    maybein = node.get_stmt().get_maybein()
-                    if maybein is not None and maybein.is_in_comp():
-                        comp = maybein.get_comp()
-                        compt = self.table.get(QName(scope, comp.get_name()))
-                        if compt[0].value_node is None:
-                            # 3. add warning
-                            self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+            self.check_undefined_function_mmodel(node, scope)
+            
             #   1.1 referencing undefined parameters
             if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
                 reaction = node.get_stmt()
@@ -615,6 +551,42 @@ class AntTreeAnalyzer:
             last_leaf = node.last_leaf()
             if last_leaf and last_leaf.next is None:
                 self.error.append(UnexpectedEOFIssue(last_leaf.range))
+    
+    def check_undefined_function_mmodel(self, node, scope):
+        if type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
+                                               type(node.get_stmt()) == Assignment or \
+                                               type(node.get_stmt()) == Declaration or \
+                                               type(node.get_stmt()) == ModularModelCall or \
+                                               type(node.get_stmt()) == FunctionCall or \
+                                               type(node.get_stmt()) == VariableIn):
+            if type(node.get_stmt()) == Declaration:
+                for item in node.get_stmt().get_items():
+                    maybein = item.get_maybein()
+                    if maybein is not None and maybein.is_in_comp():
+                        comp = maybein.get_comp()
+                        compt = self.table.get(QName(scope, comp.get_name()))
+                        if compt[0].value_node is None:
+                            # 3. add warning
+                            self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+            elif type(node.get_stmt()) == VariableIn:
+                comp = node.get_stmt().get_incomp().get_comp()
+                compt = self.table.get(QName(scope, comp.get_name()))
+                if compt[0].value_node is None:
+                    # 3. add warning
+                    self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+                # also check if the parameter is defined or not
+                param_name = node.get_stmt().get_name()
+                matched_param = self.table.get(QName(scope, param_name.get_name()))
+                if matched_param[0].value_node is None:
+                    self.error.append(RefUndefined(param_name.get_name().range, param_name.get_name_text()))
+            else:
+                maybein = node.get_stmt().get_maybein()
+                if maybein is not None and maybein.is_in_comp():
+                    comp = maybein.get_comp()
+                    compt = self.table.get(QName(scope, comp.get_name()))
+                    if compt[0].value_node is None:
+                        # 3. add warning
+                        self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
 
 # def get_ancestors(node: ASTNode):
 #     ancestors = list()

@@ -8,7 +8,7 @@ from typing import Callable, Dict, Optional, Type, TypeVar, Union, cast
 from lark.lexer import Token
 from lark.tree import Tree
 
-from stibium.ant_types import (VariableIn, FunctionCall, UnitAssignment, BuiltinUnit, UnitAtom, UnitSum, UnitDeclaration, Annotation, ArithmeticExpr, Assignment, Atom, DeclModifiers,
+from stibium.ant_types import (IsAssignment, VariableIn, FunctionCall, UnitAssignment, BuiltinUnit, UnitAtom, UnitSum, UnitDeclaration, Annotation, ArithmeticExpr, Assignment, Atom, DeclModifiers,
                                Declaration, DeclAssignment,
                                DeclItem, ErrorNode, ErrorToken,
                                FileNode, InComp, Keyword, LeafNode, NameMaybeIn,
@@ -66,11 +66,12 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'mmodel_call' : ModularModelCall,
     'function_call' : FunctionCall,
     'variable_in' : VariableIn,
+    'is_assignment' : IsAssignment,
 }
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',
-             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ"}
-KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL', 'FUNCTION', "UNIT", "HAS"}
+             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ", "DBLQUOTE"}
+KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL', 'FUNCTION', "UNIT", "HAS", "IS"}
 
 for name in OPERATORS:
     TREE_MAP[name] = Operator

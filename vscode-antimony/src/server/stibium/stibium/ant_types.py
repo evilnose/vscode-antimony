@@ -166,6 +166,9 @@ class Name(LeafNode):
     def __hash__(self):
         return hash(self.text)
 
+class EscapedString(LeafNode):
+    pass
+
 class Number(LeafNode, ArithmeticExpr):
     def get_value(self):
         return float(self.text)
@@ -534,8 +537,18 @@ class VariableIn(TrunkNode):
         return self.children[1]
 
 @dataclass
+class IsAssignment(TrunkNode):
+    children: Tuple[VarName, Keyword, EscapedString] = field(repr=False)
+
+    def get_var_name(self):
+        return self.children[0]
+    
+    def get_display_name(self):
+        return self.children[2]
+
+@dataclass
 class SimpleStmt(TrunkNode):
-    children: Tuple[Union[Reaction, Assignment, Declaration, Annotation, UnitDeclaration, UnitAssignment, VariableIn], Union[Operator, Newline]] = field(repr=False)
+    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, UnitDeclaration, UnitAssignment, VariableIn], Union[Operator, Newline]] = field(repr=False)
 
     def get_stmt(self):
         return self.children[0]
@@ -544,7 +557,6 @@ class SimpleStmt(TrunkNode):
 @dataclass
 class SimpleStmtList(TrunkNode):
     children: Tuple[SimpleStmt, ...] = field(repr=False)
-
 
 @dataclass
 class Model(TrunkNode):

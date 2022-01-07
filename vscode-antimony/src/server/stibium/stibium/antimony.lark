@@ -83,6 +83,7 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
     | mmodel_call
     | function_call
     | variable_in
+    | is_assignment
 
 simple_stmt_list : simple_stmt+
 
@@ -99,6 +100,8 @@ function : "function" NAME "(" [parameters] ")" NEWLINE sum NEWLINE END
 parameters : NAME ("," NAME)*
 
 variable_in : var_name in_comp
+
+is_assignment : NAME "is" ESCAPED_STRING
 
 END : "end"
 
@@ -122,5 +125,6 @@ NAME : /(?!\b(var|const|compartment|species|formula|function|end|model)\b)/ ["*"
 %import common.NEWLINE
 %import common.ESCAPED_STRING
 %import common.WORD
+%import common.ESCAPED_STRING
 %ignore WS_INLINE
 %ignore COMMENT

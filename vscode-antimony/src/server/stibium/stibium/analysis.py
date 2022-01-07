@@ -1,6 +1,6 @@
 
 import logging
-from stibium.ant_types import VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -93,6 +93,7 @@ class AntTreeAnalyzer:
                                 'ModularModelCall' : self.handle_mmodel_call,
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
+                                'IsAssignment' : self.handle_is_assignment,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
             if isinstance(child, ModularModel):
@@ -121,6 +122,7 @@ class AntTreeAnalyzer:
                                 'ModularModelCall' : self.handle_mmodel_call,
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
+                                'IsAssignment' : self.handle_is_assignment,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
                     if isinstance(cchild, Parameters):
@@ -156,6 +158,7 @@ class AntTreeAnalyzer:
                     'ModularModelCall' : self.handle_mmodel_call,
                     'FunctionCall' : self.handle_function_call,
                     'VariableIn' : self.handle_variable_in,
+                    'IsAssignment' : self.handle_is_assignment,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
         
@@ -366,6 +369,9 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
+    
+    def handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
+        pass
     
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()

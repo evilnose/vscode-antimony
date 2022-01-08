@@ -382,6 +382,8 @@ class AntTreeAnalyzer:
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()
         unit_sum = unitdec.get_unit_sum()
+        qname = QName(scope, varname)
+        self.table.insert(qname, SymbolType.Unit)
     
     def handle_unit_assignment(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()
@@ -520,7 +522,7 @@ class AntTreeAnalyzer:
                     call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
                     call_name = self.table.get(QName(scope, call))
                     call_type = call_name[0].type if len(call_name) != 0 else None
-                    if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
+                    if not expec_type is None and not call_type is None and not call_type.derives_from(expec_type):
                         self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
         self.process_maybein(node, scope)
     
@@ -540,7 +542,7 @@ class AntTreeAnalyzer:
                     call = node.get_stmt().get_params().get_items()[index]
                     call_name = self.table.get(QName(scope, call))
                     call_type = call_name[0].type if len(call_name) != 0 else None
-                    if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
+                    if not expec_type is None and not call_type is None and not call_type.derives_from(expec_type):
                         self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
         self.process_maybein(node, scope)
 

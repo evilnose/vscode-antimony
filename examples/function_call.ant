@@ -7,6 +7,7 @@ model quad1
   k1 = 0
   k2 = 0
   k3 = 0
-  S3 = quadratic(s1, k1, k2, k3);
+  unit substance = 1e-6 mole;
+  S3 = quadratic(s1, substance, k2, k3);
   S4 = quadratics(s1, k1, k2, k3);
 end

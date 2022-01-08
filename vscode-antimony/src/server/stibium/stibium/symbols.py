@@ -3,7 +3,7 @@
 import logging
 from stibium.ant_types import Annotation, Name, TreeNode
 from .types import ObscuredValueCompartment, RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
-from .ant_types import VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall
+from .ant_types import Declaration, VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall
 
 import abc
 from collections import defaultdict, namedtuple
@@ -349,7 +349,7 @@ class SymbolTable:
             sym.value_node = value_node
         elif decl_node is not None:
             decl_name = qname.name
-            if sym.decl_node is not None and decl_node.get_modifiers is None:
+            if sym.decl_node is not None and (type(decl_node) != Declaration or decl_node.get_modifiers is None):
                 old_range = sym.decl_node.range
                 new_range = decl_node.range
                 # Overriding previous declaration

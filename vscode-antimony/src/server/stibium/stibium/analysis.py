@@ -188,36 +188,34 @@ class AntTreeAnalyzer:
         # 4. calling undefined function/modular model
         # 5. check parameters
         # 6. check "is" assignment
-        lines = set()
         for node in root.children:
             if node is None:
                 continue
-            if type(node) == Model:
+            elif type(node) == Model:
                 self.check_parse_tree(node.get_stmt_list(), ModelScope(str(node.get_name())))
-            if type(node) == Function:
-                #   1.1 referencing undefined parameters
-                #   1.2 unused parameters in function
+            elif type(node) == Function:
                 self.check_parse_tree_function(node, FunctionScope(str(node.get_name())))
-            if type(node) == ModularModel:
-                #   1.1 referencing undefined parameters
-                #   1.2 unused parameters in mmodel
+            elif type(node) == ModularModel:
                 self.check_parse_tree_mmodel(node, ModularModelScope(str(node.get_name())))
-            # 2. syntax issue when parsing the grammar
-            self.check_syntax_issues(node)
-
-            # 3. 
-            self.check_undefined_function_mmodel(node, scope)
-
-            #   1.1 referencing undefined parameters
-            self.check_ref_undef_params(node, scope)
-
-            # 4. and 5.
-            self.check_mmodel_function_calls(node, scope)
-
-            # 6.
-            if type(node) == SimpleStmt and type(node.get_stmt()) == IsAssignment:
-                self.check_is_assignment(node, scope)
-            
+            elif type(node) == ErrorToken:
+                self.process_error_token(node)
+            elif type(node) == ErrorNode:
+                self.process_error_node(node)
+            elif type(node) == SimpleStmt:
+                if type(node.get_stmt()) == Declaration:
+                    self.process_declaration(node, scope)
+                elif type(node.get_stmt()) == VariableIn:
+                    self.process_variablein(node, scope)
+                elif type(node.get_stmt()) == Reaction:
+                    self.process_reaction(node, scope)
+                elif type(node.get_stmt()) == ModularModelCall:
+                    self.process_mmodel_call(node, scope)
+                elif type(node.get_stmt()) == FunctionCall:
+                    self.process_function_call(node, scope)
+                elif type(node.get_stmt()) == IsAssignment:
+                    self.process_is_assignment(node, scope)
+                elif type(node.get_stmt()) == Assignment:
+                    self.process_maybein(node, scope)
 
     def check_parse_tree_function(self, function, scope):
         # check the expression
@@ -250,7 +248,6 @@ class AntTreeAnalyzer:
                 self.warning.append(UnusedParameter(param.range, param.text))
           
     def check_parse_tree_mmodel(self, mmodel, scope):
-        lines = set()
         used = set()
         stmt_list = mmodel.get_stmt_list()
         params = mmodel.get_params()
@@ -261,28 +258,28 @@ class AntTreeAnalyzer:
         for node in stmt_list.children:
             if node is None:
                 continue
-            # 2. syntax issue when parsing the grammar
-            self.check_syntax_issues(node)
-
-            #   1.1 referencing undefined parameters
-            if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
-                reaction = node.get_stmt()
-                rate_law = reaction.get_rate_law()
-                used = set.union(used, self.check_rate_law(rate_law, scope, params))
-
-            # 3. 
-            self.check_undefined_function_mmodel(node, scope)
-
-            #   1.1 referencing undefined parameters
-            self.check_ref_undef_params(node, scope)
-
-            # 4. and 5.
-            self.check_mmodel_function_calls(node, scope)
-
-            # 6.
-            if type(node) == SimpleStmt and type(node.get_stmt()) == IsAssignment:
-                self.check_is_assignment(node, scope)
-
+            elif type(node) == ErrorToken:
+                self.process_error_token(node)
+            elif type(node) == ErrorNode:
+                self.process_error_node(node)
+            elif type(node) == SimpleStmt:
+                if type(node.get_stmt()) == Declaration:
+                    self.process_declaration(node, scope)
+                elif type(node.get_stmt()) == VariableIn:
+                    self.process_variablein(node, scope)
+                elif type(node.get_stmt()) == Reaction:
+                    reaction = node.get_stmt()
+                    rate_law = reaction.get_rate_law()
+                    used = set.union(used, self.check_rate_law(rate_law, scope, params))
+                    self.process_reaction(node, scope)
+                elif type(node.get_stmt()) == ModularModelCall:
+                    self.process_mmodel_call(node, scope)
+                elif type(node.get_stmt()) == FunctionCall:
+                    self.process_function_call(node, scope)
+                elif type(node.get_stmt()) == IsAssignment:
+                    self.process_is_assignment(node, scope)
+                elif type(node.get_stmt()) == Assignment:
+                    self.process_maybein(node, scope)
         self.check_param_unused(used, params)
 
     def check_rate_law(self, rate_law, scope, params=set()):
@@ -455,116 +452,109 @@ class AntTreeAnalyzer:
         self.table.insert_mmodel(QName(BaseScope(), mmodel), SymbolType.ModularModel, parameters)
         self.table.insert_mmodel(QName(ModularModelScope(str(mmodel.get_name())), mmodel), SymbolType.ModularModel, parameters)
 
-    def check_syntax_issues(self, node):
-        if type(node) == ErrorToken:
-            node = cast(ErrorToken, node)
-            if node.text.strip() == '':
-                # this must be an unexpected newline
-                self.error.append(UnexpectedNewlineIssue(node.range.start))
-            else:
-                self.error.append(UnexpectedTokenIssue(node.range, node.text))
-        # 2. syntax issue when parsing the grammar
-        elif type(node) == ErrorNode:
-            node = cast(ErrorNode, node)
-            last_leaf = node.last_leaf()
-            if last_leaf and last_leaf.next is None:
-                self.error.append(UnexpectedEOFIssue(last_leaf.range))
+    def process_error_token(self, node):
+        node = cast(ErrorToken, node)
+        if node.text.strip() == '':
+            # this must be an unexpected newline
+            self.error.append(UnexpectedNewlineIssue(node.range.start))
+        else:
+            self.error.append(UnexpectedTokenIssue(node.range, node.text))
     
-    def check_undefined_function_mmodel(self, node, scope):
-        if type(node) == SimpleStmt and (type(node.get_stmt()) == Reaction or \
-                                               type(node.get_stmt()) == Assignment or \
-                                               type(node.get_stmt()) == Declaration or \
-                                               type(node.get_stmt()) == ModularModelCall or \
-                                               type(node.get_stmt()) == FunctionCall or \
-                                               type(node.get_stmt()) == VariableIn):
-            if type(node.get_stmt()) == Declaration:
-                for item in node.get_stmt().get_items():
-                    maybein = item.get_maybein()
-                    if maybein is not None and maybein.is_in_comp():
-                        comp = maybein.get_comp()
-                        compt = self.table.get(QName(scope, comp.get_name()))
-                        if compt[0].value_node is None:
-                            # 3. add warning
-                            self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
-            elif type(node.get_stmt()) == VariableIn:
-                comp = node.get_stmt().get_incomp().get_comp()
+    def process_error_node(self, node):
+        node = cast(ErrorNode, node)
+        last_leaf = node.last_leaf()
+        if last_leaf and last_leaf.next is None:
+            self.error.append(UnexpectedEOFIssue(last_leaf.range))
+    
+    def process_declaration(self, node, scope):
+        for item in node.get_stmt().get_items():
+            maybein = item.get_maybein()
+            if maybein is not None and maybein.is_in_comp():
+                comp = maybein.get_comp()
                 compt = self.table.get(QName(scope, comp.get_name()))
                 if compt[0].value_node is None:
                     # 3. add warning
                     self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
-                # also check if the parameter is defined or not
-                param_name = node.get_stmt().get_name()
-                matched_param = self.table.get(QName(scope, param_name.get_name()))
-                if matched_param[0].value_node is None:
-                    self.error.append(RefUndefined(param_name.get_name().range, param_name.get_name_text()))
-            else:
-                maybein = node.get_stmt().get_maybein()
-                if maybein is not None and maybein.is_in_comp():
-                    comp = maybein.get_comp()
-                    compt = self.table.get(QName(scope, comp.get_name()))
-                    if compt[0].value_node is None:
-                        # 3. add warning
-                        self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
     
-    def check_ref_undef_params(self, node, scope):
-        if type(node) == SimpleStmt and type(node.get_stmt()) == Reaction:
-            reaction = node.get_stmt()
-            rate_law = reaction.get_rate_law()
-            self.check_rate_law(rate_law, scope)
-            # check if all species have been initialized
-            species_list = []
-            for species in reaction.get_reactants():
-                species_list.append(species)
-            for species in reaction.get_products():
-                species_list.append(species)
-            for species in species_list:
-                species_name = species.get_name()
-                matched_species = self.table.get(QName(scope, species_name))
-                if matched_species[0].value_node is None:
-                    self.warning.append(SpeciesUndefined(species.range, species_name))
+    def process_variablein(self, node, scope):
+        comp = node.get_stmt().get_incomp().get_comp()
+        compt = self.table.get(QName(scope, comp.get_name()))
+        if compt[0].value_node is None:
+            # 3. add warning
+            self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
+        # also check if the parameter is defined or not
+        param_name = node.get_stmt().get_name()
+        matched_param = self.table.get(QName(scope, param_name.get_name()))
+        if matched_param[0].value_node is None:
+            self.error.append(RefUndefined(param_name.get_name().range, param_name.get_name_text()))
+    
+    def process_reaction(self, node, scope):
+        reaction = node.get_stmt()
+        rate_law = reaction.get_rate_law()
+        self.check_rate_law(rate_law, scope)
+        # check if all species have been initialized
+        species_list = []
+        for species in reaction.get_reactants():
+            species_list.append(species)
+        for species in reaction.get_products():
+            species_list.append(species)
+        for species in species_list:
+            species_name = species.get_name()
+            matched_species = self.table.get(QName(scope, species_name))
+            if matched_species[0].value_node is None:
+                self.warning.append(SpeciesUndefined(species.range, species_name))
+        self.process_maybein(node, scope)
+    
+    def process_mmodel_call(self, node, scope):
+        mmodel_name = node.get_stmt().get_mmodel_name()
+        mmodel = self.table.get(QName(BaseScope(), mmodel_name))
+        if len(mmodel) == 0:
+            self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
+        else:
+            call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
+            if len(mmodel[0].parameters) != len(call_params):
+                self.error.append(IncorrectParamNum(node.range, len(mmodel[0].parameters), len(call_params)))
+            else:
+                for index in range(len(mmodel[0].parameters)):
+                    expec = mmodel[0].parameters[index][0] if len(mmodel[0].parameters[index]) != 0 else None
+                    expec_type = expec.type if expec is not None else None
+                    call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
+                    call_name = self.table.get(QName(scope, call))
+                    call_type = call_name[0].type if len(call_name) != 0 else None
+                    if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
+                        self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
+        self.process_maybein(node, scope)
+    
+    def process_function_call(self, node, scope):
+        function_name = node.get_stmt().get_function_name()
+        function = self.table.get(QName(BaseScope(), function_name))
+        if len(function) == 0:
+            self.error.append(UninitFunction(function_name.range, function_name.text))
+        else:
+            call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
+            if len(function[0].parameters) != len(call_params):
+                self.error.append(IncorrectParamNum(node.range, len(function[0].parameters), len(call_params)))
+            else:
+                for index in range(len(function[0].parameters)):
+                    expec = function[0].parameters[index][0] if len(function[0].parameters[index]) != 0 else None
+                    expec_type = expec.type if expec is not None else None
+                    call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
+                    call_name = self.table.get(QName(scope, call))
+                    call_type = call_name[0].type if len(call_name) != 0 else None
+                    if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
+                        self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
+        self.process_maybein(node, scope)
 
-    def check_mmodel_function_calls(self, node, scope):
-        # 4. 
-        if type(node) == SimpleStmt and type(node.get_stmt()) == ModularModelCall:
-            mmodel_name = node.get_stmt().get_mmodel_name()
-            mmodel = self.table.get(QName(BaseScope(), mmodel_name))
-            if len(mmodel) == 0:
-                self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
-            # 5.
-            else:
-                call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
-                if len(mmodel[0].parameters) != len(call_params):
-                    self.error.append(IncorrectParamNum(node.range, len(mmodel[0].parameters), len(call_params)))
-                else:
-                    for index in range(len(mmodel[0].parameters)):
-                        expec = mmodel[0].parameters[index][0] if len(mmodel[0].parameters[index]) != 0 else None
-                        expec_type = expec.type if expec is not None else None
-                        call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
-                        call_name = self.table.get(QName(scope, call))
-                        call_type = call_name[0].type if len(call_name) != 0 else None
-                        if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
-                            self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
-        if type(node) == SimpleStmt and type(node.get_stmt()) == FunctionCall:
-            function_name = node.get_stmt().get_function_name()
-            function = self.table.get(QName(BaseScope(), function_name))
-            if len(function) == 0:
-                self.error.append(UninitFunction(function_name.range, function_name.text))
-            # 5.
-            else:
-                call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
-                if len(function[0].parameters) != len(call_params):
-                    self.error.append(IncorrectParamNum(node.range, len(function[0].parameters), len(call_params)))
-                else:
-                    for index in range(len(function[0].parameters)):
-                        expec = function[0].parameters[index][0] if len(function[0].parameters[index]) != 0 else None
-                        expec_type = expec.type if expec is not None else None
-                        call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
-                        call_name = self.table.get(QName(scope, call))
-                        call_type = call_name[0].type if len(call_name) != 0 else None
-                        if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):
-                            self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
+    def process_maybein(self, node, scope):
+        maybein = node.get_stmt().get_maybein()
+        if maybein is not None and maybein.is_in_comp():
+            comp = maybein.get_comp()
+            compt = self.table.get(QName(scope, comp.get_name()))
+            if compt[0].value_node is None:
+                # 3. add warning
+                self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
     
-    def check_is_assignment(self, node, scope):
+    def process_is_assignment(self, node, scope):
         name = node.get_stmt().get_var_name()
         qname = QName(scope, name)
         if len(self.table.get(qname)) == 0:
@@ -578,7 +568,6 @@ class AntTreeAnalyzer:
 #             break
 #         ancestors.append(parent)
 #         node = parent
-
 #     return ancestors
 
 

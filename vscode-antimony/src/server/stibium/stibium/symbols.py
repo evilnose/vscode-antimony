@@ -91,9 +91,10 @@ class Symbol:
     Attributes:
         name:           The name of the symbol.
         typ:            The type of the symbol.
-        type_name:     The exact analysis token of the symbol.
+        type_name:      The exact analysis token of the symbol.
         dcl_node:       The analysis Node that represents the declaration statement of the symbol. May
                         be None if the symbol was not explicitly declared.
+        display_name:   The display name of the symbol
     '''
 
     name: str
@@ -103,11 +104,13 @@ class Symbol:
     decl_node: Optional[TreeNode]
     value_node: Optional[TreeNode]
     annotations: List[Annotation]
+    display_name: str
 
     def __init__(self, name: str, typ: SymbolType, type_name: Name,
             decl_name: Name = None,
             decl_node: TreeNode = None,
-            value_node: TreeNode = None):
+            value_node: TreeNode = None,
+            display_name: str = None):
         self.name = name
         self.type = typ
         self.type_name = type_name
@@ -115,15 +118,21 @@ class Symbol:
         self.decl_node = decl_node
         self.value_node = value_node
         self.annotations = list()
+        self.display_name = display_name
 
     def def_name(self):
         '''Return the Name that should be considered as the definition'''
         return self.decl_name or self.value_node or self.type_name
 
     def help_str(self):
+        ret = ""
+
+        if self.display_name != None:
+            ret = self.display_name + "\n"
+
         if isinstance(self, MModelSymbol):
             name = self.name
-            ret = '```\n{}'.format(name) + "("
+            ret += '```\n{}'.format(name) + "("
             for index, param in enumerate(self.parameters):
                 if not param:
                     ret += ")"
@@ -135,7 +144,7 @@ class Symbol:
             ret += ")```"
         elif isinstance(self, FuncSymbol):
             name = self.name
-            ret = '```\n{}'.format(name) + "("
+            ret += '```\n{}'.format(name) + "("
             for index, param in enumerate(self.parameters):
                 ret += param[0].name
                 if index != len(self.parameters) - 1:
@@ -144,21 +153,21 @@ class Symbol:
         elif self.value_node is not None and self.value_node.get_value() is not None \
             and isinstance(self.value_node.get_value(), Number):
             if isinstance(self.value_node, Assignment) and self.value_node.get_type() is not None:
-                ret = '```\n({}) {}\n{}\n```'.format(
+                ret += '```\n({}) {}\n{}\n```'.format(
                     self.type, self.name, 
                     "Initialized Value: " + self.value_node.get_value().text + " (" + 
                     self.value_node.get_type().get_str() + ")")
             elif isinstance(self.value_node, DeclItem) and self.value_node.get_decl_assignment().get_type() is not None:
-                ret = '```\n({}) {}\n{}\n```'.format(
+                ret += '```\n({}) {}\n{}\n```'.format(
                     self.type, self.name, 
                     "Initialized Value: " + self.value_node.get_value().text + " (" + 
                     self.value_node.get_decl_assignment().get_type().get_str() + ")")
             else:
-                ret = '```\n({}) {}\n{}\n```'.format(
+                ret += '```\n({}) {}\n{}\n```'.format(
                     self.type, self.name, 
                     "Initialized Value: " + self.value_node.get_value().text)
         else:
-            ret = '```\n({}) {}\n```'.format(self.type, self.name)
+            ret += '```\n({}) {}\n```'.format(self.type, self.name)
     
         if self.annotations:
             # add the first annotation

@@ -379,7 +379,12 @@ class AntTreeAnalyzer:
         self.table.insert_annotation(qname, annotation)
     
     def handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
-        pass
+        name = is_assignment.get_var_name()
+        qname = QName(scope, name)
+        var = self.table.get(qname)
+        display_name = is_assignment.get_display_name().text
+        if len(var) != 0:
+            var[0].display_name = display_name
     
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()

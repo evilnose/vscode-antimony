@@ -209,6 +209,8 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == Reaction:
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
+                    logging.debug("AAA")
+                    logging.debug(node.get_stmt())
                     self.process_mmodel_call(node, scope)
                 elif type(node.get_stmt()) == FunctionCall:
                     self.process_function_call(node, scope)

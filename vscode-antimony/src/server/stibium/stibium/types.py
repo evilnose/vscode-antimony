@@ -312,9 +312,6 @@ class SymbolType(Enum):
         return self.value
 
     def derives_from(self, other):
-        logging.debug("AAA")
-        logging.debug(self)
-        logging.debug(other)
         if self == other:
             return True
 

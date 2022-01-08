@@ -577,20 +577,20 @@ class Parameters(TrunkNode):
 
 @dataclass
 class ModularModel(TrunkNode):
-    children: Tuple[Keyword, VarName, Operator, Optional[Parameters], Operator, 
+    children: Tuple[Keyword, Optional[Operator], VarName, Operator, Optional[Parameters], Operator, 
                     SimpleStmtList, Keyword] = field(repr=False)
 
     def get_name(self):
-        return self.children[1]
+        return self.children[2]
 
     def get_name_str(self):
-        return self.children[1].text
+        return self.children[2].text
 
     def get_params(self):
-        return self.children[3]
+        return self.children[4]
     
     def get_stmt_list(self):
-        return self.children[5]
+        return self.children[6]
 
 @dataclass
 class ModularModelCall(TrunkNode):

@@ -122,25 +122,23 @@ class Symbol:
 
     def help_str(self):
         if isinstance(self, MModelSymbol):
-            name = self.type_name.get_name_str()
+            name = self.name
             ret = '```\n{}'.format(name) + "("
             for index, param in enumerate(self.parameters):
                 if not param:
                     ret += ")"
                     return ret
-                # TODO: add type
                 type = param[0].type
                 ret += str(type) + ": " + param[0].name
                 if index != len(self.parameters) - 1:
                     ret += ", "
             ret += ")```"
         elif isinstance(self, FuncSymbol):
-            name = self.type_name.get_name_str()
-            params = self.type_name.get_params().get_items()
+            name = self.name
             ret = '```\n{}'.format(name) + "("
-            for index, param in enumerate(params):
-                ret += param.text
-                if index != len(params) - 1:
+            for index, param in enumerate(self.parameters):
+                ret += param[0].name
+                if index != len(self.parameters) - 1:
                     ret += ", "
             ret += ")```"
         elif self.value_node is not None and self.value_node.get_value() is not None \
@@ -182,7 +180,7 @@ class FuncSymbol(Symbol):
 
     def __init__(self, name: str, typ: SymbolType, type_name: Name,
             parameters):
-        Symbol.__init__(self, name, type, type_name)
+        Symbol.__init__(self, name, typ, type_name)
         self.parameters = parameters
 
 class MModelSymbol(Symbol):
@@ -193,7 +191,7 @@ class MModelSymbol(Symbol):
 
     def __init__(self, name: str, typ: SymbolType, type_name: Name,
             parameters):
-        Symbol.__init__(self, name, type, type_name)
+        Symbol.__init__(self, name, typ, type_name)
         self.parameters = parameters
 
 # TODO allow the same scope and name to map to multiple symbols, since antimony allows
@@ -262,6 +260,11 @@ class SymbolTable:
             return [leaf_table[name]]
         else:
             return []
+    
+    def insert_function_holder(self, function, scope):
+        leaf_table = self._leaf_table(scope)
+        sym = FuncSymbol(function.name, function.type, function.type_name, parameters=function.parameters)
+        leaf_table[function.name] = sym
 
     def insert_function(self, qname: QName, typ: SymbolType, parameters, decl_node: TreeNode = None,
                value_node: TreeNode = None):
@@ -270,7 +273,7 @@ class SymbolTable:
         leaf_table = self._leaf_table(qname.scope)
         name = qname.name.get_name().text
         if name not in leaf_table:
-            sym = FuncSymbol(name, typ, qname.name, parameters=parameters)
+            sym = FuncSymbol(name, typ, qname.name.get_name(), parameters=parameters)
             leaf_table[name] = sym
         else:
             # variable already exists
@@ -283,6 +286,7 @@ class SymbolTable:
                 sym.type_name = qname.name
                 # error
                 new_range = qname.name.get_name().range
+                self._error.append(RedefinedFunction(new_range, name, old_range))
                 self._error.append(RedefinedFunction(old_range, name, new_range))
             else:
                 old_range = sym.type_name.range

@@ -6,6 +6,7 @@ species s2 = 2
 compartment s2 = 3
 
 species s3 = 2
+
 function s3(x, a, b, c)
   a*x^2 + b*x + c
 end

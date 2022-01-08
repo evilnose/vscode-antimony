@@ -2,7 +2,7 @@
 import logging
 from stibium.ant_types import IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
-from .symbols import AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
+from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
 from typing import Any, List, Optional, Set, cast
@@ -130,7 +130,6 @@ class AntTreeAnalyzer:
                 self.handle_mmodel(child)
             if isinstance(child, Function):
                 scope = FunctionScope(str(child.get_name()))
-                self.handle_function(child)
                 for cchild in child.children:
                     if isinstance(cchild, ErrorToken):
                         continue
@@ -140,6 +139,7 @@ class AntTreeAnalyzer:
                         self.handle_arith_expr(scope, cchild)
                     if isinstance(cchild, Parameters):
                         self.handle_parameters(scope, cchild)
+                self.handle_function(child, scope)
             if isinstance(child, SimpleStmt):
                 if isinstance(child, ErrorToken):
                     continue
@@ -382,15 +382,11 @@ class AntTreeAnalyzer:
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()
         unit_sum = unitdec.get_unit_sum()
-        qname = QName(scope, varname)
-        self.table.insert(qname, SymbolType.Unit)
     
     def handle_unit_assignment(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()
         unit_sum = unitdec.get_unit_sum()
         symbols = self.table.get(QName(scope, varname))
-        qname = QName(scope, varname)
-        self.table.insert(qname, SymbolType.Unit)
         if symbols:
             sym = symbols[0]
             value_node = sym.value_node
@@ -411,7 +407,11 @@ class AntTreeAnalyzer:
     def handle_function_call(self, scope: AbstractScope, function_call: FunctionCall):
         self.table.insert(QName(scope, function_call.get_name()), SymbolType.Parameter,
                     value_node=function_call)
-    
+        # also insert the function for hover lookup
+        function = self.table.get(QName(BaseScope(), function_call.get_function_name()))
+        if len(function) != 0:
+            self.table.insert_function_holder(function[0], scope)
+
     def handle_variable_in(self, scope: AbstractScope, variable_in: VariableIn):
         name = variable_in.get_name().get_name()
         comp = variable_in.get_incomp().get_comp()
@@ -423,12 +423,12 @@ class AntTreeAnalyzer:
             qname = QName(scope, parameter)
             self.table.insert(qname, SymbolType.Parameter)
     
-    def handle_function(self, function):
+    def handle_function(self, function, scope):
         if function.get_params() is not None:
             params = function.get_params().get_items()
         else:
             params = []
-        scope = ModularModelScope(str(function.get_name()))
+        scope = FunctionScope(str(function.get_name()))
         parameters = []
         for name in params:
             # get symbols
@@ -491,7 +491,6 @@ class AntTreeAnalyzer:
     def process_reaction(self, node, scope):
         reaction = node.get_stmt()
         rate_law = reaction.get_rate_law()
-        self.check_rate_law(rate_law, scope)
         # check if all species have been initialized
         species_list = []
         for species in reaction.get_reactants():
@@ -502,7 +501,7 @@ class AntTreeAnalyzer:
             species_name = species.get_name()
             matched_species = self.table.get(QName(scope, species_name))
             if matched_species[0].value_node is None:
-                self.warning.append(SpeciesUndefined(species.range, species_name))
+                self.warning.append(SpeciesUndefined(species.range, species_name.text))
         self.process_maybein(node, scope)
     
     def process_mmodel_call(self, node, scope):
@@ -538,7 +537,7 @@ class AntTreeAnalyzer:
                 for index in range(len(function[0].parameters)):
                     expec = function[0].parameters[index][0] if len(function[0].parameters[index]) != 0 else None
                     expec_type = expec.type if expec is not None else None
-                    call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
+                    call = node.get_stmt().get_params().get_items()[index]
                     call_name = self.table.get(QName(scope, call))
                     call_type = call_name[0].type if len(call_name) != 0 else None
                     if not expec_type is None and not call_type is None and not expec_type.derives_from(call_type):

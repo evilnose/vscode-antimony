@@ -324,16 +324,25 @@ class AntTreeAnalyzer:
 
     def handle_reaction(self, scope: AbstractScope, reaction: Reaction):
         name = reaction.get_name()
+        comp = None
+        if reaction.get_maybein() != None and reaction.get_maybein().is_in_comp():
+            comp = reaction.get_maybein().get_comp().get_name_text()
+        if reaction.get_comp():
+            comp = reaction.get_comp().get_comp().get_name_text()
+
         if name is not None:
-            self.table.insert(QName(scope, name), SymbolType.Reaction, reaction)
+            self.table.insert(QName(scope, name), SymbolType.Reaction, reaction, comp=comp)
 
         for species in chain(reaction.get_reactants(), reaction.get_products()):
-            self.table.insert(QName(scope, species.get_name()), SymbolType.Species)
+            self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
         self.handle_arith_expr(scope, reaction.get_rate_law())
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
+        comp = None
+        if assignment.get_maybein() != None and assignment.get_maybein().is_in_comp():
+            comp = assignment.get_maybein().get_comp().get_name_text()
         self.table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
-                            value_node=assignment)
+                            value_node=assignment, comp=comp)
         self.handle_arith_expr(scope, assignment.get_value())
 
     def resolve_variab(self, tree) -> Variability:
@@ -350,9 +359,7 @@ class AntTreeAnalyzer:
         }[tree.data]
 
     def handle_declaration(self, scope: AbstractScope, declaration: Declaration):
-        # TODO add modifiers in table
         modifiers = declaration.get_modifiers()
-        # TODO deal with variability
         variab = modifiers.get_variab()
         stype = modifiers.get_type()
         is_const = (variab == Variability.CONSTANT)
@@ -362,12 +369,17 @@ class AntTreeAnalyzer:
             name = item.get_maybein().get_var_name().get_name()
             value = item.get_value()
 
+            comp = None
+            if item.get_maybein() != None and item.get_maybein().is_in_comp():
+                comp = item.get_maybein().get_comp().get_name_text()
+
             # TODO update variability
             # If there is value assignment (value is not None), then record the declaration item
             # as the value node. Otherwise put None. See that we can't directly put "value" as
             # argument "valud_node" since they are different things
             value_node = item if value else None
-            self.table.insert(QName(scope, name), stype, declaration, value_node, is_const=is_const)
+            self.table.insert(QName(scope, name), stype, declaration, value_node, 
+                                is_const=is_const, comp=comp)
             if value:
                 self.handle_arith_expr(scope, value)
     
@@ -411,12 +423,18 @@ class AntTreeAnalyzer:
             name = mmodel_call.get_mmodel_name()
         else:
             name = mmodel_call.get_name()
+        comp = None
+        if mmodel_call.get_maybein() != None and mmodel_call.get_maybein().is_in_comp():
+            comp = mmodel_call.get_maybein().get_comp().get_name_text()
         self.table.insert(QName(scope, name), SymbolType.Parameter,
-                    value_node=mmodel_call)
+                    value_node=mmodel_call, comp=comp)
         
     def handle_function_call(self, scope: AbstractScope, function_call: FunctionCall):
+        comp = None
+        if function_call.get_maybein() != None and function_call.get_maybein().is_in_comp():
+            comp = function_call.get_maybein().get_comp().get_name_text()
         self.table.insert(QName(scope, function_call.get_name()), SymbolType.Parameter,
-                    value_node=function_call)
+                    value_node=function_call, comp=comp)
         # also insert the function for hover lookup
         function = self.table.get(QName(BaseScope(), function_call.get_function_name()))
         if len(function) != 0:
@@ -424,8 +442,8 @@ class AntTreeAnalyzer:
 
     def handle_variable_in(self, scope: AbstractScope, variable_in: VariableIn):
         name = variable_in.get_name().get_name()
-        comp = variable_in.get_incomp().get_comp()
-        self.table.insert(QName(scope, name), SymbolType.Variable, decl_node=variable_in)
+        comp = variable_in.get_incomp().get_comp().get_name_text()
+        self.table.insert(QName(scope, name), SymbolType.Variable, decl_node=variable_in, comp=comp)
 
 
     def handle_parameters(self, scope: AbstractScope, parameters: Parameters):

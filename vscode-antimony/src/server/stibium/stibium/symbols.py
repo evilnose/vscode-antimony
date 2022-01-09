@@ -105,6 +105,7 @@ class Symbol:
     value_node: Optional[TreeNode]
     annotations: List[Annotation]
     display_name: str
+    comp: str
     is_const: bool
 
     def __init__(self, name: str, typ: SymbolType, type_name: Name,
@@ -112,6 +113,7 @@ class Symbol:
             decl_node: TreeNode = None,
             value_node: TreeNode = None,
             display_name: str = None,
+            comp: str = None,
             is_const: bool = False):
         self.name = name
         self.type = typ
@@ -121,6 +123,7 @@ class Symbol:
         self.value_node = value_node
         self.annotations = list()
         self.display_name = display_name
+        self.comp = comp
         self.is_const = is_const
 
     def def_name(self):
@@ -135,6 +138,9 @@ class Symbol:
         
         if self.is_const:
             ret += '\n{}'.format("const")
+
+        if self.comp:
+            ret += '\nIn compartment: {}'.format(self.comp)
 
         if isinstance(self, MModelSymbol):
             name = self.name
@@ -323,7 +329,7 @@ class SymbolTable:
         leaf_table[name] = sym
 
     def insert(self, qname: QName, typ: SymbolType, decl_node: TreeNode = None,
-               value_node: TreeNode = None, is_const : bool = False):
+               value_node: TreeNode = None, is_const : bool = False, comp : str = None):
         '''Insert a variable symbol into the symbol table.'''
         # TODO create more functions like insert_var(), insert_reaction(), insert_model() and
         # create more specific symbols. Need to store things like value for types like var.
@@ -335,7 +341,7 @@ class SymbolTable:
         name = qname.name.text
         if name not in leaf_table:
             # first time parsing, insert directly in the table
-            sym = VarSymbol(name, typ, qname.name, is_const=is_const)
+            sym = VarSymbol(name, typ, qname.name, is_const=is_const, comp=comp)
             leaf_table[name] = sym
         else:
             # variable already exists
@@ -345,10 +351,16 @@ class SymbolTable:
                 # new type is valid and narrower
                 sym.type = typ
                 sym.type_name = qname.name
-                sym.is_const = is_const
+                if is_const:
+                    sym.is_const = is_const
+                if not sym.comp:
+                    sym.comp = comp
             elif old_type.derives_from(typ):
                 # legal, but useless information
-                sym.is_const = is_const
+                if is_const:
+                    sym.is_const = is_const
+                if not sym.comp:
+                    sym.comp = comp
             else:
                 old_range = sym.type_name.range
                 new_range = qname.name.range

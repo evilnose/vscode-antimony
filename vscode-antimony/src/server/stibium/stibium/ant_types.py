@@ -265,7 +265,10 @@ class NameMaybeIn(TrunkNode):
         return self.children[1] is not None
 
     def get_comp(self):
-        return self.children[1].get_comp()
+        if self.is_in_comp():
+            return self.children[1].get_comp()
+        else:
+            return None
 
 
 # # TODO move this to another class, e.g. logical/model types
@@ -368,6 +371,11 @@ class Reaction(TrunkNode):
     def is_reversible(self):
         assert self.children[2].text in ('->', '=>')
         return self.children[2].text == '=>'
+    
+    def get_comp(self):
+        if self.children[6] is not None:
+            return self.children[6]
+        return None
 
 
 @dataclass

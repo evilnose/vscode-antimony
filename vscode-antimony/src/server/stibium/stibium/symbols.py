@@ -105,12 +105,14 @@ class Symbol:
     value_node: Optional[TreeNode]
     annotations: List[Annotation]
     display_name: str
+    is_const: bool
 
     def __init__(self, name: str, typ: SymbolType, type_name: Name,
             decl_name: Name = None,
             decl_node: TreeNode = None,
             value_node: TreeNode = None,
-            display_name: str = None):
+            display_name: str = None,
+            is_const: bool = False):
         self.name = name
         self.type = typ
         self.type_name = type_name
@@ -119,59 +121,66 @@ class Symbol:
         self.value_node = value_node
         self.annotations = list()
         self.display_name = display_name
+        self.is_const = is_const
 
     def def_name(self):
         '''Return the Name that should be considered as the definition'''
         return self.decl_name or self.value_node or self.type_name
 
     def help_str(self):
-        ret = ""
+        ret = "```"
 
         if self.display_name != None:
-            ret = self.display_name + "\n"
+            ret += '\n{}'.format(self.display_name)
+        
+        if self.is_const:
+            ret += '\n{}'.format("const")
 
         if isinstance(self, MModelSymbol):
             name = self.name
-            ret += '```\n{}'.format(name) + "("
+            ret += '\n{}'.format(name) + "("
             for index, param in enumerate(self.parameters):
                 if not param:
                     ret += ")"
+                    ret += "```"
                     return ret
                 type = param[0].type
                 ret += str(type) + ": " + param[0].name
                 if index != len(self.parameters) - 1:
                     ret += ", "
-            ret += ")```"
+            ret += ")"
         elif isinstance(self, FuncSymbol):
             name = self.name
-            ret += '```\n{}'.format(name) + "("
+            ret += '\n{}'.format(name) + "("
             for index, param in enumerate(self.parameters):
                 ret += param[0].name
                 if index != len(self.parameters) - 1:
                     ret += ", "
-            ret += ")```"
+            ret += ")"
         elif self.value_node is not None and self.value_node.get_value() is not None \
             and isinstance(self.value_node.get_value(), Number):
             if isinstance(self.value_node, Assignment) and self.value_node.get_type() is not None:
-                ret += '```\n({}) {}\n{}\n```'.format(
+                ret += '\n({}) {}\n{}\n'.format(
                     self.type, self.name, 
                     "Initialized Value: " + self.value_node.get_value().text + " (" + 
                     self.value_node.get_type().get_str() + ")")
             elif isinstance(self.value_node, DeclItem) and self.value_node.get_decl_assignment().get_type() is not None:
-                ret += '```\n({}) {}\n{}\n```'.format(
+                ret += '\n({}) {}\n{}\n'.format(
                     self.type, self.name, 
                     "Initialized Value: " + self.value_node.get_value().text + " (" + 
                     self.value_node.get_decl_assignment().get_type().get_str() + ")")
             else:
-                ret += '```\n({}) {}\n{}\n```'.format(
+                ret += '\n({}) {}\n{}\n'.format(
                     self.type, self.name, 
                     "Initialized Value: " + self.value_node.get_value().text)
         else:
-            ret += '```\n({}) {}\n```'.format(self.type, self.name)
+            ret += '\n({}) {}\n'.format(self.type, self.name)
     
         if self.annotations:
             # add the first annotation
-            ret += '\n\n***\n\n{}'.format(self.annotations[0].get_uri())
+            ret += '\n***\n{}'.format(self.annotations[0].get_uri())
+
+        ret += '```'
         return ret
 
 
@@ -314,7 +323,7 @@ class SymbolTable:
         leaf_table[name] = sym
 
     def insert(self, qname: QName, typ: SymbolType, decl_node: TreeNode = None,
-               value_node: TreeNode = None):
+               value_node: TreeNode = None, is_const : bool = False):
         '''Insert a variable symbol into the symbol table.'''
         # TODO create more functions like insert_var(), insert_reaction(), insert_model() and
         # create more specific symbols. Need to store things like value for types like var.
@@ -326,7 +335,7 @@ class SymbolTable:
         name = qname.name.text
         if name not in leaf_table:
             # first time parsing, insert directly in the table
-            sym = VarSymbol(name, typ, qname.name)
+            sym = VarSymbol(name, typ, qname.name, is_const=is_const)
             leaf_table[name] = sym
         else:
             # variable already exists
@@ -336,9 +345,10 @@ class SymbolTable:
                 # new type is valid and narrower
                 sym.type = typ
                 sym.type_name = qname.name
+                sym.is_const = is_const
             elif old_type.derives_from(typ):
                 # legal, but useless information
-                pass
+                sym.is_const = is_const
             else:
                 old_range = sym.type_name.range
                 new_range = qname.name.range

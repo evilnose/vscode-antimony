@@ -355,6 +355,7 @@ class AntTreeAnalyzer:
         # TODO deal with variability
         variab = modifiers.get_variab()
         stype = modifiers.get_type()
+        is_const = (variab == Variability.CONSTANT)
 
         # Skip comma separators
         for item in declaration.get_items():
@@ -366,7 +367,7 @@ class AntTreeAnalyzer:
             # as the value node. Otherwise put None. See that we can't directly put "value" as
             # argument "valud_node" since they are different things
             value_node = item if value else None
-            self.table.insert(QName(scope, name), stype, declaration, value_node)
+            self.table.insert(QName(scope, name), stype, declaration, value_node, is_const=is_const)
             if value:
                 self.handle_arith_expr(scope, value)
     

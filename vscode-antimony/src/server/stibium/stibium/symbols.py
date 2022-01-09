@@ -133,14 +133,16 @@ class Symbol:
     def help_str(self):
         ret = "```"
 
+        if self.type == SymbolType.Parameter or \
+            self.type == SymbolType.Species or \
+                self.type == SymbolType.Compartment:
+            if self.is_const:
+                ret += '\n{}'.format("const")
+            else:
+                ret += '\n{}'.format("var")
+
         if self.display_name != None:
             ret += '\n{}'.format(self.display_name)
-        
-        if self.is_const:
-            ret += '\n{}'.format("const")
-
-        if self.comp:
-            ret += '\nIn compartment: {}'.format(self.comp)
 
         if isinstance(self, MModelSymbol):
             name = self.name
@@ -181,7 +183,10 @@ class Symbol:
                     "Initialized Value: " + self.value_node.get_value().text)
         else:
             ret += '\n({}) {}\n'.format(self.type, self.name)
-    
+
+        if self.comp:
+            ret += 'In compartment: {}\n'.format(self.comp)
+
         if self.annotations:
             # add the first annotation
             ret += '\n***\n{}'.format(self.annotations[0].get_uri())

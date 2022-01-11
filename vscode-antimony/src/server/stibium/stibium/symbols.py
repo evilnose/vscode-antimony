@@ -133,6 +133,7 @@ class Symbol:
     def help_str(self):
         ret = "```"
 
+        # add formula later
         if self.type == SymbolType.Parameter or \
             self.type == SymbolType.Species or \
                 self.type == SymbolType.Compartment:

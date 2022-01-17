@@ -1,7 +1,7 @@
 
 import logging
 from stibium.ant_types import IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
-from .types import VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -361,6 +361,8 @@ class AntTreeAnalyzer:
     def handle_declaration(self, scope: AbstractScope, declaration: Declaration):
         modifiers = declaration.get_modifiers()
         variab = modifiers.get_variab()
+        sub = modifiers.get_sub_modifier()
+
         stype = modifiers.get_type()
         is_const = (variab == Variability.CONSTANT)
 
@@ -495,6 +497,11 @@ class AntTreeAnalyzer:
             self.error.append(UnexpectedEOFIssue(last_leaf.range))
     
     def process_declaration(self, node, scope):
+        type = node.get_stmt().get_modifiers().get_type()
+        sub = node.get_stmt().get_modifiers().get_sub_modifier()
+        # sub only works with species
+        if sub is not None and type != SymbolType.Species:
+            self.error.append(SubError(node.get_stmt().range))
         for item in node.get_stmt().get_items():
             maybein = item.get_maybein()
             if maybein is not None and maybein.is_in_comp():

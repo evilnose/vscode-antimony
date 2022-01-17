@@ -273,6 +273,11 @@ class RedefinedFunction(Issue):
             old_column=old_range.start.column,
         )
 
+class SubError(Issue):
+    def __init__(self, range):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("The substanceOnly keyword only works with species")
+
 
 class OverrodeValue(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):

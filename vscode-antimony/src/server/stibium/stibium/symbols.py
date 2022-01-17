@@ -177,11 +177,7 @@ class Symbol:
             if isinstance(self.value_node.get_value(), Number):
                 init_val = self.value_node.get_value().text
             else:
-                for child in self.value_node.get_value().children:
-                    if isinstance(child, VarName):
-                        init_val += child.get_name_text() + " "
-                    elif hasattr(child, "text"):
-                        init_val += child.text + " "
+                init_val = _get_init_val(self.value_node.get_value())
             if isinstance(self.value_node, Assignment) and self.value_node.get_type() is not None:
                 ret += '\n({}) {}\n{}\n'.format(
                     self.type, self.name, 
@@ -208,6 +204,24 @@ class Symbol:
 
         ret += '```'
         return ret
+
+
+def _get_init_val(node):
+    if node == None or not hasattr(node, "children"):
+        return ""
+    elif (isinstance(node, VarName)):
+        return node.get_name_text()
+    elif hasattr(node, "text"):
+        return node.text
+    init_val = ""
+    for child in node.children:
+        if isinstance(child, VarName):
+            init_val += child.get_name_text()
+        elif hasattr(child, "text"):
+            init_val += child.text
+        else:
+            init_val += _get_init_val(child)
+    return init_val
 
 
 class VarSymbol(Symbol):

@@ -365,6 +365,7 @@ class AntTreeAnalyzer:
 
         stype = modifiers.get_type()
         is_const = (variab == Variability.CONSTANT)
+        is_sub = (sub is not None)
 
         # Skip comma separators
         for item in declaration.get_items():
@@ -381,7 +382,7 @@ class AntTreeAnalyzer:
             # argument "valud_node" since they are different things
             value_node = item if value else None
             self.table.insert(QName(scope, name), stype, declaration, value_node, 
-                                is_const=is_const, comp=comp)
+                                is_const=is_const, comp=comp, is_sub=is_sub)
             if value:
                 self.handle_arith_expr(scope, value)
     

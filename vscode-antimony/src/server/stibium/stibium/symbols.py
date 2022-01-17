@@ -3,7 +3,7 @@
 import logging
 from stibium.ant_types import Annotation, Name, TreeNode
 from .types import ObscuredValueCompartment, RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
-from .ant_types import Declaration, VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall
+from .ant_types import VarName, Declaration, VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall
 
 import abc
 from collections import defaultdict, namedtuple
@@ -166,22 +166,30 @@ class Symbol:
                 if index != len(self.parameters) - 1:
                     ret += ", "
             ret += ")"
-        elif self.value_node is not None and self.value_node.get_value() is not None \
-            and isinstance(self.value_node.get_value(), Number):
+        elif self.value_node is not None and self.value_node.get_value() is not None: 
+            init_val = ""
+            if isinstance(self.value_node.get_value(), Number):
+                init_val = self.value_node.get_value().text
+            else:
+                for child in self.value_node.get_value().children:
+                    if isinstance(child, VarName):
+                        init_val += child.get_name_text() + " "
+                    elif hasattr(child, "text"):
+                        init_val += child.text + " "
             if isinstance(self.value_node, Assignment) and self.value_node.get_type() is not None:
                 ret += '\n({}) {}\n{}\n'.format(
                     self.type, self.name, 
-                    "Initialized Value: " + self.value_node.get_value().text + " (" + 
+                    "Initialized Value: " + init_val + " (" + 
                     self.value_node.get_type().get_str() + ")")
             elif isinstance(self.value_node, DeclItem) and self.value_node.get_decl_assignment().get_type() is not None:
                 ret += '\n({}) {}\n{}\n'.format(
                     self.type, self.name, 
-                    "Initialized Value: " + self.value_node.get_value().text + " (" + 
+                    "Initialized Value: " + init_val + " (" + 
                     self.value_node.get_decl_assignment().get_type().get_str() + ")")
             else:
                 ret += '\n({}) {}\n{}\n'.format(
                     self.type, self.name, 
-                    "Initialized Value: " + self.value_node.get_value().text)
+                    "Initialized Value: " + init_val)
         else:
             ret += '\n({}) {}\n'.format(self.type, self.name)
 

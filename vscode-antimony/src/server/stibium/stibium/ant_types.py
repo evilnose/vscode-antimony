@@ -409,6 +409,10 @@ class TypeModifier(Keyword):
     # text: Union[Literal['species'], Literal['compartment'], Literal['formula']]
     pass
 
+@dataclass
+class SubModifier(Keyword):
+    pass
+
 
 @dataclass
 class DeclModifiers(TrunkNode):
@@ -418,13 +422,16 @@ class DeclModifiers(TrunkNode):
     But here it always has two: [DeclVarModifier, DeclTypeModifier]. At most one of those may be
     None.
     '''
-    children: Tuple[Optional[VarModifier], Optional[TypeModifier]] = field(repr=False)
+    children: Tuple[Optional[VarModifier], Optional[SubModifier], Optional[TypeModifier]] = field(repr=False)
 
     def get_var_modifier(self):
         return self.children[0]
 
-    def get_type_modifier(self):
+    def get_sub_modifier(self):
         return self.children[1]
+
+    def get_type_modifier(self):
+        return self.children[2]
 
     def get_variab(self):
         var_mod = self.get_var_modifier()

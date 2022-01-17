@@ -15,7 +15,7 @@ from stibium.ant_types import (IsAssignment, VariableIn, FunctionCall, UnitAssig
                                Name, Newline, Number, Operator,
                                Power, Product, Reaction, ReactionName,
                                SimpleStmt, Species, SpeciesList, StringLiteral,
-                               Sum, TreeNode, TrunkNode, TypeModifier, VarModifier,
+                               Sum, TreeNode, TrunkNode, TypeModifier, VarModifier, SubModifier,
                                VarName, Model, SimpleStmtList, End, Function, Parameters, ModularModel, ModularModelCall)
 from stibium.symbols import AbstractScope, BaseScope
 from stibium.types import ASTNode, SrcRange, SymbolType, Variability
@@ -28,6 +28,7 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'NEWLINE': Newline,
     'ERROR_TOKEN': ErrorToken,
     'VAR_MODIFIER': VarModifier,
+    'SUB_MODIFIER': SubModifier,
     'TYPE_MODIFIER': TypeModifier,
     'ESCAPED_STRING': StringLiteral,
     'ANNOT_KEYWORD': Keyword,
@@ -71,7 +72,7 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',
              'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ", "DBLQUOTE"}
-KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL', 'FUNCTION', "UNIT", "HAS", "IS"}
+KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL', 'FUNCTION', "UNIT", "HAS", "IS", "SUBSTANCEONLY"}
 
 for name in OPERATORS:
     TREE_MAP[name] = Operator
@@ -100,14 +101,17 @@ def transform_tree(tree: Optional[Union[Tree, str]]):
         if cls is DeclModifiers:
             var_mod = None
             type_mod = None
+            sub_mod = None
             for child in children:
                 if isinstance(child, VarModifier):
                     var_mod = child
+                elif isinstance(child, SubModifier):
+                    sub_mod = child
                 else:
                     # assert isinstance(child, TypeModifier)
                     child = cast(TypeModifier, child)
                     type_mod = child
-            children = (var_mod, type_mod)
+            children = (var_mod, sub_mod, type_mod)
 
         return cls(get_tree_range(tree), children)  # type: ignore
 

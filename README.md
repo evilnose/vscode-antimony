@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # BioIDE VSCode Extension
 This is a VSCode extension for the Antimony language. The backend used for parsing and analyzing 
 Antimony is [Stibium](https://github.com/evilnose/stibium).
@@ -193,3 +194,7 @@ script (Python would work great).
 ## Test TODOs
 * symbol_at
 * resolve_qname
+=======
+# vscode-antimony
+VSCode extension for the Antimony language
+>>>>>>> steve

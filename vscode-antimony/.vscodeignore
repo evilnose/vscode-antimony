@@ -1,0 +1,32 @@
+# IDE
+.vscode/**
+.vscode-test
+
+# JS source
+client/
+
+# Development files
+requirements.txt
+all-requirements.txt
+scripts/**
+webpack.config.js
+temp
+**/*.ts
+**/tsconfig.json
+**/tsconfig.base.json
+.travis.yml
+.gitignore
+
+# Venvs
+py36
+py37
+venv
+
+# Logs
+**/*.log
+
+# Build files
+*.vsix
+**/*.pyc
+node_modules
+.lark-cache

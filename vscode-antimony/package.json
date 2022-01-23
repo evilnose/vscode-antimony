@@ -1,0 +1,96 @@
+{
+	"name": "vscode-antimony",
+	"displayName": "vscode-antimony",
+	"description": "VSCode extension for the Antimony language.",
+	"author": "Steve Ma, Joseph Hellerstein, Gary Geng",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.62.0"
+	},
+	"categories": [
+		"Programming Languages"
+	],
+	"activationEvents": [
+		"onLanguage:antimony",
+		"onCommand:createAnnotationDialog"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"configuration": {
+			"title": "vscode-antimony",
+			"properties": {
+				"vscode-antimony.pythonInterpreter": {
+					"type": "string",
+					"default": "python",
+					"scope": "machine",
+					"description": "The Python interpreter (>= 3.7) used to power the language backend. Either a full path or a name (e.g. 'python36')."
+				}
+			}
+		},
+		"commands": [
+			{
+				"command": "antimony.createAnnotationDialog",
+				"title": "Create Annotation"
+			}
+		],
+		"languages": [
+			{
+				"id": "antimony",
+				"extensions": [
+					".ant"
+				],
+				"aliases": [
+					"Antimony",
+					"ant"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"menus": {
+			"editor/context": [
+				{
+					"command": "antimony.createAnnotationDialog",
+					"title": "Create Annotation",
+					"group": "1_modification",
+					"when": "editorLangId == antimony"
+				}
+			]
+		},
+		"grammars": [
+			{
+				"language": "antimony",
+				"scopeName": "source.antimony",
+				"path": "./src/syntax/antimony.tmLanguage.json"
+			},
+			{
+				"path": "./src/syntax/injection.json",
+				"scopeName": "todo-comment.injection",
+				"injectTo": ["source.antimony"]
+			  }
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.1.4",
+		"@types/mocha": "^9.0.0",
+		"@types/node": "14.x",
+		"@types/vscode": "^1.62.0",
+		"@typescript-eslint/eslint-plugin": "^5.1.0",
+		"@typescript-eslint/parser": "^5.1.0",
+		"@vscode/test-electron": "^1.6.2",
+		"eslint": "^8.1.0",
+		"glob": "^7.1.7",
+		"mocha": "^9.1.3",
+		"typescript": "^4.4.4"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^7.0.0"
+	}
+}

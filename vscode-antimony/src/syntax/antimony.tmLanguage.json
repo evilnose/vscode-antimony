@@ -1,0 +1,180 @@
+{
+    "scopeName": "source.antimony",
+    "patterns": [
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#code"
+        }
+    ],
+    "repository": {
+        "comments": {
+            "patterns": [
+                {
+                    "captures": {
+                        "0": {
+                            "name": "punctuation.definition.comment.antimony"
+                        }
+                    },
+                    "match": "/\\*\\*/",
+                    "name": "comment.block.empty.antimony"
+                },
+                {
+                    "include": "#comments-inline"
+                }
+            ]
+        },
+        "comments-inline": {
+            "patterns": [
+                {
+                    "begin": "/\\*",
+                    "captures": {
+                        "0": {
+                            "name": "punctuation.definition.comment.antimony"
+                        }
+                    },
+                    "end": "\\*/",
+                    "name": "comment.block.antimony"
+                },
+                {
+                    "begin": "(^[ \\t]+)?(?=//|#)",
+                    "beginCaptures": {
+                        "1": {
+                            "name": "punctuation.whitespace.comment.leading.antimony"
+                        }
+                    },
+                    "end": "(?!\\G)",
+                    "patterns": [
+                        {
+                            "begin": "//",
+                            "beginCaptures": {
+                                "0": {
+                                    "name": "punctuation.definition.comment.antimony"
+                                }
+                            },
+                            "end": "\\n",
+                            "name": "comment.line.double-slash.java"
+                        },
+                        {
+                            "begin": "#",
+                            "beginCaptures": {
+                                "0": {
+                                    "name": "punctuation.definition.comment.antimony"
+                                }
+                            },
+                            "end": "\\n",
+                            "name": "comment.line.number-sign.antimony"
+                        }
+                    ]
+                }
+            ]
+        },
+        "code": {
+            "patterns": [
+                {
+                    "include": "#string-literal"
+                },
+                {
+                    "include": "#keywords"
+                },
+                {
+                    "include": "#reaction-name"
+                },
+                {
+                    "include": "#operators"
+                },
+                {
+                    "include": "#numbers"
+                }
+            ]
+        },
+        "string-literal": {
+            "name": "string.quoted.double.antimony",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.antimony",
+                    "match": "\\\\."
+                }
+            ]
+        },
+        "operators": {
+            "patterns": [
+                {
+                    "match": "=>|->",
+                    "name": "symbol.transform"
+                },
+                {
+                    "match": "=|:=",
+                    "name": "symbol.assign"
+                },
+                {
+                    "match": "\\-|\\+|\\*|\\/|\\^",
+                    "name": "symbol.operator"
+                }
+            ]
+        },
+        "keywords": {
+            "patterns": [
+                {
+                    "match": "\\b(?:identity)\\b",
+                    "name": "type.annotation"
+                },
+                {
+                    "match": "\\b(?:const)\\b",
+                    "name": "type.const"
+                },
+                {
+                    "match": "\\b(?:unit)\\b",
+                    "name": "type.unit"
+                },
+                {
+                    "match": "\\b(?:var)\\b",
+                    "name": "type.var"
+                },
+                {
+                    "match": "\\b(?:species)\\b",
+                    "name": "type.species"
+                },
+                {
+                    "match": "\\b(?:function|model|end)\\b",
+                    "name": "type.functionmodel"
+                },
+                {
+                    "match": "\\b(?:compartment)\\b",
+                    "name": "type.compartment"
+                },
+                {
+                    "match": "\\b(?:in|at|import|has)\\b",
+                    "name": "type.keywords"
+                }
+            ]
+        },
+        "reaction-name": {
+            "patterns": [
+                {
+                    "match": "^\\s*([a-zA-Z_][a-zA-Z_0-9]*):",
+                    "captures": {
+                        "1": {
+                            "name": "support.class.antimony"
+                        }
+                    }
+                }
+            ]
+        },
+        "numbers": {
+            "patterns": [
+                {
+                    "match": "(?x)\n  (?<! \\w)(?:\n    (?:\n      \\.[0-9]+\n      |\n      [0-9]+ \\. [0-9]+\n      |\n      [0-9]+ \\.\n    ) (?: [eE][+-]?[0-9]+ )?\n    |\n    [0-9]+ (?: [eE][+-]?[0-9]+ )\n  )\n",
+                    "name": "constant.numeric.float.antimony"
+                },
+                {
+                    "match": "(?x)\n  (?<![\\w\\.])(?:\n      [0-9]+|\n      0 ([0-9]+)(?![eE\\.])\n  )\n",
+                    "name": "constant.numeric.decimal.antimony"
+                }
+            ]
+        }
+    }
+}

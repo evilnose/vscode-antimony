@@ -3,7 +3,9 @@
 .vscode-test
 
 # JS source
-client/
+src/utils/utils.ts
+src/annotationInput.ts
+src/extension.ts
 
 # Development files
 requirements.txt
@@ -28,5 +30,5 @@ venv
 # Build files
 *.vsix
 **/*.pyc
-node_modules
+ node_modules
 .lark-cache

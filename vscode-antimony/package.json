@@ -83,13 +83,13 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "webpack --mode production",
-		"webpack": "webpack --mode development",
-		"webpack-dev": "webpack --mode development --watch",
-		"test-compile": "webpack --mode development && npx tsc -b",
-		"postinstall": "cd src && npm install && cd .. && sh ./scripts/installPythonReqs.sh",
-		"pretest": "webpack",
-		"test": "scripts\\runTestsDriver.bat"
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"postinstall": "sh ./scripts/installPythonReqs.sh",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.1.4",

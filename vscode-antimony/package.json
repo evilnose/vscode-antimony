@@ -19,7 +19,7 @@
 		"url": "https://github.com/sys-bio/vscode-antimony/issues",
 		"email": "bochenma@cs.washington.edu"
 	  },
-	"license": "SEE LICENSE IN LICENSE.md",
+	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/sys-bio/vscode-antimony.git"

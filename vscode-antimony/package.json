@@ -3,7 +3,7 @@
 	"displayName": "Antimony",
 	"description": "VSCode extension for the Antimony language.",
 	"author": "Steve Ma, Joseph Hellerstein, Gary Geng",
-	"publisher": "SteveMa",
+	"publisher": "stevem",
 	"version": "0.1.0",
 	"engines": {
 		"vscode": "^1.62.0"
@@ -87,7 +87,7 @@
 		"webpack": "webpack --mode development",
 		"webpack-dev": "webpack --mode development --watch",
 		"test-compile": "webpack --mode development && npx tsc -b",
-		"postinstall": "sh ./scripts/installPythonReqs.sh",
+		"postinstall": "cd src/syntax/antimony-syntax && npm install && cd ../../.. && sh ./scripts/installPythonReqs.sh",
 		"pretest": "webpack",
 		"test": "node ./out/test/runTest.js"
 	},

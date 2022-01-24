@@ -1,12 +1,13 @@
 """Temporary single-file server implementation.
-Author: Gary Geng
+Author: Gary Geng, Steve Ma
 """
 import os
 import sys
-import filecmp
+
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(EXTENSION_ROOT, "pythonFiles", "lib", "python"))
+sys.path.insert(0, os.path.join(EXTENSION_ROOT, "..", "pythonFiles", "lib", "python"))
+
 sys.path.append(os.path.join(EXTENSION_ROOT, "server", "stibium"))
 
 from stibium.api import AntCompletion, AntCompletionKind

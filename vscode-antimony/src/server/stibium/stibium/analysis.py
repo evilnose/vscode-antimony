@@ -1,7 +1,7 @@
 
 import logging
 from stibium.ant_types import IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
-from .types import SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -400,6 +400,8 @@ class AntTreeAnalyzer:
         var = self.table.get(qname)
         display_name = is_assignment.get_display_name().text
         if len(var) != 0:
+            if var[0].display_name != None:
+                self.table.insert_warning(OverridingDisplayName(is_assignment.range, name.text))
             var[0].display_name = display_name
     
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
@@ -592,8 +594,10 @@ class AntTreeAnalyzer:
     def process_is_assignment(self, node, scope):
         name = node.get_stmt().get_var_name()
         qname = QName(scope, name)
-        if len(self.table.get(qname)) == 0:
-            self.warning.append(VarNotFound(name.range, name))
+        var = self.table.get(qname)
+        if len(var) == 0:
+            self.warning.append(VarNotFound(name.range, name.text))
+        
 
 # def get_ancestors(node: ASTNode):
 #     ancestors = list()

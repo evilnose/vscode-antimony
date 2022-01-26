@@ -139,6 +139,7 @@ model *BIOMD0000000007()
   // Display Names:
   time_unit is "minutes";
   UbE is "ubiquitinProtease1";
+  UbE is "ubiquitinProtease1";
   UbE2 is "ubiquitinProtease2";
   G2K is "Cdc13_Cdc2";
   R is "FreeRum1";

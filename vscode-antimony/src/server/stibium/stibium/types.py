@@ -235,16 +235,12 @@ class ObscuredValue(Issue):
         )
 
 class OverridingDisplayName(Issue):
-    def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):
-        super().__init__(old_range, IssueSeverity.Warning)
-        self.old_range = old_range
-        self.new_range = new_range
+    def __init__(self, range: SrcRange, name: str):
+        super().__init__(range, IssueSeverity.Warning)
+        self.range = range
         self.name = name
-        self.message = ("Name assignment to '{name}' is being overridden by a later assignment on "
-                        "line {new_line}:{new_column}").format(
+        self.message = ("Name already assignment to '{name}'").format(
             name=name,
-            new_line=new_range.start.line,
-            new_column=new_range.start.column,
         )
 
 class ObscuredValueCompartment(Issue):

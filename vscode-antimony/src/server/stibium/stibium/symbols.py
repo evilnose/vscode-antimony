@@ -2,7 +2,7 @@
 '''
 import logging
 from stibium.ant_types import Annotation, Name, TreeNode
-from .types import ObscuredValueCompartment, RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
+from .types import Issue, ObscuredValueCompartment, RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
 from .ant_types import VarName, Declaration, VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall
 
 import abc
@@ -318,6 +318,9 @@ class SymbolTable:
             return [leaf_table[name]]
         else:
             return []
+    
+    def insert_warning(self, issue: Issue):
+        self.warning.append(issue)
     
     def insert_function_holder(self, function, scope):
         leaf_table = self._leaf_table(scope)

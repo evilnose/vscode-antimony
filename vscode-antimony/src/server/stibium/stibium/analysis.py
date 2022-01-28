@@ -339,6 +339,7 @@ class AntTreeAnalyzer:
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
         comp = None
+        logging.debug(assignment.get_type())
         if assignment.get_maybein() != None and assignment.get_maybein().is_in_comp():
             comp = assignment.get_maybein().get_comp().get_name_text()
         self.table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
@@ -406,22 +407,22 @@ class AntTreeAnalyzer:
     
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()
-        unit_sum = unitdec.get_unit_sum()
+        unit_sum = unitdec.get_sum()
         qname = QName(scope, varname)
         self.table.insert(qname, SymbolType.Unit)
     
     def handle_unit_assignment(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()
-        unit_sum = unitdec.get_unit_sum()
+        unit_sum = unitdec.get_sum()
         symbols = self.table.get(QName(scope, varname))
         if symbols:
             sym = symbols[0]
             value_node = sym.value_node
             if isinstance(value_node, Assignment):
-                value_node.children = (value_node.children[0], value_node.children[1], value_node.children[2], unit_sum)
+                value_node.unit = unit_sum
             elif isinstance(value_node, DeclItem):
                 decl_assignment = value_node.children[1]
-                decl_assignment.children = (decl_assignment.children[0], decl_assignment.children[1], unit_sum)
+                decl_assignment.unit = unit_sum
     
     def handle_mmodel_call(self, scope: AbstractScope, mmodel_call: ModularModelCall):
         if mmodel_call.get_name() is None:

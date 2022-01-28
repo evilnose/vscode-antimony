@@ -45,6 +45,9 @@ model *Waugh2006___Diabetic_Wound_Healing___TGF_B_Dynamics()
   d2 = 9.1;
   d2 has unit_5;
 
+  a = 4;
+  a has foo/3 seconds;
+
   // Other declarations:
   const COMpartment, tau1, tau2, tau3, tau4, alpha, k1, k2, k3, d1, k4, d2;
 

@@ -181,34 +181,6 @@ class Number(LeafNode, ArithmeticExpr):
 class Operator(LeafNode):
     pass
 
-@dataclass
-class UnitAtom(TrunkNode):
-    pass
-
-@dataclass
-class UnitSum(TrunkNode):
-    
-    def get_str(self):
-        return _flat_unit_sum(0, len(self.children) - 1, self)
-
-def _flat_unit_sum(current, end, unit_sum):
-    if current > end:
-        return ""
-    child = unit_sum.children[current]
-    if isinstance(child, Operator):
-        return child.text + _flat_unit_sum(current + 1, end, unit_sum)
-    elif isinstance(child, UnitSum):
-        return _flat_unit_sum(0, len(child.children) - 1, child) + _flat_unit_sum(current + 1, end, unit_sum)
-    elif isinstance(child, UnitAtom):
-        return _flat_unit_atom(child) + _flat_unit_sum(current + 1, end, unit_sum)
-
-def _flat_unit_atom(unit_atom):
-    if isinstance(unit_atom.children[0], Number):
-        return unit_atom.children[0].text + " " + unit_atom.children[1].text
-    elif isinstance(unit_atom.children[0], Name):
-        return unit_atom.children[0].text
-    else:
-        return _flat_unit_sum(0, len(unit_atom.children[1].children) - 1, unit_atom.children[1])
 
 @dataclass
 class Keyword(LeafNode):
@@ -380,7 +352,8 @@ class Reaction(TrunkNode):
 
 @dataclass
 class Assignment(TrunkNode):
-    children: Tuple[NameMaybeIn, Operator, ArithmeticExpr, Optional[UnitSum]] = field(repr=False)
+    unit: Sum = None
+    children: Tuple[NameMaybeIn, Operator, ArithmeticExpr] = field(repr=False)
 
     def get_maybein(self):
         return self.children[0]
@@ -393,9 +366,9 @@ class Assignment(TrunkNode):
 
     def get_value(self):
         return self.children[2]
-    
+
     def get_type(self):
-        return self.children[3]
+        return self.unit
 
 
 @dataclass
@@ -456,13 +429,14 @@ class DeclModifiers(TrunkNode):
 
 @dataclass
 class DeclAssignment(TrunkNode):
-    children: Tuple[Operator, ArithmeticExpr, Optional[UnitSum]] = field(repr=False)
+    unit: Sum = None
+    children: Tuple[Operator, ArithmeticExpr] = field(repr=False)
 
     def get_value(self):
         return self.children[1]
 
     def get_type(self):
-        return self.children[2]
+        return self.unit
 
 
 @dataclass
@@ -523,22 +497,22 @@ class Annotation(TrunkNode):
 
 @dataclass
 class UnitDeclaration(TrunkNode):
-    children: Tuple[Keyword, VarName, Operator, UnitSum] = field(repr=False)
+    children: Tuple[Keyword, VarName, Operator, Sum] = field(repr=False)
 
     def get_var_name(self):
         return self.children[1]
     
-    def get_unit_sum(self):
+    def get_sum(self):
         return self.children[3]
 
 @dataclass
 class UnitAssignment(TrunkNode):
-    children: Tuple[VarName, Keyword, UnitSum] = field(repr=False)
+    children: Tuple[VarName, Keyword, Sum] = field(repr=False)
 
     def get_var_name(self):
         return self.children[0]
     
-    def get_unit_sum(self):
+    def get_sum(self):
         return self.children[2]
 
 @dataclass

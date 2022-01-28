@@ -12,7 +12,7 @@ species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
-assignment : namemaybein ("=" | AEQ) sum [unit_sum]
+assignment : namemaybein ("=" | AEQ) sum 
 
 AEQ : ":="
 
@@ -27,24 +27,16 @@ decl_modifiers : VAR_MODIFIER
     | SUB_MODIFIER TYPE_MODIFIER
     | VAR_MODIFIER SUB_MODIFIER TYPE_MODIFIER
 decl_item : namemaybein [decl_assignment]
-decl_assignment : "=" sum [unit_sum]
+decl_assignment : "=" sum
 
 // unit
 // builtin_unit : ("liter" | "mole" | "second" | "item" | "meter" | "liters" | "moles" | "seconds" | "items" | "meters")
 
 unit : NAME
 
-unit_declaration : "unit" var_name "=" unit_sum
-unit_sum : unit_sum "*" unit_atom
-        | unit_sum "/" unit_atom
-        | unit_sum "^" unit_atom
-        | unit_atom
-unit_atom : NUMBER NAME
-        | NAME
-        // | NUMBER builtin_unit
-        | "(" unit_sum ")"
+unit_declaration : "unit" var_name "=" sum
 
-unit_assignment : var_name "has" unit_sum
+unit_assignment : var_name "has" sum
 
 // this should not be a reaction name, I'm just being lazy
 mmodel_call : [reaction_name] NAME "(" [parameters] ")"
@@ -68,6 +60,7 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
 
 ?atom : NUMBER
     | var_name
+    | NUMBER var_name
     | "-" atom
     | "+" atom
     | "(" sum ")"

@@ -175,34 +175,35 @@ class Symbol:
         elif self.value_node is not None and self.value_node.get_value() is not None: 
             init_val = ""
             if isinstance(self.value_node.get_value(), Number):
-                init_val = self.value_node.get_value().text
+                init_val = " " + self.value_node.get_value().text
             else:
                 init_val = _get_init_val(self.value_node.get_value())
             if isinstance(self.value_node, Assignment) and self.value_node.get_type() is not None:
                 ret += '\n({}) {}\n{}\n'.format(
                     self.type, self.name, 
-                    "Initialized Value: " + init_val + " (" + 
-                    self.value_node.get_type().get_str() + ")")
+                    "Initialized Value:" + init_val  + 
+                    _get_init_val(self.value_node.get_type()))
             elif isinstance(self.value_node, DeclItem) and self.value_node.get_decl_assignment().get_type() is not None:
                 ret += '\n({}) {}\n{}\n'.format(
                     self.type, self.name, 
-                    "Initialized Value: " + init_val + " (" + 
-                    self.value_node.get_decl_assignment().get_type().get_str() + ")")
+                    "Initialized Value:" + init_val  + 
+                    _get_init_val(self.value_node.get_decl_assignment().get_type()))
             else:
                 ret += '\n({}) {}\n{}\n'.format(
                     self.type, self.name, 
-                    "Initialized Value: " + init_val)
+                    "Initialized Value:" + init_val)
         else:
             ret += '\n({}) {}\n'.format(self.type, self.name)
 
         if self.comp:
             ret += 'In compartment: {}\n'.format(self.comp)
 
+        ret += '```'
+
         if self.annotations:
             # add the first annotation
-            ret += '\n***\n{}'.format(self.annotations[0].get_uri())
-
-        ret += '```'
+            ret += '\n***\n{}\n'.format(self.annotations[0].get_uri())
+            
         return ret
 
 
@@ -210,15 +211,15 @@ def _get_init_val(node):
     if node == None or not hasattr(node, "children"):
         return ""
     elif (isinstance(node, VarName)):
-        return node.get_name_text()
+        return " " + node.get_name_text()
     elif hasattr(node, "text"):
-        return node.text
+        return " " + node.text
     init_val = ""
     for child in node.children:
         if isinstance(child, VarName):
-            init_val += child.get_name_text()
+            init_val += " " + child.get_name_text()
         elif hasattr(child, "text"):
-            init_val += child.text
+            init_val += " " + child.text
         else:
             init_val += _get_init_val(child)
     return init_val

@@ -41,13 +41,32 @@ The extension provides many convenient features for developing biological models
 <em>(Hovering over species to look up information)</em>
 </p>
 
-### 3. Code navigation
+### 4. Code navigation
 
 <p align=center>
 <img src="docs/images/nav.gif" width=75%>
 <br/>
 <em>(Navigating to the definition code)</em>
 </p>
+
+### 5. Error detection
+The extension supports various warning and error detections to help modelers debug their model during development. Our design principle for whether an issue should be a warning or an error entirely depends on the logic of tellurium. Our extension will mark the subject as an error if tellurium throws an error while rendering the model, with a red underline. An example would be calling a function that does not exist (usually due to a typo, which is extremely common during development. Read more in my [thesis](https://drive.google.com/file/d/1FutuOYgq9Jd_AHqp_z4f2joDavVIURuz/view?usp=sharing)).
+
+<p align=center>
+<img src="docs/images/function.gif" width=75%>
+<br/>
+<em>(Typos are extremely common in software development)</em>
+</p>
+
+On the other hand, certain issues are not errors in tellurium, but we thought it would be worthwhile to have the user's attention. For example, missing initial values for species and overriding a previously defined value.
+
+<p align=center>
+<img src="docs/images/warning.gif" width=75%>
+<br/>
+<em>(Forgetting to initialize the value for a species, causing tellurium to assume a default value)</em>
+</p>
+
+The extension supports a wide range of errors and warnings, and we plan to support more in the upcoming releases. Read more in [issues](https://github.com/sys-bio/vscode-antimony/issues).
 
 ## Requirements
 

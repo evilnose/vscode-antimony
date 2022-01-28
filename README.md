@@ -24,7 +24,7 @@ The extension provides many convenient features for developing biological models
 
 ### 2. Automatic annotation creation with ChEBI and UniProt
 <p align=center>
-<img src="docs/images/12.gif" width=75%>
+<img src="docs/images/annotations.gif" width=75%>
 <br/>
 <em>(Syntax Highlights)</em>
 </p>

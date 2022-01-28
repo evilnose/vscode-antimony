@@ -10,13 +10,16 @@ The currently available version 0.1 is a public beta version developed by [Gary 
 
 Please note that the current release does not support the complete Antimony grammar. While most grammar has been supported, more will be included in future releases.
 
+## Installation
+The Antimony extension pack includes two extensions: [Antimony](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony) and [Antimony Syntax](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony-syntax) for the color scheme. The [Antimony Extension Pack](https://marketplace.visualstudio.com/items?itemName=stevem.antimony-extension-pack) is also available on the Visual Studio Code Marketplace. We recommend installing the extension pack directly so you have full access to all of the features. For installation, simply download the extension pack from the Visual Studio Code Marketplace and install.
+
 ## Features
 The extension provides many convenient features for developing biological models with the Antimony language in tellurium. The current release focuses on the areas below.
 
 ### 1. Syntax recognition and highlights.
 
 <p align=center>
-<img src="../docs/images/syntax_highlights.png" width=75%>
+<img src="docs/images/syntax_highlights.png" width=75%>
 <br/>
 <em>(Syntax Highlights)</em>
 </p>
@@ -26,7 +29,7 @@ The extension provides many convenient features for developing biological models
 ### 2. Automatic annotation creation with ChEBI and UniProt
 
 <p align=center>
-<img src="../docs/images/annotations.gif" width=75%>
+<img src="docs/images/annotations.gif" width=75%>
 <br/>
 <em>(Creating an annotation through the ChEBI database)</em>
 </p>
@@ -36,7 +39,7 @@ The extension provides many convenient features for developing biological models
 ### 3. Hover messages 
 
 <p align=center>
-<img src="../docs/images/hover.gif" width=75%>
+<img src="docs/images/hover.gif" width=75%>
 <br/>
 <em>(Hovering over species to look up information)</em>
 </p>
@@ -44,7 +47,7 @@ The extension provides many convenient features for developing biological models
 ### 4. Code navigation
 
 <p align=center>
-<img src="../docs/images/nav.gif" width=75%>
+<img src="docs/images/nav.gif" width=75%>
 <br/>
 <em>(Navigating to the definition code)</em>
 </p>
@@ -53,7 +56,7 @@ The extension provides many convenient features for developing biological models
 The extension supports various warning and error detections to help modelers debug their model during development. Our design principle for whether an issue should be a warning or an error entirely depends on the logic of tellurium. Our extension will mark the subject as an error if tellurium throws an error while rendering the model, with a red underline. An example would be calling a function that does not exist (usually due to a typo, which is extremely common during development. Read more in my [thesis](https://drive.google.com/file/d/1FutuOYgq9Jd_AHqp_z4f2joDavVIURuz/view?usp=sharing)).
 
 <p align=center>
-<img src="../docs/images/function.gif" width=75%>
+<img src="docs/images/function.gif" width=75%>
 <br/>
 <em>(Typos are extremely common in software development)</em>
 </p>
@@ -61,7 +64,7 @@ The extension supports various warning and error detections to help modelers deb
 On the other hand, certain issues are not errors in tellurium, but we thought it would be worthwhile to have the user's attention. For example, missing initial values for species and overriding a previously defined value.
 
 <p align=center>
-<img src="../docs/images/warning.gif" width=75%>
+<img src="docs/images/warning.gif" width=75%>
 <br/>
 <em>(Forgetting to initialize the value for a species, causing tellurium to assume a default value)</em>
 </p>
@@ -82,3 +85,6 @@ I have an open issue for [manually curating models](https://github.com/sys-bio/v
 * Added docs and examples.
 * Fixed an issue related to code navigation ([#46](https://github.com/sys-bio/vscode-antimony/issues/46)).
 * Fixed an issue related to displaying hover message for annotated entities ([#47](https://github.com/sys-bio/vscode-antimony/issues/47)).
+
+### 0.1.2
+* Updated docs.

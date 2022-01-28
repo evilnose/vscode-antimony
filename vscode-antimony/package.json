@@ -4,7 +4,8 @@
 	"description": "VSCode extension for the Antimony language.",
 	"author": "Steve Ma, Joseph Hellerstein, Gary Geng",
 	"publisher": "stevem",
-	"version": "0.1.1",
+	"version": "0.1.2",
+	"icon": "docs/images/logo.png",
 	"engines": {
 		"vscode": "^1.62.0"
 	},

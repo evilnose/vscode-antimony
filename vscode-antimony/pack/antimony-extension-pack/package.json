@@ -2,8 +2,9 @@
     "name": "antimony-extension-pack",
     "displayName": "Antimony Extension Pack",
     "description": "Extensions for Antimony development in Visual Studio Code.",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "author": "Steve Ma, Joseph Hellerstein",
+    "icon": "images/logo.png",
     "publisher": "stevem",
     "engines": {
         "vscode": "^1.63.0"

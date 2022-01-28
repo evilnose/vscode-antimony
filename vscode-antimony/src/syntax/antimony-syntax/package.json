@@ -1,10 +1,11 @@
 {
     "name": "vscode-antimony-syntax",
     "displayName": "Antimony Syntax",
-    "description": "syntax highlighting for Antimony.",
+    "description": "UI Themes for Antimony.",
     "author": "Steve Ma, Joseph Hellerstein",
     "publisher": "stevem",
-    "version": "0.1.1",
+    "version": "0.1.2",
+    "icon": "images/logo.png",
     "engines": {
         "vscode": "^1.63.0"
     },

@@ -68,12 +68,17 @@ On the other hand, certain issues are not errors in tellurium, but we thought it
 
 The extension supports a wide range of errors and warnings, and we plan to support more in the upcoming releases. Read more in [issues](https://github.com/sys-bio/vscode-antimony/issues).
 
-## Requirements
-
-## Extension Settings
-
 ## Known Issues
+I have an open issue for [manually curating models](https://github.com/sys-bio/vscode-antimony/issues/26) from BioModels to test the extension. Please feel free to contribute and submit issues.
+* "Events" are currently not supported and false error messages will be triggered.
+* "Rate rules" are currently not supported and false error messages will be triggered.
 
 ## Release Notes
 
-### 1.0.0
+### 0.1.0
+* First public release of the extension pack.
+
+### 0.1.1
+* Added docs and examples.
+* Fixed an issue related to code navigation ([#46](https://github.com/sys-bio/vscode-antimony/issues/46)).
+* Fixed an issue related to displaying hover message for annotated entities ([#47](https://github.com/sys-bio/vscode-antimony/issues/47)).

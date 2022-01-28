@@ -131,7 +131,8 @@ class Symbol:
 
     def def_name(self):
         '''Return the Name that should be considered as the definition'''
-        return self.decl_name or self.value_node or self.type_name
+        # return self.decl_name or self.value_node or self.type_name
+        return self.value_node or self.decl_name or self.type_name
 
     def help_str(self):
         ret = "```"
@@ -203,7 +204,7 @@ class Symbol:
         if self.annotations:
             # add the first annotation
             ret += '\n***\n{}\n'.format(self.annotations[0].get_uri())
-            
+
         return ret
 
 

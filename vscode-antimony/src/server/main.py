@@ -116,6 +116,7 @@ def definition(params):
         text_doc = server.workspace.get_document(params.textDocument.uri)
         antfile_cache = get_antfile(text_doc)
         uri = params.textDocument.uri
+
     srclocations, range_ = antfile_cache.goto(sb_position(params.position))
     definitions = [Location(
         loc.path,

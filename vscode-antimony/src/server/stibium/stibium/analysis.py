@@ -209,8 +209,6 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == Reaction:
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
-                    logging.debug("AAA")
-                    logging.debug(node.get_stmt())
                     self.process_mmodel_call(node, scope)
                 elif type(node.get_stmt()) == FunctionCall:
                     self.process_function_call(node, scope)
@@ -339,7 +337,6 @@ class AntTreeAnalyzer:
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
         comp = None
-        logging.debug(assignment.get_type())
         if assignment.get_maybein() != None and assignment.get_maybein().is_in_comp():
             comp = assignment.get_maybein().get_comp().get_name_text()
         self.table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,

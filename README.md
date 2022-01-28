@@ -14,6 +14,7 @@ Please note that the current release does not support the complete Antimony gram
 The extension provides many convenient features for developing biological models with the Antimony language in tellurium. The current release focuses on the areas below.
 
 ### 1. Syntax recognition and highlights.
+
 <p align=center>
 <img src="docs/images/syntax_highlights.png" width=75%>
 <br/>
@@ -27,7 +28,25 @@ The extension provides many convenient features for developing biological models
 <p align=center>
 <img src="docs/images/annotations.gif" width=75%>
 <br/>
-<em>(Syntax Highlights)</em>
+<em>(Creating an annotation through the ChEBI database)</em>
+</p>
+
+⚠️ Note: support for more databases & performance optimization will come soon!
+
+### 3. Hover messages 
+
+<p align=center>
+<img src="docs/images/hover.gif" width=75%>
+<br/>
+<em>(Hovering over species to look up information)</em>
+</p>
+
+### 3. Code navigation
+
+<p align=center>
+<img src="docs/images/nav.gif" width=75%>
+<br/>
+<em>(Navigating to the definition code)</em>
 </p>
 
 ## Requirements

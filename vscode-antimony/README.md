@@ -16,7 +16,7 @@ The Antimony extension pack includes two extensions: [Antimony](https://marketpl
 ## Features
 The extension provides many convenient features for developing biological models with the Antimony language in tellurium. The current release focuses on the areas below.
 
-### 1. Syntax recognition and highlights.
+### 1. Syntax recognition and highlights
 
 <p align=center>
 <img src="docs/images/syntax_highlights.png" width=75%>
@@ -87,4 +87,7 @@ I have an open issue for [manually curating models](https://github.com/sys-bio/v
 * Fixed an issue related to displaying hover message for annotated entities ([#47](https://github.com/sys-bio/vscode-antimony/issues/47)).
 
 ### 0.1.2
+* Updated docs.
+
+### 0.1.3
 * Updated docs.

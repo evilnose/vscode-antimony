@@ -23,6 +23,7 @@ The extension provides many convenient features for developing biological models
 ⚠️ Note: the default syntax highlighting for Antimony is provided by a separate extension [Antimony Syntax](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony-syntax), and is also available in the [Antimony Extension Pack](https://marketplace.visualstudio.com/items?itemName=stevem.antimony-extension-pack) 
 
 ### 2. Automatic annotation creation with ChEBI and UniProt
+
 <p align=center>
 <img src="docs/images/annotations.gif" width=75%>
 <br/>

@@ -6,7 +6,7 @@
 
 The Antimony extension adds language support for Antimony to Visual Studio Code for building models in Systems Biology.
 
-The currently available version 0.1 is a public beta version developed by [Gary Geng](https://www.linkedin.com/in/gary-geng-9995a2160/), [Steve Ma](https://www.linkedin.com/in/steve-ma/), and Dr. [Joseph Hellerstein](https://sites.google.com/uw.edu/joseph-hellerstein/home?authuser=0) at the University of Washington. Steve Ma is responsible for future releases, and please feel free to [contact](mailto:bochenma@cs.washington.edu) him if you have any questions.
+The currently available version 0.1 is a public beta version developed by [Gary Geng](https://www.linkedin.com/in/gary-geng-9995a2160/), [Steve Ma](https://www.linkedin.com/in/steve-ma/), [Dr. Joseph Hellerstein](https://sites.google.com/uw.edu/joseph-hellerstein/home?authuser=0), and [Dr. Herbert Sauro](https://bioe.uw.edu/portfolio-items/sauro/) at the University of Washington. Steve Ma is responsible for future releases, and please feel free to [contact](mailto:bochenma@cs.washington.edu) him if you have any questions.
 
 Please note that the current release does not support the complete Antimony grammar. While most grammar has been supported, more will be included in future releases.
 
@@ -76,6 +76,18 @@ I have an open issue for [manually curating models](https://github.com/sys-bio/v
 * "Events" are currently not supported and false error messages will be triggered.
 * "Rate rules" are currently not supported and false error messages will be triggered.
 
+## Preview Features for 0.2
+* [Be able to detect subvariables in modular models](https://github.com/sys-bio/vscode-antimony/issues/48).
+* [Support semantic synthesis of models](https://github.com/sys-bio/vscode-antimony/issues/23).
+* [Automatic creation of rate laws](https://github.com/sys-bio/vscode-antimony/issues/22).
+* [Performance improvement for creating annotations](https://github.com/sys-bio/vscode-antimony/issues/27).
+* [Fix annotation insert position](https://github.com/sys-bio/vscode-antimony/issues/48).
+* [Better caching](https://github.com/sys-bio/vscode-antimony/issues/9).
+* [Grammar support for events](https://github.com/sys-bio/vscode-antimony/issues/4).
+* [Warning and error detection for events](https://github.com/sys-bio/vscode-antimony/issues/20).
+* [Grammar support for rate rules](https://github.com/sys-bio/vscode-antimony/issues/45).
+* [Warning and error detection for modular models](https://github.com/sys-bio/vscode-antimony/issues/16).
+
 ## Release Notes
 
 ### 0.1.0
@@ -91,3 +103,6 @@ I have an open issue for [manually curating models](https://github.com/sys-bio/v
 
 ### 0.1.3
 * Updated docs.
+
+### 0.1.4
+* Updated docs, included a list for updates in 0.2.

@@ -9,10 +9,6 @@ import {
 } from 'vscode-languageclient/node';
 import { multiStepInput } from './annotationInput';
 
-// for debugging
-let debug = vscode.window.createOutputChannel("Debug");
-debug.show();
-
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
 let lastChangeInterp = 0;

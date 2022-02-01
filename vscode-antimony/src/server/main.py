@@ -30,7 +30,7 @@ import time
 
 
 # TODO remove this for production
-logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.DEBUG)
+# logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.DEBUG)
 
 server = LanguageServer()
 services = WebServices()

@@ -4,7 +4,7 @@
 	"description": "Extensions for Antimony development in Visual Studio Code.",
 	"author": "Steve Ma, Gary Geng, Joseph Hellerstein, Herbet Sauro",
 	"publisher": "stevem",
-	"version": "0.1.4",
+	"version": "0.1.6",
 	"icon": "docs/images/logo.png",
 	"engines": {
 		"vscode": "^1.62.0"
@@ -118,6 +118,6 @@
 	},
 	"dependencies": {
 		"vsce": "^2.6.3",
-		"vscode-languageclient": "^7.0.0"
+		"vscode-languageclient": "8.0.0-next.7"
 	}
 }

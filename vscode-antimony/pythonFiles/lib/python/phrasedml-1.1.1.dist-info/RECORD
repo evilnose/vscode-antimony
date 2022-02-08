@@ -1,0 +1,11 @@
+phrasedml-1.1.1.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+phrasedml-1.1.1.dist-info/METADATA,sha256=fId-DNaifTCWRlRzWTNpfbtUes3NNCCGN13V03N2XO8,270
+phrasedml-1.1.1.dist-info/RECORD,,
+phrasedml-1.1.1.dist-info/WHEEL,sha256=jr7ubY0Lkz_yXH9FfFe9PTtLhGOsf62dZkNvTYrJINE,100
+phrasedml-1.1.1.dist-info/top_level.txt,sha256=HnWYz2YXKRwN5SCuwSxkiioNM8-v8UKSwGI150GxCkA,10
+phrasedml/__init__.py,sha256=yIW77dp4M1Cy-0oGI2H626ipnL_RhFv3qglmj5I8FQ0,348
+phrasedml/__pycache__/__init__.cpython-39.pyc,,
+phrasedml/__pycache__/phrasedml.cpython-39.pyc,,
+phrasedml/_phrasedml.lib,sha256=a5vjaDg4-w9-Pn-14OFP-i8OxU1fAZzB4_yhZqMG4w0,354352
+phrasedml/_phrasedml.pyd,sha256=Vbiv1mo9qSiLpHtl7H7XGRUy2gkcWcsDxl5dJEL8-ys,8065536
+phrasedml/phrasedml.py,sha256=Ff8BefAQKQxrP2K8E7iuk1_Be9kcUZYntprGF_35Ecg,12130

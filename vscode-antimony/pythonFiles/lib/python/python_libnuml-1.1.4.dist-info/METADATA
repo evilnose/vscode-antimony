@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: python-libnuml
+Version: 1.1.4
+Summary: LibNuML Python API
+Home-page: https://github.com/NuML/NuML/tree/master/libnuml
+Author: Frank T. Bergmann
+Author-email: fbergman@caltech.edu
+License: BSD
+Platform: UNKNOWN
+
+libNuML is a library for reading, writing and manipulating NuML.  It is written in ISO C and C++, supports NuML Level 1, Version 1, and runs on Linux, Microsoft Windows, and Apple MacOS X.  For more information about SEDML, please see http://github.com/numl/numl/.
+
+

@@ -3,10 +3,12 @@ Author: Gary Geng, Steve Ma
 """
 import os
 import sys
-
+import logging
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(EXTENSION_ROOT, "..", "pythonFiles", "lib", "python"))
+
+import tellurium as te
 
 sys.path.append(os.path.join(EXTENSION_ROOT, "server", "stibium"))
 
@@ -16,7 +18,6 @@ from stibium.types import Issue, IssueSeverity
 from bioservices_server.utils import AntFile, pygls_range, sb_position, get_antfile, sb_range
 from bioservices_server.webservices import NetworkError, WebServices
 
-import logging
 from dataclasses import dataclass
 from pygls.features import (CODE_LENS, COMPLETION, DEFINITION, HOVER, SIGNATURE_HELP, TEXT_DOCUMENT_DID_CHANGE,
                             TEXT_DOCUMENT_DID_OPEN, TEXT_DOCUMENT_DID_SAVE, WORKSPACE_EXECUTE_COMMAND)
@@ -28,9 +29,8 @@ from pygls.types import (CompletionItem, CompletionItemKind, CompletionList, Com
 import threading
 import time
 
-
 # TODO remove this for production
-# logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.DEBUG)
 
 server = LanguageServer()
 services = WebServices()
@@ -57,6 +57,13 @@ def get_annotated(ls: LanguageServer, args):
             } for r in ranges
     ]
     return range_objs
+
+@server.thread()
+@server.command('antimony.toSBML')
+def to_sbml(ls: LanguageServer, args):
+    logging.debug("AAA")
+    logging.debug(args[0])
+    
 
 @server.thread()
 @server.command('antimony.sendQuery')

@@ -44,6 +44,11 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('antimony.createAnnotationDialog',
 			(...args: any[]) => createAnnotationDialog(context, args)));
 
+	// convertion
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.convertAntimonyToSBML',
+			(...args: any[]) => convertAntimonyToSBML(context, args)));
+
 	// language config for CodeLens
 	const docSelector = {
 		language: 'antimony',
@@ -64,6 +69,15 @@ export function activate(context: vscode.ExtensionContext) {
 	// });
 	// // underline color should change once the color theme changes (dark/light theme)
 	// vscode.window.onDidChangeActiveColorTheme(() => decorateDocument(window.activeTextEditor?.document));
+}
+
+async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any[]) {
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+	vscode.commands.executeCommand('antimony.toSBML', vscode.window.activeTextEditor.document);
 }
 
 async function createAnnotationDialog(context: vscode.ExtensionContext, args: any[]) {

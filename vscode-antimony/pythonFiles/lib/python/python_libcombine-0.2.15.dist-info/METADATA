@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: python-libcombine
+Version: 0.2.15
+Summary: LibCombine Python API
+Home-page: https://github.com/sbmlteam/libcombine
+Author: Frank T. Bergmann
+Author-email: fbergman@caltech.edu
+License: BSD
+Platform: UNKNOWN
+
+LibCombine implements a C++ API library providing support for the Combine Archive.  For more information about COMBINE, please see https://github.com/sbmlteam/libcombine.
+
+

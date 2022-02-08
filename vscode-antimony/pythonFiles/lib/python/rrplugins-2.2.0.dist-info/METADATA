@@ -1,0 +1,22 @@
+Metadata-Version: 2.1
+Name: rrplugins
+Version: 2.2.0
+Summary: rrplugins: Plugins to extend libroadrunner.
+Home-page: http://libroadrunner.org
+Author: Debashish Roy, M Totte Karlsson, J Kyle Medley, Herbert Sauro
+Author-email: tellurium-discuss@u.washington.edu
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Intended Audience :: Science/Research
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX
+Classifier: Programming Language :: C++
+License-File: LICENSE.txt
+License-File: NOTICE.txt
+License-File: AUTHORS.txt
+Requires-Dist: numpy (>=1.19)
+Requires-Dist: matplotlib (>=3)
+
+UNKNOWN
+

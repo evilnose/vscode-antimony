@@ -22,7 +22,8 @@
 	],
 	"activationEvents": [
 		"onLanguage:antimony",
-		"onCommand:createAnnotationDialog"
+		"onCommand:createAnnotationDialog",
+		"onCommand:convertAntimonyToSBML"
 	],
 	"main": "./dist/extension.js",
 	"bugs": {
@@ -51,6 +52,10 @@
 			{
 				"command": "antimony.createAnnotationDialog",
 				"title": "Create Annotation"
+			},
+			{
+				"command": "antimony.convertAntimonyToSBML",
+				"title": "Convert to SBML"
 			}
 		],
 		"languages": [
@@ -71,6 +76,12 @@
 				{
 					"command": "antimony.createAnnotationDialog",
 					"title": "Create Annotation",
+					"group": "1_modification",
+					"when": "editorLangId == antimony"
+				},
+				{
+					"command": "antimony.convertAntimonyToSBML",
+					"title": "Convert to SBML",
 					"group": "1_modification",
 					"when": "editorLangId == antimony"
 				}

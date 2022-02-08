@@ -1,0 +1,42 @@
+The orginal C# version of roadRunner was developed as part of the SBW project by
+		 
+    Herbert M Sauro and Frank Bergmann
+		  
+The current version of roadRunner, now renamed libRoadRunner, was rewritten and 
+considerably modified and enhanced in C/C++ by
+
+    Andy Somogyi, Totte Karlsson and Herbert M Sauro
+ 
+The Python interface to the C API was developed by
+
+    Greg Medlock (gmedlo@uw.edu), Totte Karlsson and Herbert M Sauro
+
+The Python SWIG interface to the C++ API was developed by
+
+    Andy Somogyi
+
+The LLVM backend and refactoring of the core was designed and undertaken by
+
+    Andy Somogyi
+
+The C# backend was ported to C++ by
+
+    Totte Karlsson
+
+The Plugin Framework was designed and developed by
+
+    Totte Karlsson
+    
+with Tellurium integration and further enhancements by
+
+    Kiri Choi
+    
+The continuous integration (CI) system and Java API were developed by
+
+    J Kyle Medley
+    
+Redesign of the integrator interface was done by
+
+    Wilbert Copeland
+
+For more information visit libroadrunner.org

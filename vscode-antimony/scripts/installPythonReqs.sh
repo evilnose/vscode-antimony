@@ -7,6 +7,8 @@ set success=0
 python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \
     --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
 
+python -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
+
 echo "Python libs installed successfully"
 
 if ((success == 0)); then

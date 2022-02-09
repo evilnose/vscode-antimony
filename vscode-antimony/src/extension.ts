@@ -77,7 +77,32 @@ async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any
 		return;
 	}
 	await client.onReady();
-	vscode.commands.executeCommand('antimony.toSBML', vscode.window.activeTextEditor.document);
+
+	const options: vscode.OpenDialogOptions = {
+		openLabel: "Select",
+		canSelectFolders: true,
+		canSelectMany: false,
+		title: "Select a folder"
+    };
+   vscode.window.showOpenDialog(options).then(fileUri => {
+	   if (fileUri && fileUri[0]) {
+	   		vscode.commands.executeCommand('antimony.toSBML', vscode.window.activeTextEditor.document, 
+			   	fileUri[0].fsPath).then(async (result) => {
+				await checkConversionResult(result);
+			});
+	   } else {
+			vscode.window.showErrorMessage("Please select a valid directory")
+	   }
+   });
+}
+
+async function checkConversionResult(result) {
+	console.log(result)
+	if (result.error) {
+		vscode.window.showErrorMessage(`Could not convert file to SBML: ${result.error}`)
+	} else {
+		vscode.window.showInformationMessage(`${result.msg}`)
+	}
 }
 
 async function createAnnotationDialog(context: vscode.ExtensionContext, args: any[]) {

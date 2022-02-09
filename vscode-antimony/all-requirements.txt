@@ -14,5 +14,4 @@ requests==2.25.1
 requests-cache==0.5.2
 six==1.15.0
 urllib3==1.26.4
-tellurium==2.2.2.1
-bioservices==1.8.2
+antimony

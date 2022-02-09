@@ -23,7 +23,8 @@
 	"activationEvents": [
 		"onLanguage:antimony",
 		"onCommand:createAnnotationDialog",
-		"onCommand:convertAntimonyToSBML"
+		"onCommand:convertAntimonyToSBML",
+		"onCommand:convertSBMLToAntimony"
 	],
 	"main": "./dist/extension.js",
 	"bugs": {
@@ -56,6 +57,10 @@
 			{
 				"command": "antimony.convertAntimonyToSBML",
 				"title": "Convert to SBML"
+			},
+			{
+				"command": "antimony.convertSBMLToAntimony",
+				"title": "Convert to Antimony"
 			}
 		],
 		"languages": [
@@ -107,7 +112,7 @@
 		"webpack": "webpack --mode development",
 		"webpack-dev": "webpack --mode development --watch",
 		"test-compile": "webpack --mode development && npx tsc -b",
-		"postinstall": "cd src/syntax/antimony-syntax && npm install && cd ../../.. && sh ./scripts/installPythonReqs.sh",
+		"postinstall": "cd src/syntax/antimony-syntax && npm install",
 		"pretest": "webpack",
 		"test": "node ./out/test/runTest.js"
 	},

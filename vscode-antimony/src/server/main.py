@@ -8,7 +8,7 @@ import logging
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(EXTENSION_ROOT, "..", "pythonFiles", "lib", "python"))
 
-import tellurium as te
+import antimony
 
 sys.path.append(os.path.join(EXTENSION_ROOT, "server", "stibium"))
 
@@ -61,8 +61,37 @@ def get_annotated(ls: LanguageServer, args):
 @server.thread()
 @server.command('antimony.toSBML')
 def to_sbml(ls: LanguageServer, args):
-    logging.debug("AAA")
-    logging.debug(args[0])
+    ant = args[0].fileName
+    output_dir = args[1]
+    if ant is None:
+        return
+    antimony.clearPreviousLoads()
+    antimony.freeAll()
+    try:
+        isfile = os.path.isfile(ant)
+    except ValueError:
+        return {
+            'error': 'Cannot open file'
+        }
+    if isfile:
+        sbml = antimony.loadAntimonyFile(ant)
+        if sbml < 0:
+            return {
+                'error': 'Antimony -  {}'.format(antimony.getLastError())
+            }
+        mid = antimony.getMainModuleName()
+        sbml_str = antimony.getSBMLString(mid)
+        model_name = os.path.basename(ant)
+        full_path_name = os.path.join(output_dir, os.path.splitext(model_name)[0]+'.xml')
+        with open(full_path_name, 'w') as f:
+            f.write(sbml_str)
+        return {
+            'msg': 'SBML has been exported to {}'.format(output_dir)
+        }
+    else:
+        return {
+            'error': 'Not a valid file'
+        }
     
 
 @server.thread()

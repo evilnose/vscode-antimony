@@ -3,7 +3,9 @@
 .vscode-test
  
 # JS source
-src/**
+src/utils/utils.ts
+src/annotationInput.ts
+src/extension.ts
 scripts/**
  
 # Development files

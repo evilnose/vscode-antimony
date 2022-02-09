@@ -13,9 +13,9 @@ let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
 let lastChangeInterp = 0;
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 	// start the language server
-	startLanguageServer(context);
+	await startLanguageServer(context);
 	vscode.workspace.onDidChangeConfiguration(async (e) => {
 		// restart the language server using the new Python interpreter, if the related
 		// setting was changed
@@ -48,6 +48,10 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.convertAntimonyToSBML',
 			(...args: any[]) => convertAntimonyToSBML(context, args)));
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.convertSBMLToAntimony',
+			(...args: any[]) => convertSBMLToAntimony(context, args)));
+		
 
 	// language config for CodeLens
 	const docSelector = {
@@ -78,28 +82,61 @@ async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any
 	}
 	await client.onReady();
 
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+
 	const options: vscode.OpenDialogOptions = {
 		openLabel: "Select",
 		canSelectFolders: true,
+		canSelectFiles: false,
 		canSelectMany: false,
-		title: "Select a folder"
+		filters: {
+			'SBML': ['xml']
+		},
+		title: "Select a location to save your converted model"
     };
    vscode.window.showOpenDialog(options).then(fileUri => {
 	   if (fileUri && fileUri[0]) {
 	   		vscode.commands.executeCommand('antimony.toSBML', vscode.window.activeTextEditor.document, 
 			   	fileUri[0].fsPath).then(async (result) => {
-				await checkConversionResult(result);
+				await checkConversionResult(result, "SBML");
 			});
-	   } else {
-			vscode.window.showErrorMessage("Please select a valid directory")
 	   }
    });
 }
 
-async function checkConversionResult(result) {
+async function convertSBMLToAntimony(context: vscode.ExtensionContext, args: any[]) {
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+
+	const options: vscode.OpenDialogOptions = {
+			openLabel: "Save",
+			canSelectFolders: true,
+			canSelectFiles: false,
+			canSelectMany: false,
+			filters: {
+				'Antimony': ['ant']
+			},
+			title: "Select a location to save your converted model"
+	};
+	vscode.window.showOpenDialog(options).then(folderUri => {
+		if (folderUri && folderUri[0]) {
+				vscode.commands.executeCommand('antimony.toAntimony', vscode.window.activeTextEditor.document, 
+				folderUri[0].fsPath).then(async (result) => {
+					await checkConversionResult(result, "Antimony");
+				});
+		}
+	});
+}
+
+async function checkConversionResult(result, type) {
 	console.log(result)
 	if (result.error) {
-		vscode.window.showErrorMessage(`Could not convert file to SBML: ${result.error}`)
+		vscode.window.showErrorMessage(`Could not convert file to ${type}: ${result.error}`)
 	} else {
 		vscode.window.showInformationMessage(`${result.msg}`)
 	}
@@ -113,6 +150,7 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 		return;
 	}
 	await client.onReady();
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
 	// dialog for annotation
 	const selection = vscode.window.activeTextEditor.selection
 	// get the selected text

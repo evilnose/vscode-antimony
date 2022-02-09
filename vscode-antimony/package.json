@@ -4,7 +4,7 @@
 	"description": "Extensions for Antimony development in Visual Studio Code.",
 	"author": "Steve Ma, Gary Geng, Joseph Hellerstein, Herbet Sauro",
 	"publisher": "stevem",
-	"version": "0.1.6",
+	"version": "0.1.7",
 	"icon": "docs/images/logo.png",
 	"engines": {
 		"vscode": "^1.62.0"
@@ -22,9 +22,9 @@
 	],
 	"activationEvents": [
 		"onLanguage:antimony",
-		"onCommand:createAnnotationDialog",
-		"onCommand:convertAntimonyToSBML",
-		"onCommand:convertSBMLToAntimony"
+		"onCommand:antimony.createAnnotationDialog",
+		"onCommand:antimony.convertAntimonyToSBML",
+		"onCommand:antimony.convertSBMLToAntimony"
 	],
 	"main": "./dist/extension.js",
 	"bugs": {
@@ -89,6 +89,12 @@
 					"title": "Convert to SBML",
 					"group": "1_modification",
 					"when": "editorLangId == antimony"
+				},
+				{
+					"command": "antimony.convertSBMLToAntimony",
+					"title": "Convert to Antimony",
+					"group": "1_modification",
+					"when": "editorLangId == xml"
 				}
 			]
 		},

@@ -64,7 +64,9 @@ def to_sbml(ls: LanguageServer, args):
     ant = args[0].fileName
     output_dir = args[1]
     if ant is None:
-        return
+        return {
+            'error': 'Cannot open file'
+        }
     antimony.clearPreviousLoads()
     antimony.freeAll()
     try:
@@ -92,6 +94,45 @@ def to_sbml(ls: LanguageServer, args):
         return {
             'error': 'Not a valid file'
         }
+
+@server.thread()
+@server.command('antimony.toAntimony')
+def to_antimony(ls: LanguageServer, args):
+    logging.debug("AAAA")
+    logging.debug(args[0])
+    sbml = args[0].fileName
+    output_dir = args[1]
+    if sbml is None:
+        return {
+            'error': 'Cannot open file'
+        }
+    antimony.clearPreviousLoads()
+    antimony.freeAll()
+    try:
+        isfile = os.path.isfile(sbml)
+    except ValueError:
+        return {
+            'error': 'Cannot open file'
+        }
+    if isfile:
+        ant = antimony.loadSBMLFile(sbml)
+        if ant < 0:
+            return {
+                'error': 'Antimony -  {}'.format(antimony.getLastError())
+            }
+        ant_str = antimony.getAntimonyString(None)
+        model_name = os.path.basename(sbml)
+        full_path_name = os.path.join(output_dir, os.path.splitext(model_name)[0]+'.ant')
+        with open(full_path_name, 'w') as f:
+            f.write(ant_str)
+        return {
+            'msg': 'Antimony has been exported to {}'.format(output_dir)
+        }
+    else:
+        return {
+            'error': 'Not a valid file'
+        }
+
     
 
 @server.thread()

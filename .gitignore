@@ -5,7 +5,7 @@ vscode-antimony/py36
 vscode-antimony/py37
 vscode-antimony/__pycache__
 vscode-antimony/pythonFiles
- 
+vscode-antimony/node_modules
 vscode-antimony/temp
 vscode-antimony/client/out
 vscode-antimony/dist

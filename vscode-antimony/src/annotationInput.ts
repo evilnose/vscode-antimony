@@ -5,6 +5,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, Uri, commands, QuickPick } from 'vscode';
+import { LogMessageNotification } from 'vscode-languageclient';
 import { sleep } from './utils/utils';
 
 /**

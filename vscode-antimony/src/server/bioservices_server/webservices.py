@@ -4,6 +4,7 @@ Author: Gary Geng
 '''
 
 # local
+from asyncio.log import logger
 from .bioservices.chebi import ChEBI
 from .bioservices.uniprot import UniProt
 
@@ -46,7 +47,6 @@ class WebServices:
         # TODO do we want to change searchCategory and maybe THREE STARS?
         if query.strip() == '':
             return list()
-
         try:
             results = self.chebi.getLiteEntity(query, maximumResults=100)
         except URLError:

@@ -33,7 +33,7 @@ venv
 **/*.pyc
 .lark-cache
 pack/**
-src/syntax/**
+src/syntax/antimony-syntax/**
 .gitignore
 .github/**
 node_modules/**

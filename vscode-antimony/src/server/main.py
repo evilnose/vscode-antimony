@@ -154,6 +154,7 @@ def query_species(ls: LanguageServer, args):
             'items': results,
         }
     except NetworkError:
+        logging.debug("AAAAAAAA")
         return {
             'error': 'Connection Error!'
         }

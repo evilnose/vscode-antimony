@@ -1,8 +1,8 @@
 
 import logging
-from stibium.ant_types import IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
-from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, ModelScope, QName, SymbolTable, ModularModelScope
+from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
 from typing import Any, List, Optional, Set, cast
@@ -61,6 +61,8 @@ class AntTreeAnalyzer:
     def __init__(self, root: FileNode):
         self.table = SymbolTable()
         self.root = root
+        self.pending_is_assignments = []
+        self.pending_annotations = []
         base_scope = BaseScope()
         for child in root.children:
             if isinstance(child, ErrorToken):
@@ -87,13 +89,13 @@ class AntTreeAnalyzer:
                                 'Reaction': self.handle_reaction,
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
-                                'Annotation': self.handle_annotation,
+                                'Annotation': self.pre_handle_annotation,
                                 'UnitDeclaration': self.handle_unit_declaration,
                                 'UnitAssignment' : self.handle_unit_assignment,
                                 'ModularModelCall' : self.handle_mmodel_call,
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
-                                'IsAssignment' : self.handle_is_assignment,
+                                'IsAssignment' : self.pre_handle_is_assignment,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
             if isinstance(child, ModularModel):
@@ -116,13 +118,13 @@ class AntTreeAnalyzer:
                                 'Reaction': self.handle_reaction,
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
-                                'Annotation': self.handle_annotation,
+                                'Annotation': self.pre_handle_annotation,
                                 'UnitDeclaration': self.handle_unit_declaration,
                                 'UnitAssignment' : self.handle_unit_assignment,
                                 'ModularModelCall' : self.handle_mmodel_call,
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
-                                'IsAssignment' : self.handle_is_assignment,
+                                'IsAssignment' : self.pre_handle_is_assignment,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
                     if isinstance(cchild, Parameters):
@@ -152,13 +154,13 @@ class AntTreeAnalyzer:
                     'Reaction': self.handle_reaction,
                     'Assignment': self.handle_assignment,
                     'Declaration': self.handle_declaration,
-                    'Annotation': self.handle_annotation,
+                    'Annotation': self.pre_handle_annotation,
                     'UnitDeclaration': self.handle_unit_declaration,
                     'UnitAssignment' : self.handle_unit_assignment,
                     'ModularModelCall' : self.handle_mmodel_call,
                     'FunctionCall' : self.handle_function_call,
                     'VariableIn' : self.handle_variable_in,
-                    'IsAssignment' : self.handle_is_assignment,
+                    'IsAssignment' : self.pre_handle_is_assignment,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
         
@@ -166,6 +168,10 @@ class AntTreeAnalyzer:
         self.error = self.table.error
         # get list of warnings
         self.warning = self.table.warning
+        self.handle_annotation_list()
+        self.handle_is_assignment_list()
+        self.pending_annotations = []
+        self.pending_is_assignments = []
         self.check_parse_tree(self.root, BaseScope())
 
     def resolve_qname(self, qname: QName):
@@ -207,6 +213,9 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == VariableIn:
                     self.process_variablein(node, scope)
                 elif type(node.get_stmt()) == Reaction:
+                    reaction = node.get_stmt()
+                    rate_law = reaction.get_rate_law()
+                    self.check_rate_law(rate_law, scope)
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
                     self.process_mmodel_call(node, scope)
@@ -233,12 +242,16 @@ class AntTreeAnalyzer:
         for child in expr.children:
             if child is None or isinstance(child, Operator) or isinstance(child, Number):
                 continue
-            if isinstance(child, VarName):
+            if isinstance(child, Name):
+                used.add(child)
+                if child not in params:
+                    self.error.append(RefUndefined(child.range, child.text))
+            elif isinstance(child, VarName):
                 name = child.get_name()
                 used.add(name)
                 if name not in params:
                     self.error.append(RefUndefined(name.range, name.text))
-            elif child.children != None:
+            elif hasattr(child, 'children') and child.children != None:
                 used = set.union(used, self.check_expr_undefined(params, child))
         return used
     
@@ -285,7 +298,25 @@ class AntTreeAnalyzer:
     def check_rate_law(self, rate_law, scope, params=set()):
         used = set()
         for leaf in rate_law.scan_leaves():
-            if isinstance(leaf, Name):
+            if isinstance(leaf, FuncCall):
+                function_name = leaf.get_function_name().get_name()
+                function = self.table.get(QName(BaseScope(), function_name))
+                if len(function) == 0:
+                    self.error.append(UninitFunction(function_name.range, function_name.text))
+                else:
+                    call_params = leaf.get_params().get_items() if leaf.get_params() is not None else []
+                    if len(function[0].parameters) != len(call_params):
+                        self.error.append(IncorrectParamNum(leaf.range, len(function[0].parameters), len(call_params)))
+                    else:
+                        for index in range(len(function[0].parameters)):
+                            expec = function[0].parameters[index][0] if len(function[0].parameters[index]) != 0 else None
+                            expec_type = expec.type if expec is not None else None
+                            call = leaf.get_params().get_items()[index]
+                            call_name = self.table.get(QName(scope, call))
+                            call_type = call_name[0].type if len(call_name) != 0 else None
+                            if not expec_type is None and not call_type is None and not call_type.derives_from(expec_type):
+                                self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
+            elif isinstance(leaf, Name):
                 text = leaf.text
                 used.add(leaf)
                 sym = self.table.get(QName(scope, leaf))
@@ -384,6 +415,13 @@ class AntTreeAnalyzer:
             if value:
                 self.handle_arith_expr(scope, value)
     
+    def pre_handle_annotation(self, scope: AbstractScope, annotation: Annotation):
+        self.pending_annotations.append((scope, annotation))
+    
+    def handle_annotation_list(self):
+        for scope, annotation in self.pending_annotations:
+            self.handle_annotation(scope, annotation)
+    
     def handle_annotation(self, scope: AbstractScope, annotation: Annotation):
         name = annotation.get_var_name().get_name()
         # TODO(Gary) maybe we can have a narrower type here, since annotation is restricted only to
@@ -391,6 +429,13 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
+    
+    def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
+        self.pending_is_assignments.append((scope, is_assignment))
+    
+    def handle_is_assignment_list(self):
+        for scope, is_assignment in self.pending_is_assignments:
+            self.handle_is_assignment(scope, is_assignment)
     
     def handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
         name = is_assignment.get_var_name()
@@ -401,6 +446,24 @@ class AntTreeAnalyzer:
             if var[0].display_name != None:
                 self.table.insert_warning(OverridingDisplayName(is_assignment.range, name.text))
             var[0].display_name = display_name
+            if isinstance(var[0], FuncSymbol):
+                qname_f = QName(FunctionScope(str(var[0].type_name)), name)
+                f_var = self.table.get(qname_f)
+                if len(f_var) != 0:
+                    f_var[0].display_name = display_name
+                qname_b = QName(BaseScope(), name)
+                base_var = self.table.get(qname_b)
+                if len(base_var) != 0:
+                    base_var[0].display_name = display_name
+            elif isinstance(var[0], MModelSymbol):
+                qname_m = QName(ModularModelScope(str(var[0].type_name)), name)
+                m_var = self.table.get(qname_m)
+                if len(m_var) != 0:
+                    m_var[0].display_name = display_name
+                qname_b = QName(BaseScope(), name)
+                base_var = self.table.get(qname_b)
+                if len(base_var) != 0:
+                    base_var[0].display_name = display_name
     
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()
@@ -438,10 +501,6 @@ class AntTreeAnalyzer:
             comp = function_call.get_maybein().get_comp().get_name_text()
         self.table.insert(QName(scope, function_call.get_name()), SymbolType.Parameter,
                     value_node=function_call, comp=comp)
-        # also insert the function for hover lookup
-        function = self.table.get(QName(BaseScope(), function_call.get_function_name()))
-        if len(function) != 0:
-            self.table.insert_function_holder(function[0], scope)
 
     def handle_variable_in(self, scope: AbstractScope, variable_in: VariableIn):
         name = variable_in.get_name().get_name()

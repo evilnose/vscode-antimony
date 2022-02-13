@@ -30,7 +30,7 @@ import threading
 import time
 
 # TODO remove this for production
-logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.DEBUG)
+# logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.DEBUG)
 
 server = LanguageServer()
 services = WebServices()
@@ -88,7 +88,8 @@ def to_sbml(ls: LanguageServer, args):
         with open(full_path_name, 'w') as f:
             f.write(sbml_str)
         return {
-            'msg': 'SBML has been exported to {}'.format(output_dir)
+            'msg': 'SBML has been exported to {}'.format(output_dir),
+            'file': full_path_name
         }
     else:
         return {
@@ -98,8 +99,6 @@ def to_sbml(ls: LanguageServer, args):
 @server.thread()
 @server.command('antimony.toAntimony')
 def to_antimony(ls: LanguageServer, args):
-    logging.debug("AAAA")
-    logging.debug(args[0])
     sbml = args[0].fileName
     output_dir = args[1]
     if sbml is None:
@@ -126,7 +125,8 @@ def to_antimony(ls: LanguageServer, args):
         with open(full_path_name, 'w') as f:
             f.write(ant_str)
         return {
-            'msg': 'Antimony has been exported to {}'.format(output_dir)
+            'msg': 'Antimony has been exported to {}'.format(output_dir),
+            'file': full_path_name
         }
     else:
         return {
@@ -154,7 +154,6 @@ def query_species(ls: LanguageServer, args):
             'items': results,
         }
     except NetworkError:
-        logging.debug("AAAAAAAA")
         return {
             'error': 'Connection Error!'
         }
@@ -175,7 +174,6 @@ def hover(params: TextDocumentPositionParams):
         return None
     
     assert range_ is not None
-
     sym = symbols[0]
     text = sym.help_str()
     contents = MarkupContent(MarkupKind.Markdown, text)

@@ -8,7 +8,7 @@ from lark.tree import Tree
 from stibium.ant_types import NameMaybeIn, Number, Reaction, ReactionName, SpeciesList
 from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
 from stibium.parse import AntimonyParser
-from stibium.symbols import QName
+from stibium.symbols import QName, BaseScope
 from stibium.tree_builder import Species, transform_tree
 from stibium.types import Issue, SrcLocation, SrcPosition
 from stibium.utils import to_uri
@@ -146,7 +146,11 @@ class AntFile:
         if qname is None:
             return [], None
         assert qname.name is not None
-        return self.analyzer.resolve_qname(qname), qname.name.range
+        resolved = self.analyzer.resolve_qname(qname)
+        if len(resolved) == 0:
+            qname.scope = BaseScope()
+            resolved = self.analyzer.resolve_qname(qname)
+        return resolved, qname.name.range
 
     def goto(self, position: SrcPosition):
         symbols, range_ = self.symbols_at(position)

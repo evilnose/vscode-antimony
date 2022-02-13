@@ -81,7 +81,9 @@ class LeafNode(TreeNode):
 
 def _scan_leaves(node: TreeNode):
     # using this instead of isinstance() for performance
-    if hasattr(node, 'children'):
+    if isinstance(node, FuncCall):
+        yield node
+    elif hasattr(node, 'children'):
         node = cast(TrunkNode, node)
         for child in node.children:
             if child is not None:
@@ -611,7 +613,7 @@ class ModularModelCall(TrunkNode):
 @dataclass
 class Function(TrunkNode):
     children: Tuple[Keyword, VarName, Operator, Optional[Parameters], Operator, Newline, 
-                    ArithmeticExpr, Keyword] = field(repr=False)
+                    ArithmeticExpr, Optional[Operator], Keyword] = field(repr=False)
 
     def get_name(self):
         return self.children[1]
@@ -647,6 +649,16 @@ class FunctionCall(TrunkNode):
     
     def get_value(self):
         return None
+    
+@dataclass
+class FuncCall(TrunkNode):
+    children: Tuple[VarName, Operator, Optional[Parameters], Operator] = field(repr=False)
+
+    def get_function_name(self):
+        return self.children[0]
+    
+    def get_params(self):
+        return self.children[2]
 
 # Unit
 @dataclass

@@ -84,6 +84,15 @@ class QName:
     scope: AbstractScope
     name: Name
 
+    def __eq__(self, other):
+        if not isinstance(other, FunctionScope):
+            return NotImplemented
+
+        return self.scope == other.scope and self.name.text == other.name.text
+
+    def __hash__(self):
+        return hash((self.scope, self.name.text))
+
 class Symbol:
     '''A generic Symbol.
 
@@ -136,7 +145,6 @@ class Symbol:
 
     def help_str(self):
         ret = "```"
-
         # add formula later
         if self.type == SymbolType.Parameter or \
             self.type == SymbolType.Species or \
@@ -157,14 +165,14 @@ class Symbol:
             ret += '\n{}'.format(name) + "("
             for index, param in enumerate(self.parameters):
                 if not param:
-                    ret += ")"
+                    ret += ")\n"
                     ret += "```"
                     return ret
                 type = param[0].type
                 ret += str(type) + ": " + param[0].name
                 if index != len(self.parameters) - 1:
                     ret += ", "
-            ret += ")"
+            ret += ")\n"
         elif isinstance(self, FuncSymbol):
             name = self.name
             ret += '\n{}'.format(name) + "("
@@ -172,7 +180,7 @@ class Symbol:
                 ret += param[0].name
                 if index != len(self.parameters) - 1:
                     ret += ", "
-            ret += ")"
+            ret += ")\n"
         elif self.value_node is not None and self.value_node.get_value() is not None: 
             init_val = ""
             if isinstance(self.value_node.get_value(), Number):
@@ -328,6 +336,11 @@ class SymbolTable:
         leaf_table = self._leaf_table(scope)
         sym = FuncSymbol(function.name, function.type, function.type_name, parameters=function.parameters)
         leaf_table[function.name] = sym
+    
+    def insert_mmodel_holder(self, mmodel, scope):
+        leaf_table = self._leaf_table(scope)
+        sym = MModelSymbol(mmodel.name, mmodel.type, mmodel.type_name, parameters=mmodel.parameters)
+        leaf_table[mmodel.name] = sym
 
     def insert_function(self, qname: QName, typ: SymbolType, parameters, decl_node: TreeNode = None,
                value_node: TreeNode = None):
@@ -363,7 +376,7 @@ class SymbolTable:
         assert qname.name is not None
         self._qnames.append(qname)
         name = qname.name.get_name().text
-        sym = MModelSymbol(name, type, qname.name, parameters=parameters)
+        sym = MModelSymbol(name, type, qname.name.get_name(), parameters=parameters)
         leaf_table = self._leaf_table(qname.scope)
         leaf_table[name] = sym
 

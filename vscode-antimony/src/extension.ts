@@ -134,11 +134,12 @@ async function convertSBMLToAntimony(context: vscode.ExtensionContext, args: any
 }
 
 async function checkConversionResult(result, type) {
-	console.log(result)
 	if (result.error) {
 		vscode.window.showErrorMessage(`Could not convert file to ${type}: ${result.error}`)
 	} else {
 		vscode.window.showInformationMessage(`${result.msg}`)
+		const document = await vscode.workspace.openTextDocument(`${result.file}`)
+		vscode.window.showTextDocument(document);
 	}
 }
 

@@ -82,7 +82,6 @@ class AntimonyParser:
             tree.meta.column = 1
             tree.meta.end_column = 1
             tree.meta.empty = False
-
         root = transform_tree(tree)
         assert root is not None and isinstance(root, FileNode)
 

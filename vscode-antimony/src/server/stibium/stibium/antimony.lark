@@ -64,7 +64,9 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
     | "-" atom
     | "+" atom
     | "(" sum ")"
+    | func_call 
 
+func_call : var_name "(" [parameters] ")"
 
 // optimizations possible when there are multiple empty lines
 // example: https://docs.python.org/3/reference/grammar.html
@@ -91,9 +93,9 @@ model : ("model" | "module") NAME simple_stmt_list END
 modular_model : "model" ["*"] NAME "(" [parameters] ")" simple_stmt_list END
 
 // Function
-function : "function" NAME "(" [parameters] ")" NEWLINE sum NEWLINE END
+function : "function" NAME "(" [parameters] ")" NEWLINE sum [";"] NEWLINE END
 
-parameters : NAME ("," NAME)*
+parameters : (NAME | NUMBER) ("," (NAME | NUMBER))*
 
 variable_in : var_name in_comp
 

@@ -8,7 +8,7 @@ from typing import Callable, Dict, Optional, Type, TypeVar, Union, cast
 from lark.lexer import Token
 from lark.tree import Tree
 
-from stibium.ant_types import (IsAssignment, VariableIn, FunctionCall, UnitAssignment, BuiltinUnit, UnitDeclaration, Annotation, ArithmeticExpr, Assignment, Atom, DeclModifiers,
+from stibium.ant_types import (FuncCall, IsAssignment, VariableIn, FunctionCall, UnitAssignment, BuiltinUnit, UnitDeclaration, Annotation, ArithmeticExpr, Assignment, Atom, DeclModifiers,
                                Declaration, DeclAssignment,
                                DeclItem, ErrorNode, ErrorToken,
                                FileNode, InComp, Keyword, LeafNode, NameMaybeIn,
@@ -17,7 +17,7 @@ from stibium.ant_types import (IsAssignment, VariableIn, FunctionCall, UnitAssig
                                SimpleStmt, Species, SpeciesList, StringLiteral,
                                Sum, TreeNode, TrunkNode, TypeModifier, VarModifier, SubModifier,
                                VarName, Model, SimpleStmtList, End, Function, Parameters, ModularModel, ModularModelCall)
-from stibium.symbols import AbstractScope, BaseScope
+from stibium.symbols import AbstractScope, BaseScope, FuncSymbol
 from stibium.types import ASTNode, SrcRange, SymbolType, Variability
 from stibium.utils import get_tree_range, get_token_range
 
@@ -37,6 +37,7 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'root': FileNode,
     'simple_stmt': SimpleStmt,
     'var_name': VarName,
+    'func_call': FuncCall,
     'in_comp': InComp,
     'namemaybein': NameMaybeIn,
     'reaction_name': ReactionName,
@@ -86,11 +87,19 @@ def transform_tree(tree: Optional[Union[Tree, str]]):
     if isinstance(tree, str):
         # assert isinstance(tree, Token)
         tree = cast(Token, tree)
-        cls = TREE_MAP[tree.type]
+        try:
+            cls = TREE_MAP[tree.type]
+        except KeyError:
+            logging.debug(tree)
+            return
         # assert issubclass(cls, LeafNode)
         return cls(get_token_range(tree), tree.value)  # type: ignore
     else:
-        cls = TREE_MAP[tree.data]
+        try:
+            cls = TREE_MAP[tree.data]
+        except KeyError:
+            logging.debug(tree)
+            return
         # assert issubclass(cls, TrunkNode)
         children = tuple(transform_tree(child) for child in tree.children)
 
@@ -110,7 +119,6 @@ def transform_tree(tree: Optional[Union[Tree, str]]):
                     child = cast(TypeModifier, child)
                     type_mod = child
             children = (var_mod, sub_mod, type_mod)
-
         return cls(get_tree_range(tree), children)  # type: ignore
 
 

@@ -63,38 +63,25 @@ def get_annotated(ls: LanguageServer, args):
 def to_sbml(ls: LanguageServer, args):
     ant = args[0].fileName
     output_dir = args[1]
-    if ant is None:
-        return {
-            'error': 'Cannot open file'
-        }
-    antimony.clearPreviousLoads()
-    antimony.freeAll()
-    try:
-        isfile = os.path.isfile(ant)
-    except ValueError:
-        return {
-            'error': 'Cannot open file'
-        }
-    if isfile:
-        sbml = antimony.loadAntimonyFile(ant)
-        if sbml < 0:
-            return {
-                'error': 'Antimony -  {}'.format(antimony.getLastError())
-            }
-        mid = antimony.getMainModuleName()
-        sbml_str = antimony.getSBMLString(mid)
+    sbml_str = _get_sbml_str(ant)
+    if 'error' in sbml_str:
+        return sbml_str
+    else:
         model_name = os.path.basename(ant)
         full_path_name = os.path.join(output_dir, os.path.splitext(model_name)[0]+'.xml')
         with open(full_path_name, 'w') as f:
-            f.write(sbml_str)
+            f.write(sbml_str['sbml_str'])
         return {
             'msg': 'SBML has been exported to {}'.format(output_dir),
             'file': full_path_name
         }
-    else:
-        return {
-            'error': 'Not a valid file'
-        }
+
+@server.thread()
+@server.command('antimony.getSBMLStr')
+def to_sbml(ls: LanguageServer, args):
+    ant = args[0].fileName
+    sbml_str = _get_sbml_str(ant)
+    return sbml_str
 
 @server.thread()
 @server.command('antimony.toAntimony')
@@ -270,6 +257,36 @@ def did_save(ls, params: DidSaveTextDocumentParams):
     antfile_cache = get_antfile(text_doc)
     uri = params.textDocument.uri
     _publish_diagnostics(params.textDocument.uri)
+
+
+def _get_sbml_str(ant):
+    if ant is None:
+        return {
+            'error': 'Cannot open file'
+        }
+    antimony.clearPreviousLoads()
+    antimony.freeAll()
+    try:
+        isfile = os.path.isfile(ant)
+    except ValueError:
+        return {
+            'error': 'Cannot open file'
+        }
+    if isfile:
+        sbml = antimony.loadAntimonyFile(ant)
+        if sbml < 0:
+            return {
+                'error': 'Antimony -  {}'.format(antimony.getLastError())
+            }
+        mid = antimony.getMainModuleName()
+        sbml_str = antimony.getSBMLString(mid)
+        return {
+            'sbml_str': sbml_str
+        }
+    else:
+        return {
+            'error': 'Not a valid file'
+        }
 
 
 if __name__ == '__main__':

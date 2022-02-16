@@ -12,6 +12,7 @@ import { multiStepInput } from './annotationInput';
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
 let lastChangeInterp = 0;
+let timestamp = new Date()
 
 export async function activate(context: vscode.ExtensionContext) {
 	// start the language server
@@ -51,7 +52,37 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.convertSBMLToAntimony',
 			(...args: any[]) => convertSBMLToAntimony(context, args)));
-		
+	
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	var filename = vscode.window.activeTextEditor.document.fileName.replace(/^.*[\\\/]/, '')
+
+    context.subscriptions.push(vscode.commands.registerCommand('antimony.startSBMLWebview', () => {
+        const panel = vscode.window.createWebviewPanel('sbmlWindow', 'SBML: ' + filename, vscode.ViewColumn.Two, {});
+        vscode.workspace.onDidSaveTextDocument(async (changeEvent) => {
+            await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+            vscode.commands.executeCommand('antimony.getSBMLStr', changeEvent)
+			.then(async (result: any) => {
+                let msg = '';
+                if (result.error) {
+                    msg = result.error;
+                }
+                else {
+                    msg = result.sbml_str;
+                }
+                panel.webview.html =
+                    `
+					  <!DOCTYPE html>
+					  <html lang="en">
+					  <div contenteditable="true">
+					  <xmp>
+						  ${msg}
+					  </xmp>
+					  </div>
+					  </html>
+					  `;
+            });
+        });
+    }));
 
 	// language config for CodeLens
 	const docSelector = {

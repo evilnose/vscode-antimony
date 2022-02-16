@@ -24,7 +24,8 @@
 		"onLanguage:antimony",
 		"onCommand:antimony.createAnnotationDialog",
 		"onCommand:antimony.convertAntimonyToSBML",
-		"onCommand:antimony.convertSBMLToAntimony"
+		"onCommand:antimony.convertSBMLToAntimony",
+		"onCommand:antimony.startSBMLWebview"
 	],
 	"main": "./dist/extension.js",
 	"bugs": {
@@ -61,6 +62,11 @@
 			{
 				"command": "antimony.convertSBMLToAntimony",
 				"title": "Convert to Antimony"
+			},
+			{
+				"command": "antimony.startSBMLWebview",
+				"title": "view SBML in Webview",
+				"icon": "docs/images/sbml.png"
 			}
 		],
 		"languages": [
@@ -95,6 +101,14 @@
 					"title": "Convert to Antimony",
 					"group": "1_modification",
 					"when": "editorLangId == xml"
+				}
+			],
+			"editor/title": [
+				{
+					"command": "antimony.startSBMLWebview",
+					"title": "view SBML in Webview",
+					"group": "navigation",
+					"when": "editorLangId == antimony"
 				}
 			]
 		},

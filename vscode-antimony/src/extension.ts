@@ -52,37 +52,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.convertSBMLToAntimony',
 			(...args: any[]) => convertSBMLToAntimony(context, args)));
-	
-	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
-	var filename = vscode.window.activeTextEditor.document.fileName.replace(/^.*[\\\/]/, '')
 
-    context.subscriptions.push(vscode.commands.registerCommand('antimony.startSBMLWebview', () => {
-        const panel = vscode.window.createWebviewPanel('sbmlWindow', 'SBML: ' + filename, vscode.ViewColumn.Two, {});
-        vscode.workspace.onDidSaveTextDocument(async (changeEvent) => {
-            await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
-            vscode.commands.executeCommand('antimony.getSBMLStr', changeEvent)
-			.then(async (result: any) => {
-                let msg = '';
-                if (result.error) {
-                    msg = result.error;
-                }
-                else {
-                    msg = result.sbml_str;
-                }
-                panel.webview.html =
-                    `
-					  <!DOCTYPE html>
-					  <html lang="en">
-					  <div contenteditable="true">
-					  <xmp>
-						  ${msg}
-					  </xmp>
-					  </div>
-					  </html>
-					  `;
-            });
-        });
-    }));
+    context.subscriptions.push(vscode.commands.registerCommand('antimony.startSBMLWebview', 
+		    (...args: any[]) => getSBMLWebView(context, args)));
 
 	// language config for CodeLens
 	const docSelector = {
@@ -133,6 +105,91 @@ async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any
 			});
 	   }
    });
+}
+
+async function getSBMLWebView(context: vscode.ExtensionContext, args: any[]) {
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	
+	var filename_full =vscode.window.activeTextEditor.document.fileName 
+	var filename = filename_full.replace(/^.*[\\\/]/, '')
+	const panel = vscode.window.createWebviewPanel('sbmlWindow', 'SBML: ' + filename, vscode.ViewColumn.Two, 
+		{enableScripts: true});
+	panel.webview.onDidReceiveMessage(
+		message => {
+			switch (message.command) {
+			case 'sbmlOnSave':
+				vscode.commands.executeCommand('antimony.writeToAntimonyFile', message.sbml, filename_full)
+					.then(async (result: any) => {
+						if (result.error) {
+							vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
+						}
+					})
+			}
+		},
+		undefined,
+		context.subscriptions
+		);
+	panel.onDidDispose(
+		() => {},
+		null,
+		context.subscriptions
+		);
+	vscode.workspace.onDidSaveTextDocument(async (changeEvent) => {
+		if (!panel.visible) {
+			return
+		}
+		await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+		vscode.commands.executeCommand('antimony.getSBMLStr', changeEvent)
+		.then(async (result: any) => {
+			let msg = '';
+			if (result.error) {
+				msg = result.error;
+			}
+			else {
+				msg = result.sbml_str;
+			}
+			msg = String(msg).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+			panel.webview.html =
+				`
+				<!DOCTYPE html>
+				<html lang="en">
+				<head>
+					<meta charset="UTF-8">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title>SBML</title>
+				</head>
+				<body>
+					<div contenteditable="true" id="sbml">
+						<pre lang="xml">
+							${msg}
+						</pre>
+					</div>
+					<script>
+						(function() {
+							const vscode = acquireVsCodeApi();
+							document.addEventListener('keydown', e => {
+								if (e.ctrlKey && e.key === 's') {
+									const node = document.getElementById('sbml');
+									const text  = node.textContent || node.innerText;
+									vscode.postMessage({
+										command: 'sbmlOnSave',
+										sbml: text
+									})
+								}
+							});
+						}())
+					</script>
+				</body>
+				</html>
+				`;
+		});
+	});
 }
 
 async function convertSBMLToAntimony(context: vscode.ExtensionContext, args: any[]) {

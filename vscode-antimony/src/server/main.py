@@ -30,7 +30,7 @@ import threading
 import time
 
 # TODO remove this for production
-# logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.DEBUG)
 
 server = LanguageServer()
 services = WebServices()
@@ -84,43 +84,37 @@ def to_sbml(ls: LanguageServer, args):
     return sbml_str
 
 @server.thread()
+@server.command('antimony.writeToAntimonyFile')
+def write_to_ant_file(ls: LanguageServer, args):
+    sbml = args[0]
+    file = args[1]
+    ant = antimony.loadSBMLString(sbml)
+    logging.debug(sbml)
+    if ant < 0:
+        return {
+            'error': 'Antimony -  {}'.format(antimony.getLastError())
+        }
+    ant_str = antimony.getAntimonyString(None)
+    with open(file, 'w') as f:
+        f.write(ant_str["ant_str"])
+
+@server.thread()
 @server.command('antimony.toAntimony')
 def to_antimony(ls: LanguageServer, args):
     sbml = args[0].fileName
     output_dir = args[1]
-    if sbml is None:
-        return {
-            'error': 'Cannot open file'
-        }
-    antimony.clearPreviousLoads()
-    antimony.freeAll()
-    try:
-        isfile = os.path.isfile(sbml)
-    except ValueError:
-        return {
-            'error': 'Cannot open file'
-        }
-    if isfile:
-        ant = antimony.loadSBMLFile(sbml)
-        if ant < 0:
-            return {
-                'error': 'Antimony -  {}'.format(antimony.getLastError())
-            }
-        ant_str = antimony.getAntimonyString(None)
+    ant_str = _get_antimony_str(sbml)
+    if 'error' in ant_str:
+        return ant_str
+    else:
         model_name = os.path.basename(sbml)
         full_path_name = os.path.join(output_dir, os.path.splitext(model_name)[0]+'.ant')
         with open(full_path_name, 'w') as f:
-            f.write(ant_str)
+            f.write(ant_str["ant_str"])
         return {
             'msg': 'Antimony has been exported to {}'.format(output_dir),
             'file': full_path_name
         }
-    else:
-        return {
-            'error': 'Not a valid file'
-        }
-
-    
 
 @server.thread()
 @server.command('antimony.sendQuery')
@@ -258,6 +252,33 @@ def did_save(ls, params: DidSaveTextDocumentParams):
     uri = params.textDocument.uri
     _publish_diagnostics(params.textDocument.uri)
 
+def _get_antimony_str(sbml):
+    if sbml is None:
+        return {
+            'error': 'Cannot open file'
+        }
+    antimony.clearPreviousLoads()
+    antimony.freeAll()
+    try:
+        isfile = os.path.isfile(sbml)
+    except ValueError:
+        return {
+            'error': 'Cannot open file'
+        }
+    if isfile:
+        ant = antimony.loadSBMLFile(sbml)
+        if ant < 0:
+            return {
+                'error': 'Antimony -  {}'.format(antimony.getLastError())
+            }
+        ant_str = antimony.getAntimonyString(None)
+        return {
+            'ant_str': ant_str
+        }
+    else:
+        return {
+            'error': 'Not a valid file'
+        }
 
 def _get_sbml_str(ant):
     if ant is None:

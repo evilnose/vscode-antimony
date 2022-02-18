@@ -3,7 +3,7 @@ model *BIOMD0000000002()
 
   // Compartments and Species:
   compartment comp1;
-  species BLL in comp1, IL in comp1, AL in comp1, A in comp1, BL in comp1;
+  species BLLd in comp1, IL in comp1, AL in comp1, A in comp1, BL in comp1;
   species B in comp1, DLL in comp1, D in comp1, ILL in comp1, DL in comp1;
   species I in comp1, ALL in comp1, L in comp1;
 

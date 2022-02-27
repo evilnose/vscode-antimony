@@ -30,7 +30,7 @@ import threading
 import time
 
 # TODO remove this for production
-logging.basicConfig(filename='vscode-antimony.log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(filename='vscode-antimony-debug.log', filemode='w', level=logging.DEBUG)
 
 server = LanguageServer()
 services = WebServices()
@@ -78,25 +78,25 @@ def to_sbml(ls: LanguageServer, args):
 
 @server.thread()
 @server.command('antimony.getSBMLStr')
-def to_sbml(ls: LanguageServer, args):
+def to_sbml_str(ls: LanguageServer, args):
     ant = args[0].fileName
     sbml_str = _get_sbml_str(ant)
     return sbml_str
 
 @server.thread()
-@server.command('antimony.writeToAntimonyFile')
-def write_to_ant_file(ls: LanguageServer, args):
-    sbml = args[0]
+@server.command('antimony.getAntimonyStr')
+def to_antimony_str(ls: LanguageServer, args):
+    sbml = '\n'.join(args[0].split('\n')[1:])
     file = args[1]
+    antimony.clearPreviousLoads()
+    antimony.freeAll()
     ant = antimony.loadSBMLString(sbml)
-    logging.debug(sbml)
     if ant < 0:
         return {
             'error': 'Antimony -  {}'.format(antimony.getLastError())
         }
     ant_str = antimony.getAntimonyString(None)
-    with open(file, 'w') as f:
-        f.write(ant_str["ant_str"])
+    return ant_str
 
 @server.thread()
 @server.command('antimony.toAntimony')

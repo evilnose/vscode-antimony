@@ -5,7 +5,7 @@ model *BIOMD0000000001()
   compartment comp1;
   species BLL in comp1, IL in comp1, AL in comp1, A in comp1, BL in comp1;
   species B in comp1, DLL in comp1, D in comp1, ILL in comp1, DL in comp1;
-  species I in comp1, ALL in comp1;
+  species I in comp1, ALL in comp1, BwLL;
 
   // Reactions:
   React0: B -> BL; comp1*(kf_0*B - kr_0*BL);
@@ -42,6 +42,7 @@ model *BIOMD0000000001()
   DL = 0;
   I = 0;
   ALL = 0;
+  BwLL = 3;
 
   // Compartment initializations:
   comp1 = 1e-16;

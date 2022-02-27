@@ -25,7 +25,8 @@
 		"onCommand:antimony.createAnnotationDialog",
 		"onCommand:antimony.convertAntimonyToSBML",
 		"onCommand:antimony.convertSBMLToAntimony",
-		"onCommand:antimony.startSBMLWebview"
+		"onCommand:antimony.startSBMLWebview",
+		"onCustomEditor:antimony.sbmlEditor"
 	],
 	"main": "./dist/extension.js",
 	"bugs": {
@@ -39,6 +40,18 @@
 	},
 	"homepage": "https://github.com/sys-bio/vscode-antimony/blob/master/README.md",
 	"contributes": {
+		"customEditors": [
+			{
+				"viewType": "antimony.sbmlEditor",
+				"displayName": "SBML",
+				"selector": [
+					{
+						"filenamePattern": "*.ant"
+					}
+				],
+				"priority": "option"
+			}
+		],
 		"configuration": {
 			"title": "vscode-antimony",
 			"properties": {

@@ -90,7 +90,6 @@ def transform_tree(tree: Optional[Union[Tree, str]]):
         try:
             cls = TREE_MAP[tree.type]
         except KeyError:
-            logging.debug(tree)
             return
         # assert issubclass(cls, LeafNode)
         return cls(get_token_range(tree), tree.value)  # type: ignore
@@ -98,7 +97,6 @@ def transform_tree(tree: Optional[Union[Tree, str]]):
         try:
             cls = TREE_MAP[tree.data]
         except KeyError:
-            logging.debug(tree)
             return
         # assert issubclass(cls, TrunkNode)
         children = tuple(transform_tree(child) for child in tree.children)

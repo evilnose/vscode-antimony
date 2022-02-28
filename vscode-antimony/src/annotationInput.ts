@@ -62,7 +62,6 @@ export async function multiStepInput(context: ExtensionContext, initialEntity: s
             placeholder: 'Enter query',
             items: [],
             activeItem: null,
-            initialValue: state.initialEntity,
             shouldResume: shouldResume,
             onInputChanged: (value) => onQueryUpdated(state.database['id'], value, input),
         });
@@ -70,7 +69,7 @@ export async function multiStepInput(context: ExtensionContext, initialEntity: s
     }
 
     async function onQueryUpdated(database: string, query: string, input: MultiStepInput) {
-        await sleep(200);
+        await sleep(666);
         if (input.current && input.current.step === 2 && input.instanceOfQuickPick(input.current)) {
             if (input.current.value !== query) {
                 return;

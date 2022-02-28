@@ -90,7 +90,7 @@ export class SBMLEditorProvider implements vscode.CustomTextEditorProvider {
                     </html>
                     `;
                     let msg = String(message.sbml).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/"/g, '"');
-                    vscode.commands.executeCommand('antimony.getAntimonyStr', msg, document.fileName)
+                    vscode.commands.executeCommand('antimony.sbmlStrToAntStr', msg)
                         .then(async (result: any) => {
                             if (result.error) {
                                 vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
@@ -109,7 +109,7 @@ export class SBMLEditorProvider implements vscode.CustomTextEditorProvider {
 }
 
 function getSBMLString(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel): any {
-    vscode.commands.executeCommand('antimony.getSBMLStr', document)
+    vscode.commands.executeCommand('antimony.antFileToSBMLStr', document)
     .then(async (result: any) => {
         let msg = '';
         if (result.error) {

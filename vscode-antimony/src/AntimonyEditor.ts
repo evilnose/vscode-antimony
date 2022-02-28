@@ -109,7 +109,7 @@ export class AntimonyEditorProvider implements vscode.CustomTextEditorProvider {
 }
 
 function getAntimonyString(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel): any {
-    vscode.commands.executeCommand('antimony.getAntimonyStrFile', document)
+    vscode.commands.executeCommand('antimony.sbmlFileToAntStr', document)
     .then(async (result: any) => {
         let msg = '';
         if (result.error) {

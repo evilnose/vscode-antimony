@@ -30,7 +30,9 @@ import threading
 import time
 
 # TODO remove this for production
-logging.basicConfig(filename='vscode-antimony-debug.log', filemode='w', level=logging.DEBUG)
+logging.basicConfig(filename='vscode-antimony-dep.log', filemode='w', level=logging.DEBUG)
+vscode_logger = logging.getLogger("vscode-antimony logger")
+vscode_logger.addHandler(logging.FileHandler('vscode-antimony-ext.log', mode="w"))
 
 server = LanguageServer()
 services = WebServices()
@@ -59,8 +61,8 @@ def get_annotated(ls: LanguageServer, args):
     return range_objs
 
 @server.thread()
-@server.command('antimony.toSBML')
-def to_sbml(ls: LanguageServer, args):
+@server.command('antimony.antFiletoSBMLFile')
+def ant_file_to_sbml_file(ls: LanguageServer, args):
     ant = args[0].fileName
     output_dir = args[1]
     sbml_str = _get_sbml_str(ant)
@@ -77,8 +79,8 @@ def to_sbml(ls: LanguageServer, args):
         }
 
 @server.thread()
-@server.command('antimony.getSBMLStr')
-def to_sbml_str(ls: LanguageServer, args):
+@server.command('antimony.antFileToSBMLStr')
+def ant_file_to_sbml_str(ls: LanguageServer, args):
     ant = args[0].fileName
     sbml_str = _get_sbml_str(ant)
     return sbml_str
@@ -101,17 +103,16 @@ def ant_str_to_sbml_str(ls: LanguageServer, args):
     }
 
 @server.thread()
-@server.command('antimony.getAntimonyStrFile')
-def to_antimony_str_file(ls: LanguageServer, args):
+@server.command('antimony.sbmlFileToAntStr')
+def sbml_file_to_ant_str(ls: LanguageServer, args):
     sbml = args[0].fileName
     ant_str = _get_antimony_str(sbml)
     return ant_str
 
 @server.thread()
-@server.command('antimony.getAntimonyStr')
-def to_antimony_str(ls: LanguageServer, args):
+@server.command('antimony.sbmlStrToAntStr')
+def sbml_str_to_ant_str(ls: LanguageServer, args):
     sbml = '\n'.join(args[0].split('\n')[1:])
-    file = args[1]
     antimony.clearPreviousLoads()
     antimony.freeAll()
     ant = antimony.loadSBMLString(sbml)
@@ -123,8 +124,8 @@ def to_antimony_str(ls: LanguageServer, args):
     return ant_str
 
 @server.thread()
-@server.command('antimony.toAntimony')
-def to_antimony(ls: LanguageServer, args):
+@server.command('antimony.sbmlFileToAntFile')
+def sbml_file_to_ant_file(ls: LanguageServer, args):
     sbml = args[0].fileName
     output_dir = args[1]
     ant_str = _get_antimony_str(sbml)
@@ -146,6 +147,8 @@ def query_species(ls: LanguageServer, args):
     try:
         database = args[0]
         query = args[1]
+        vscode_logger.info("Recieved search request for: " + database + " " + query)
+        start = time.time()
         if database == 'chebi':
             results = services.annot_search_chebi(query)
         elif database == 'uniprot':
@@ -153,7 +156,9 @@ def query_species(ls: LanguageServer, args):
         else:
             # This is not supposed to happen
             raise SystemError("Unknown database '{}'".format(database))
-
+        end = time.time()
+        vscode_logger.debug("Search request completed")
+        vscode_logger.debug("--- %s seconds ---" % (end - start))
         return {
             'query': query,
             'items': results,

@@ -16,6 +16,7 @@ from lark.tree import Meta, Tree
 from lark.exceptions import (LexError, ParseError, UnexpectedCharacters,
                              UnexpectedInput, UnexpectedToken)
 
+vscode_logger = logging.getLogger("vscode-antimony logger")
 
 def get_grammar_str():
     '''Load the grammar string.'''
@@ -74,7 +75,8 @@ class AntimonyParser:
         tree: Tree
         root_puppet = get_puppet(self.parser, 'root', text)
         tree = self._parse_with_puppet(root_puppet, recoverable, text)
-        logging.debug(str(tree))
+        vscode_logger.info("Parse tree:")
+        vscode_logger.info(str(tree))
         # If text is empty, this tree would not have line or columns
         if len(tree.children) == 0:
             tree.meta.line = 1

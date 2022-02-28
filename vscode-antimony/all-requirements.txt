@@ -15,3 +15,4 @@ requests-cache==0.5.2
 six==1.15.0
 urllib3==1.26.4
 antimony
+bioservices==1.8.3

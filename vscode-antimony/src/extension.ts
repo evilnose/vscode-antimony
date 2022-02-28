@@ -56,6 +56,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	
 	// custom editor
 	context.subscriptions.push(await SBMLEditorProvider.register(context, client));
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.startSBMLWebview',
+			(...args: any[]) => startSBMLWebview(context, args)));
 
 	// language config for CodeLens
 	const docSelector = {
@@ -67,6 +70,19 @@ export async function activate(context: vscode.ExtensionContext) {
 		new AntCodeLensProvider()
 	)
 	context.subscriptions.push(codeLensProviderDisposable)
+}
+
+async function startSBMLWebview(context: vscode.ExtensionContext, args: any[]) {
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+
+	vscode.commands.executeCommand("vscode.openWith", 
+		vscode.window.activeTextEditor.document.uri, "antimony.sbmlEditor", 2);
 }
 
 async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any[]) {

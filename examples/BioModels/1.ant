@@ -49,7 +49,7 @@ model *BIOMD0000000001()
 
   // Variable initializations:
   t2 = 20;
-  kf_0 = 3000;
+  kf_0 = 30002;
   kf_3 = 3000;
   kf_7 = 3000;
   kf_12 = 3000;

@@ -26,7 +26,9 @@
 		"onCommand:antimony.convertAntimonyToSBML",
 		"onCommand:antimony.convertSBMLToAntimony",
 		"onCommand:antimony.startSBMLWebview",
-		"onCustomEditor:antimony.sbmlEditor"
+		"onCommand:antimony.startAntimonyWebview",
+		"onCustomEditor:antimony.sbmlEditor",
+		"onCustomEditor:antimony.antimonyEditor"
 	],
 	"main": "./dist/extension.js",
 	"bugs": {
@@ -44,6 +46,16 @@
 			{
 				"viewType": "antimony.sbmlEditor",
 				"displayName": "SBML",
+				"selector": [
+					{
+						"filenamePattern": "*.ant"
+					}
+				],
+				"priority": "option"
+			},
+			{
+				"viewType": "antimony.antimonyEditor",
+				"displayName": "Antimony",
 				"selector": [
 					{
 						"filenamePattern": "*.ant"
@@ -78,8 +90,13 @@
 			},
 			{
 				"command": "antimony.startSBMLWebview",
-				"title": "view SBML in Webview",
-				"icon": "docs/images/sbml.png"
+				"title": "preview SBML",
+				"icon": "docs/images/sbml_color.png"
+			},
+			{
+				"command": "antimony.startAntimonyWebview",
+				"title": "preview Antimony",
+				"icon": "docs/images/logo.png"
 			}
 		],
 		"languages": [
@@ -119,9 +136,15 @@
 			"editor/title": [
 				{
 					"command": "antimony.startSBMLWebview",
-					"title": "view SBML in Webview",
+					"title": "preview SBML",
 					"group": "navigation",
 					"when": "editorLangId == antimony"
+				},
+				{
+					"command": "antimony.startAntimonyWebview",
+					"title": "preview Antimony",
+					"group": "navigation",
+					"when": "editorLangId == xml"
 				}
 			]
 		},

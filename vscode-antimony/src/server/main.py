@@ -84,6 +84,30 @@ def to_sbml_str(ls: LanguageServer, args):
     return sbml_str
 
 @server.thread()
+@server.command('antimony.antStrToSBMLStr')
+def ant_str_to_sbml_str(ls: LanguageServer, args):
+    ant_str = args[0]
+    antimony.clearPreviousLoads()
+    antimony.freeAll()
+    sbml = antimony.loadAntimonyString(ant_str)
+    if sbml < 0:
+        return {
+            'error': 'Antimony -  {}'.format(antimony.getLastError())
+        }
+    mid = antimony.getMainModuleName()
+    sbml_str = antimony.getSBMLString(mid)
+    return {
+        'sbml_str': sbml_str
+    }
+
+@server.thread()
+@server.command('antimony.getAntimonyStrFile')
+def to_antimony_str_file(ls: LanguageServer, args):
+    sbml = args[0].fileName
+    ant_str = _get_antimony_str(sbml)
+    return ant_str
+
+@server.thread()
 @server.command('antimony.getAntimonyStr')
 def to_antimony_str(ls: LanguageServer, args):
     sbml = '\n'.join(args[0].split('\n')[1:])

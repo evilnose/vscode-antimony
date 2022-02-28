@@ -4,7 +4,7 @@ import {
 	LanguageClient,
 } from 'vscode-languageclient/node';
 
-export class SBMLEditorProvider implements vscode.CustomTextEditorProvider {
+export class AntimonyEditorProvider implements vscode.CustomTextEditorProvider {
 
     public static async register(context: vscode.ExtensionContext, client: LanguageClient): Promise<vscode.Disposable> {
         if (!client) {
@@ -12,13 +12,12 @@ export class SBMLEditorProvider implements vscode.CustomTextEditorProvider {
             return;
         }
         await client.onReady();
-
-		const provider = new SBMLEditorProvider(context);
-		const providerRegistration = vscode.window.registerCustomEditorProvider(SBMLEditorProvider.viewType, provider);
+		const provider = new AntimonyEditorProvider(context);
+		const providerRegistration = vscode.window.registerCustomEditorProvider(AntimonyEditorProvider.viewType, provider);
 		return providerRegistration;
 	}
     
-    private static readonly viewType = 'antimony.sbmlEditor';
+    private static readonly viewType = 'antimony.antimonyEditor';
 
     constructor(
 		private readonly context: vscode.ExtensionContext
@@ -38,11 +37,11 @@ export class SBMLEditorProvider implements vscode.CustomTextEditorProvider {
 		webviewPanel.webview.options = {
 			enableScripts: true,
 		};
-		getSBMLString(document, webviewPanel)
+		getAntimonyString(document, webviewPanel)
 
 		const changeDocumentSubscription = vscode.workspace.onDidSaveTextDocument(e => {
 			if (!webviewPanel.active && e.uri.toString() === document.uri.toString()) {
-				getSBMLString(document, webviewPanel)
+				getAntimonyString(document, webviewPanel)
 			}
 		});
 
@@ -53,7 +52,7 @@ export class SBMLEditorProvider implements vscode.CustomTextEditorProvider {
         webviewPanel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
-                case 'sbmlOnSave':
+                case 'antimonyOnSave':
                     webviewPanel.webview.html = 
                     `
                     <!DOCTYPE html>
@@ -61,25 +60,25 @@ export class SBMLEditorProvider implements vscode.CustomTextEditorProvider {
                     <head>
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>SBML</title>
+                        <title>Antimony</title>
                     </head>
                     <body>
-                        <div contenteditable="true" id="sbml">
-                            <pre lang="xml" id="sbml-text">
-                                ${message.sbml}
+                        <div contenteditable="true" id="antimony">
+                            <pre id="antimony-text">
+                                ${message.antimony}
                             </pre>
                             <script>
                                 let size = getComputedStyle(document.body).getPropertyValue('--vscode-editor-font-size')
-                                document.getElementById("sbml").style="font-size: " + size;
+                                document.getElementById("antimony").style="font-size: " + size;
         
                                 (function() {
                                     const vscode = acquireVsCodeApi();
                                     document.addEventListener('keydown', e => {
                                         if (e.ctrlKey && e.key === 's') {
-                                            const node = document.getElementById('sbml-text');
+                                            const node = document.getElementById('antimony-text');
                                             vscode.postMessage({
-                                                command: 'sbmlOnSave',
-                                                sbml: node.innerHTML
+                                                command: 'antimonyOnSave',
+                                                antimony: node.innerHTML
                                             })
                                         }
                                     });
@@ -89,8 +88,9 @@ export class SBMLEditorProvider implements vscode.CustomTextEditorProvider {
                         
                     </html>
                     `;
-                    let msg = String(message.sbml).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/"/g, '"');
-                    vscode.commands.executeCommand('antimony.getAntimonyStr', msg, document.fileName)
+                    let msg = message.antimony
+                    msg = String(msg).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/"/g, '"')
+                    vscode.commands.executeCommand('antimony.antStrToSBMLStr', msg)
                         .then(async (result: any) => {
                             if (result.error) {
                                 vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
@@ -99,7 +99,7 @@ export class SBMLEditorProvider implements vscode.CustomTextEditorProvider {
                                 edit.replace(
                                     document.uri,
                                     new vscode.Range(0, 0, document.lineCount, 0),
-                                    result);
+                                    result.sbml_str);
                                 return vscode.workspace.applyEdit(edit);
                             }
                         })
@@ -108,8 +108,8 @@ export class SBMLEditorProvider implements vscode.CustomTextEditorProvider {
     }
 }
 
-function getSBMLString(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel): any {
-    vscode.commands.executeCommand('antimony.getSBMLStr', document)
+function getAntimonyString(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel): any {
+    vscode.commands.executeCommand('antimony.getAntimonyStrFile', document)
     .then(async (result: any) => {
         let msg = '';
         if (result.error) {
@@ -121,16 +121,16 @@ function getSBMLString(document: vscode.TextDocument, webviewPanel: vscode.Webvi
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>SBML</title>
+                    <title>Antimony</title>
                 </head>
                 <body>
-                    <div id="sbml">
-                        <p id="sbml-text">
+                    <div id="antimony">
+                        <p id="antimony-text">
                             ${msg}
                         </p>
                         <script>
                             let size = getComputedStyle(document.body).getPropertyValue('--vscode-editor-font-size')
-                            document.getElementById("sbml").style="font-size: " + size;
+                            document.getElementById("antimony").style="font-size: " + size;
                         </script>
                     </div>
                     
@@ -138,8 +138,7 @@ function getSBMLString(document: vscode.TextDocument, webviewPanel: vscode.Webvi
                 `;
         }
         else {
-            msg = result.sbml_str;
-            msg = String(msg).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            msg = result.ant_str;
             webviewPanel.webview.html = 
                 `
                 <!DOCTYPE html>
@@ -147,25 +146,25 @@ function getSBMLString(document: vscode.TextDocument, webviewPanel: vscode.Webvi
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>SBML</title>
+                    <title>Antimony</title>
                 </head>
                 <body>
-                    <div contenteditable="true" id="sbml">
-                        <pre lang="xml" id="sbml-text">
+                    <div contenteditable="true" id="antimony">
+                        <pre id="antimony-text">
                             ${msg}
                         </pre>
                         <script>
                             let size = getComputedStyle(document.body).getPropertyValue('--vscode-editor-font-size')
-                            document.getElementById("sbml").style="font-size: " + size;
+                            document.getElementById("antimony").style="font-size: " + size;
     
                             (function() {
                                 const vscode = acquireVsCodeApi();
                                 document.addEventListener('keydown', e => {
                                     if (e.ctrlKey && e.key === 's') {
-                                        const node = document.getElementById('sbml-text');
+                                        const node = document.getElementById('antimony-text');
                                         vscode.postMessage({
-                                            command: 'sbmlOnSave',
-                                            sbml: node.innerHTML
+                                            command: 'antimonyOnSave',
+                                            antimony: node.innerHTML
                                         })
                                     }
                                 });

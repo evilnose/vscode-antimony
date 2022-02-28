@@ -9,6 +9,7 @@ import {
 } from 'vscode-languageclient/node';
 import { multiStepInput } from './annotationInput';
 import { SBMLEditorProvider } from './SBMLEditor';
+import { AntimonyEditorProvider } from './AntimonyEditor';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -56,9 +57,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	
 	// custom editor
 	context.subscriptions.push(await SBMLEditorProvider.register(context, client));
+	context.subscriptions.push(await AntimonyEditorProvider.register(context, client));
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.startSBMLWebview',
 			(...args: any[]) => startSBMLWebview(context, args)));
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.startAntimonyWebview',
+			(...args: any[]) => startAntimonyWebview(context, args)));
 
 	// language config for CodeLens
 	const docSelector = {
@@ -85,6 +90,23 @@ async function startSBMLWebview(context: vscode.ExtensionContext, args: any[]) {
 		vscode.window.activeTextEditor.document.uri, "antimony.sbmlEditor", 2);
 }
 
+async function startAntimonyWebview(context: vscode.ExtensionContext, args: any[]) {
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+
+	vscode.commands.executeCommand("vscode.openWith", 
+		vscode.window.activeTextEditor.document.uri, "antimony.antimonyEditor", 2);
+}
+
+async function saveSBMLWebview(context: vscode.ExtensionContext, args: any[]) {
+
+}
+
 async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any[]) {
 	if (!client) {
 		utils.pythonInterpreterError();
@@ -102,7 +124,7 @@ async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any
 		filters: {
 			'SBML': ['xml']
 		},
-		title: "Select a location to save your converted model"
+		title: "Select a location to save your SBML file"
     };
    vscode.window.showOpenDialog(options).then(fileUri => {
 	   if (fileUri && fileUri[0]) {
@@ -131,7 +153,7 @@ async function convertSBMLToAntimony(context: vscode.ExtensionContext, args: any
 			filters: {
 				'Antimony': ['ant']
 			},
-			title: "Select a location to save your converted model"
+			title: "Select a location to save your Antimony file"
 	};
 	vscode.window.showOpenDialog(options).then(folderUri => {
 		if (folderUri && folderUri[0]) {

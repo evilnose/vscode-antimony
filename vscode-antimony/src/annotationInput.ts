@@ -7,6 +7,7 @@
 import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, Uri, commands, QuickPick } from 'vscode';
 import { LogMessageNotification } from 'vscode-languageclient';
 import { sleep } from './utils/utils';
+import { ProgressLocation } from 'vscode'
 
 /**
  * A multi-step input using window.createQuickPick() and window.createInputBox().
@@ -77,9 +78,15 @@ export async function multiStepInput(context: ExtensionContext, initialEntity: s
         } else {
             return;
         }
-        commands.executeCommand('antimony.sendQuery', database, query).then(async (result) => {
-            await input.onQueryResults(result);
-        });
+        window.withProgress({
+			location: ProgressLocation.Notification,
+			title: "Searching for annotations...",
+			cancellable: true
+		}, (progress, token) => {
+            return commands.executeCommand('antimony.sendQuery', database, query).then(async (result) => {
+                await input.onQueryResults(result);
+            });
+        })
     }
 
     function shouldResume() {
@@ -229,9 +236,6 @@ export class MultiStepInput {
     }
 
     async onQueryResults(result) {
-        // TODO display a banner saying 'no results' if there aren't any results
-        // Or display a progress bar when querying, just so that the user can distinguish
-        // loading vs. no results
         if (this.current && this.current.step === 2) {
             if (this.instanceOfQuickPick(this.current)) {
                 if (result.error) {
@@ -248,6 +252,9 @@ export class MultiStepInput {
                 }
 
                 if (this.current.value === result.query) {
+                    if (result.items.length == 0) {
+                        window.showInformationMessage("Annotation not found")
+                    }
                     this.current.items = result.items.map((item) => {
                         item['label'] = item['name'];
                         item['detail'] = 'detail';

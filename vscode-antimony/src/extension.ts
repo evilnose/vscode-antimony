@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as utils from './utils/utils';
 import * as path from 'path';
+import * as cp from "child_process";
 import {
 	LanguageClient,
 	LanguageClientOptions,
@@ -239,6 +240,18 @@ async function startLanguageServer(context: vscode.ExtensionContext) {
 		}
 		return;
 	}
+	// install dependencies
+	// const parentDir = context.asAbsolutePath(path.join(''));
+	// console.log(parentDir)
+	// const cp = require('child_process')
+	// const command = pythonInterpreter + " -m pip --disable-pip-version-check install --no-cache-dir --upgrade -r ./all-requirements.txt"
+	// cp.exec("dir", {cwd: parentDir}, (err, stdout, stderr) => {
+	// 	console.log('stdout: ' + stdout);
+	// 	console.log('stderr: ' + stderr);
+	// 	if (err) {
+	// 		vscode.window.showErrorMessage(err);
+	// 	}
+	// });
 	// create language client and launch server
 	const pythonMain = context.asAbsolutePath(
 		path.join('src', 'server', 'main.py')

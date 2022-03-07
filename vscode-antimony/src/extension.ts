@@ -187,7 +187,18 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 	// dialog for annotation
 	const selection = vscode.window.activeTextEditor.selection
 	// get the selected text
-	const selectedText = vscode.window.activeTextEditor.document.getText(selection);
+	const doc = vscode.window.activeTextEditor.document
+	const selectedText = doc.getText(selection);
+	// get the position for insert
+	var line = selection.start.line
+	while (line < doc.lineCount - 1) {
+		const text = doc.lineAt(line).text
+		if (text.localeCompare("end", undefined, { sensitivity: 'accent' }) == 0) {
+			line -= 1;
+			break;
+		}
+		line += 1;
+	}
 	const initialEntity = selectedText || 'entityName';
 	let initialQuery;
 	// get current file
@@ -197,7 +208,7 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 		initialQuery = selectedText;
 	}
 	const selectedItem = await multiStepInput(context, initialQuery);
-	await insertAnnotation(selectedItem, initialEntity);
+	await insertAnnotation(selectedItem, initialEntity, line);
 }
 
 export function deactivate(): Thenable<void> | undefined {
@@ -291,13 +302,13 @@ class AntCodeLensProvider implements vscode.CodeLensProvider {
 	}
 }
 
-async function insertAnnotation(selectedItem, entityName) {
+async function insertAnnotation(selectedItem, entityName, line) {
 	const entity = selectedItem.entity;
 	const id = entity['id'];
 	const prefix = entity['prefix'];
-	const snippetText = `\n\n\${1:${entityName}} identity "http://identifiers.org/${prefix}/${id}"`;
+	const snippetText = `\n\${1:${entityName}} identity "http://identifiers.org/${prefix}/${id}"`;
 	const snippetStr = new vscode.SnippetString(snippetText);
 	const doc = vscode.window.activeTextEditor.document;
-	const pos = doc.lineAt(doc.lineCount - 1).range.end;
+	const pos = doc.lineAt(line).range.end;
 	vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
 }

@@ -105,4 +105,7 @@ model *BIOMD0000000001()
   I is "Intermediate";
   ALL is "ActiveACh2";
   RemovalACh is "removal of ACh";
+
+  // Annotations:
+  DL identity "http://identifiers.org/chebi/CHEBI:3291"
 end

@@ -111,7 +111,7 @@
                     "name": "symbol.assign"
                 },
                 {
-                    "match": "\\-|\\+|\\*|\\/|\\^",
+                    "match": "\\-|\\+|\\*|\\/|\\^|\\;",
                     "name": "symbol.operator"
                 }
             ]

@@ -1,3 +1,4 @@
-BLL identity "http://identifiers.org/chebi/CHEBI:763"
-
-BLL = 0
+model test
+    compartment C1;
+    C1 = 1.0;
+end

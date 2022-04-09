@@ -84,7 +84,7 @@ model *BIOMD0000000001()
   kf_16 = 0.05;
   kr_16 = 0.0012;
 
-  // Other declarations:
+  // Other declarations: 
   var kf_0, kf_3, kf_7, kf_12, kf_1, kf_4, kf_8, kf_13;
   const comp1, t2, kr_0, kr_1, kf_2, kr_2, kr_3, kr_4, kf_5, kr_5, kf_6, kr_6;
   const kr_7, kr_8, kf_9, kr_9, kf_10, kr_10, kf_11, kr_11, kr_12, kr_13;
@@ -106,6 +106,9 @@ model *BIOMD0000000001()
   ALL is "ActiveACh2";
   RemovalACh is "removal of ACh";
 
-  // Annotations:
+  // CV terms:
   DL identity "http://identifiers.org/chebi/CHEBI:3291"
+  BLL identity "http://identifiers.org/chebi/CHEBI:149632"
+  BLL identity "http://identifiers.org/chebi/CHEBI:51384"
+  React0 identity "http://identifiers.org/chebi/CHEBI:53290"
 end

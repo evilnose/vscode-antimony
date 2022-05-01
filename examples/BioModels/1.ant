@@ -106,9 +106,6 @@ model *BIOMD0000000001()
   ALL is "ActiveACh2";
   RemovalACh is "removal of ACh";
 
-  // CV terms:
-  DL identity "http://identifiers.org/chebi/CHEBI:3291"
-  BLL identity "http://identifiers.org/chebi/CHEBI:149632"
-  BLL identity "http://identifiers.org/chebi/CHEBI:51384"
-  React0 identity "http://identifiers.org/chebi/CHEBI:53290"
+
+  BLL identity "http://identifiers.org/chebi/CHEBI:27732"
 end

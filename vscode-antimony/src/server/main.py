@@ -12,8 +12,12 @@ import antimony
 
 sys.path.append(os.path.join(EXTENSION_ROOT, "server", "stibium"))
 
+from stibium.parse import AntimonyParser
 from stibium.api import AntCompletion, AntCompletionKind
-from stibium.types import Issue, IssueSeverity
+from stibium.types import Issue, IssueSeverity, SrcPosition
+from stibium.symbols import QName, Symbol, SymbolTable
+
+from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
 
 from bioservices_server.utils import AntFile, pygls_range, sb_position, get_antfile, sb_range
 from bioservices_server.webservices import NetworkError, WebServices
@@ -25,7 +29,7 @@ from pygls.server import LanguageServer
 from pygls.types import (CompletionItem, CompletionItemKind, CompletionList, CompletionParams, Diagnostic, DiagnosticSeverity,
                          DidChangeTextDocumentParams,
                          DidOpenTextDocumentParams, DidSaveTextDocumentParams, Hover, InsertTextFormat, Location, MarkupContent, MarkupKind,
-                         TextDocumentContentChangeEvent, TextDocumentPositionParams)
+                         TextDocumentContentChangeEvent, TextDocumentPositionParams, Position)
 import threading
 import time
 
@@ -140,6 +144,30 @@ def sbml_file_to_ant_file(ls: LanguageServer, args):
             'msg': 'Antimony has been exported to {}'.format(output_dir),
             'file': full_path_name
         }
+
+@server.thread()
+@server.command('antimony.sendType')
+def get_type(ls: LanguageServer, args):
+    global antfile_cache
+    global uri
+    selected_text = args[0]
+    line = args[1]
+    character = args[2]
+    uri = args[3]
+    doc = server.workspace.get_document(uri)
+    antfile_cache = get_antfile(doc)
+    
+    vscode_logger.info("selected text: " + selected_text + ", line: " + line + ", char: " + character)
+    parser = AntimonyParser()
+    root = parser.parse(selected_text, True)
+    position  = SrcPosition(int(line) + 1, int(character) + 1)
+    symbols, range_ = antfile_cache.symbols_at(position)
+    
+    symbol = symbols[0].type.__str__()
+    vscode_logger.info("symbol: " + symbol)
+    return {
+        'symbol': symbol
+    }
 
 @server.thread()
 @server.command('antimony.sendQuery')

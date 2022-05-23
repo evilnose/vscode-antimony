@@ -5,16 +5,18 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, Uri, commands, QuickPick } from 'vscode';
-import { LogMessageNotification } from 'vscode-languageclient';
+import { integer, LogMessageNotification } from 'vscode-languageclient';
 import { sleep } from './utils/utils';
 import { ProgressLocation } from 'vscode'
+import { Stats } from 'webpack';
 
 /**
  * A multi-step input using window.createQuickPick() and window.createInputBox().
  * 
  * This first part uses the helper class `MultiStepInput` that wraps the API for the multi-step case.
  */
-export async function multiStepInput(context: ExtensionContext, initialEntity: string = null) {
+export async function multiStepInput(context: ExtensionContext, initialEntity: string = null, selectedType: string = null) {
+    console.log("3 selected type: " + selectedType);
     const databases = [
         { label: 'ChEBI', id: 'chebi' },
         { label: 'UniProt', id: 'uniprot'}];

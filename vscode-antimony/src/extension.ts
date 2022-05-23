@@ -189,6 +189,7 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 	const selection = vscode.window.activeTextEditor.selection
 	// get the selected text
 	const doc = vscode.window.activeTextEditor.document
+	const uri = doc.uri.toString();
 	const selectedText = doc.getText(selection);
 	// get the position for insert
 	var line = selection.start.line
@@ -200,6 +201,9 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 		}
 		line += 1;
 	}
+	const positionAt = selection.anchor;
+	const lineStr = positionAt.line.toString();
+	const charStr = positionAt.character.toString();
 	const initialEntity = selectedText || 'entityName';
 	let initialQuery;
 	// get current file
@@ -208,8 +212,15 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 	} else {
 		initialQuery = selectedText;
 	}
-	const selectedItem = await multiStepInput(context, initialQuery);
-	await insertAnnotation(selectedItem, initialEntity, line);
+	vscode.commands.executeCommand('antimony.sendType', selectedText, lineStr, charStr, uri).then(async (result) => {
+		const selectedType = await getResult(result);
+		const selectedItem = await multiStepInput(context, initialQuery, selectedType);
+		await insertAnnotation(selectedItem, initialEntity, line);
+	});
+}
+
+async function getResult(result) {
+	return result.symbol;
 }
 
 export function deactivate(): Thenable<void> | undefined {

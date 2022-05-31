@@ -10,6 +10,12 @@ from asyncio.log import logger
 
 from bioservices import ChEBI
 from bioservices import UniProt
+from bioservices import Rhea
+
+from ols_client import OlsClient
+
+import pandas as pd
+import logging
 
 from io import StringIO
 from urllib.error import URLError
@@ -27,6 +33,8 @@ class WebServices:
     def __init__(self):
         self.chebi = None
         self.uniprot = None
+        self.rhea = None
+        self.ontology = None
 
     def init_chebi(self):
         if self.chebi is None:
@@ -39,6 +47,20 @@ class WebServices:
         if self.uniprot is None:
             try:
                 self.uniprot = UniProt()
+            except Exception:
+                raise NetworkError
+            
+    def init_rhea(self):
+        if self.rhea is None:
+            try:
+                self.rhea = Rhea()
+            except Exception:
+                raise NetworkError
+            
+    def init_ontology(self):
+        if self.ontology is None:
+            try:
+                self.ontology = OlsClient()
             except Exception:
                 raise NetworkError
 
@@ -91,4 +113,61 @@ class WebServices:
                 'genes': genes,
                 'prefix': 'uniprot',
             })
+        return objects
+    
+    def annot_search_rhea(self, query: str):
+        rhea_logger = logging.getLogger("rhea logger")
+        self.init_rhea()
+        
+        if query.strip() == '':
+            return list()
+
+        try:
+            result_df = self.rhea.search(query, columns='rhea-id,equation')
+            rhea_logger.info("result_df: " + result_df[0:20])
+        except URLError:
+            raise NetworkError
+
+        result_df = result_df[0:20]
+        result_l = result_df.values.tolist()
+        rhea_logger.info(result_l)
+        objects = list()
+        for row in result_l:
+            id_ = row[0]
+            equation = row[1]
+            id_ = id_[5:]
+            objects.append({
+                'id': id_,
+                'name': equation,
+                'detail': id_,
+                'prefix': 'rhea',
+            })
+        return objects
+    
+    def annot_search_ontology(self, query: str, ontology_id: str):
+        ontology_logger = logging.getLogger("ontology logger")
+        self.init_ontology()
+        
+        if query.strip() == '':
+            return list()
+        ontology_logger.info('here')
+        try:
+            result_dict = self.ontology.search(query)
+            result_dicts = result_dict['response']['docs']
+            ontology_logger.info(result_dict)
+        except URLError:
+            raise NetworkError
+        
+        objects = list()
+        
+        for d in result_dicts:
+            iri = d['iri']
+            name = d['label']
+            prefix = d['ontology_prefix']
+            if (prefix == ontology_id):
+                objects.append({
+                    'name': name,
+                    'iri': iri,
+                    'prefix': 'ontology'
+                })
         return objects

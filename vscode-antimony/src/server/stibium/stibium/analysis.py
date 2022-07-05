@@ -375,8 +375,6 @@ class AntTreeAnalyzer:
         for species in chain(reaction.get_reactants(), reaction.get_products()):
             self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp, is_const=species.is_const)
             self.table.get(QName(scope, species.get_name()))[0].in_reaction = True
-            vscode_logger.info(self.table.get(QName(scope, species.get_name()))[0].name + 
-                             " " + str(self.table.get(QName(scope, species.get_name()))[0].is_const))
         self.handle_arith_expr(scope, reaction.get_rate_law())
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
@@ -631,11 +629,8 @@ class AntTreeAnalyzer:
         species_list = []
         for species in reaction.get_reactants():
             species_list.append(species)
-            # vscode_logger.info(str(self.table.get(QName(scope, species.get_name()))[0].in_reaction) + " " + self.table.get(QName(scope, species.get_name()))[0].name)
-            # self.table.get(QName(scope, species.get_name()))[0].in_reaction = True
         for species in reaction.get_products():
             species_list.append(species)
-            # self.table.get(QName(scope, species.get_name()))[0].in_reaction = True
         for species in species_list:
             species_name = species.get_name()
             matched_species = self.table.get(QName(scope, species_name))

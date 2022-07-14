@@ -13,3 +13,4 @@ vscode-antimony/dist
 vscode-antimony/.lark-cache
 vscode-antimony/*.prof
 vscode-antimony/pythonFiles
+__pycache__/

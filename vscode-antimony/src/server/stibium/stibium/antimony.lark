@@ -57,6 +57,7 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
 
 ?power: atom
     | power "^" atom
+    | "exp" atom
 
 ?atom : NUMBER
     | var_name

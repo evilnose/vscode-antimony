@@ -98,11 +98,5 @@ I have an open issue for [manually curating models](https://github.com/sys-bio/v
 * Fixed an issue related to code navigation ([#46](https://github.com/sys-bio/vscode-antimony/issues/46)).
 * Fixed an issue related to displaying hover message for annotated entities ([#47](https://github.com/sys-bio/vscode-antimony/issues/47)).
 
-### 0.1.2
-* Updated docs.
-
-### 0.1.3
-* Updated docs.
-
-### 0.1.4
+### 0.1.2 - 0.1.9
 * Updated docs, included a list for updates in 0.2.

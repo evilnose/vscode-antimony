@@ -1,7 +1,6 @@
 
 var_name : ["$"] NAME
 in_comp : "in" var_name
-var_property : var_name ".sboTerm" | var_name "." "sboTerm"
 
 namemaybein : var_name [in_comp]
 

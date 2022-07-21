@@ -1,7 +1,6 @@
 
 var_name : ["$"] NAME
 in_comp : "in" var_name
-
 namemaybein : var_name [in_comp]
 
 empty:
@@ -13,7 +12,9 @@ species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
-sboterm: var_property "sboTerm" "=" NUMBER
+sboterm: var_name ".sboTerm" "=" SBOTERM
+SBOTERM: NUMBER
+    | "SBO:" NUMBER
 
 assignment : namemaybein ("=" | AEQ) sum
 
@@ -113,6 +114,7 @@ func_call : var_name "(" [parameters] ")"
     | function_call
     | variable_in
     | is_assignment
+    | sboterm
 
 simple_stmt_list : simple_stmt+
 

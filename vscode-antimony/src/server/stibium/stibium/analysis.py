@@ -1,6 +1,6 @@
 
 import logging
-from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Sbo, Annotation, Sboterm, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -63,6 +63,7 @@ class AntTreeAnalyzer:
         self.root = root
         self.pending_is_assignments = []
         self.pending_annotations = []
+        self.pending_sboterms = []
         base_scope = BaseScope()
         for child in root.children:
             if isinstance(child, ErrorToken):
@@ -90,6 +91,7 @@ class AntTreeAnalyzer:
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.pre_handle_annotation,
+                                'Sboterm': self.pre_handle_sboterm,
                                 'UnitDeclaration': self.handle_unit_declaration,
                                 'UnitAssignment' : self.handle_unit_assignment,
                                 'ModularModelCall' : self.handle_mmodel_call,
@@ -119,6 +121,7 @@ class AntTreeAnalyzer:
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.pre_handle_annotation,
+                                'Sboterm': self.pre_handle_sboterm,
                                 'UnitDeclaration': self.handle_unit_declaration,
                                 'UnitAssignment' : self.handle_unit_assignment,
                                 'ModularModelCall' : self.handle_mmodel_call,
@@ -155,6 +158,7 @@ class AntTreeAnalyzer:
                     'Assignment': self.handle_assignment,
                     'Declaration': self.handle_declaration,
                     'Annotation': self.pre_handle_annotation,
+                    'Sboterm': self.pre_handle_sboterm,
                     'UnitDeclaration': self.handle_unit_declaration,
                     'UnitAssignment' : self.handle_unit_assignment,
                     'ModularModelCall' : self.handle_mmodel_call,
@@ -169,8 +173,10 @@ class AntTreeAnalyzer:
         # get list of warnings
         self.warning = self.table.warning
         self.handle_annotation_list()
+        self.handle_sboterm_list()
         self.handle_is_assignment_list()
         self.pending_annotations = []
+        self.pending_sboterms = []
         self.pending_is_assignments = []
         self.check_parse_tree(self.root, BaseScope())
 
@@ -429,6 +435,19 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
+    
+    def pre_handle_sboterm(self, scope: AbstractScope, sboterm: Sboterm):
+        self.pending_sboterms.append((scope, sboterm))
+    
+    def handle_sboterm_list(self):
+        for scope, sboterm in self.pending_sboterms:
+            self.handle_sboterm(scope, sboterm)
+    
+    def handle_sboterm(self, scope: AbstractScope, sboterm: Sboterm):
+        name = sboterm.get_var_name().get_name()
+        qname = QName(scope, name)
+        self.table.insert(qname, SymbolType.Parameter)
+        self.table.insert_sboterm(qname, sboterm)
     
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
         self.pending_is_assignments.append((scope, is_assignment))

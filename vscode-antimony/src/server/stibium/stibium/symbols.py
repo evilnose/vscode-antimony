@@ -1,7 +1,7 @@
 '''Classes for working with and storing symbols.
 '''
 import logging
-from stibium.ant_types import Annotation, Name, TreeNode
+from stibium.ant_types import Annotation, Name, Sboterm, TreeNode
 from .types import Issue, ObscuredValueCompartment, RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
 from .ant_types import VarName, Declaration, VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall
 
@@ -113,6 +113,7 @@ class Symbol:
     decl_node: Optional[TreeNode]
     value_node: Optional[TreeNode]
     annotations: List[Annotation]
+    sboterms: List[Sboterm]
     display_name: str
     comp: str
     is_const: bool
@@ -133,6 +134,7 @@ class Symbol:
         self.decl_node = decl_node
         self.value_node = value_node
         self.annotations = list()
+        self.sboterms = list()
         self.display_name = display_name
         self.comp = comp
         self.is_const = is_const
@@ -211,7 +213,15 @@ class Symbol:
 
         if self.annotations:
             # add the first annotation
-            ret += '\n***\n{}\n'.format(self.annotations[0].get_uri())
+            for annotation in self.annotations:
+                ret += '\n***\n{}\n'.format(annotation.get_uri())
+        if self.sboterms:
+            # add all sboterms
+            for sboterm in self.sboterms:
+                if sboterm.get_val()[:4] == 'SBO:':
+                    ret += '\n***\nSBOterm: {}\n'.format(sboterm.get_val()[4:])
+                else:
+                    ret += '\n***\nSBOterm: {}\n'.format(sboterm.get_val())
 
         return ret
 
@@ -464,3 +474,13 @@ class SymbolTable:
         else:
             sym = leaf_table[name]
         sym.annotations.append(node)
+        
+    def insert_sboterm(self, qname: QName, node: Sboterm):
+        leaf_table = self._leaf_table(qname.scope)
+        name = qname.name.text
+        if name not in leaf_table:
+            sym = VarSymbol(name, SymbolType.Unknown, qname.name)
+            leaf_table[name] = sym
+        else:
+            sym = leaf_table[name]
+        sym.sboterms.append(node)

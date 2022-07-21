@@ -1,6 +1,8 @@
 
 var_name : ["$"] NAME
 in_comp : "in" var_name
+var_property : var_name ".sboTerm" | var_name "." "sboTerm"
+
 namemaybein : var_name [in_comp]
 
 empty:
@@ -12,12 +14,42 @@ species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
-assignment : namemaybein ("=" | AEQ) sum 
+sboterm: var_property "sboTerm" "=" NUMBER
+
+assignment : namemaybein ("=" | AEQ) sum
 
 AEQ : ":="
 
 annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
-ANNOT_KEYWORD: "identity" | "hasPart"
+ANNOT_KEYWORD: "identity"
+    | "hasPart"
+    | "biological_entity_is"
+    | "part"
+    | "isPartOf"
+    | "parthood"
+    | "isVersionOf"
+    | "hypernym"
+    | "hasVersion"
+    | "version"
+    | "isHomologTo"
+    | "homolog"
+    | "isDescribedBy"
+    | "description"
+    | "isEncodedBy"
+    | "encoder"
+    | "encodes"
+    | "encodement"
+    | "occursIn"
+    | "container"
+    | "hasProperty"
+    | "property"
+    | "isPropertyOf"
+    | "propertyBearer"
+    | "hasTaxon"
+    | "taxon"
+
+
+
 
 
 declaration : decl_modifiers decl_item ("," decl_item)*

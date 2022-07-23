@@ -98,6 +98,7 @@ class AntTreeAnalyzer:
                                 'IsAssignment' : self.pre_handle_is_assignment,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
+                            self.handle_is_const(scope, stmt)
             if isinstance(child, ModularModel):
                 scope = ModularModelScope(str(child.get_name()))
                 for cchild in child.children:
@@ -127,6 +128,7 @@ class AntTreeAnalyzer:
                                 'IsAssignment' : self.pre_handle_is_assignment,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
+                            self.handle_is_const(scope, stmt)
                     if isinstance(cchild, Parameters):
                         self.handle_parameters(scope, cchild)
                 self.handle_mmodel(child)
@@ -163,6 +165,7 @@ class AntTreeAnalyzer:
                     'IsAssignment' : self.pre_handle_is_assignment,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
+                self.handle_is_const(scope, stmt)
         
         # get list of errors from the symbol table
         self.error = self.table.error
@@ -337,6 +340,20 @@ class AntTreeAnalyzer:
             if child and type(child) == InComp:
                 child = cast(InComp, child)
                 self.table.insert(QName(scope, child.get_comp().get_name()), SymbolType.Compartment)
+
+    def handle_is_const(self, scope: AbstractScope, node: TrunkNode):
+        indicator = False
+        for child in node.descendants():
+            if indicator and child and type(child) == Name:
+                
+                child = cast(Name, child)
+                
+                self.table.insert(QName(scope, child), SymbolType.Unknown, is_const=True)
+            indicator = False
+            if child and type(child) == Operator:
+                child = cast(Operator, child)
+                if child.text == "$":
+                    indicator = True
 
     def handle_arith_expr(self, scope: AbstractScope, expr: TreeNode):
         # TODO handle dummy tokens

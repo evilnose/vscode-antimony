@@ -12,8 +12,12 @@ import antimony
 
 sys.path.append(os.path.join(EXTENSION_ROOT, "server", "stibium"))
 
+from stibium.parse import AntimonyParser
 from stibium.api import AntCompletion, AntCompletionKind
-from stibium.types import Issue, IssueSeverity
+from stibium.types import Issue, IssueSeverity, SrcPosition
+from stibium.symbols import QName, Symbol, SymbolTable
+
+from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
 
 from bioservices_server.utils import AntFile, pygls_range, sb_position, get_antfile, sb_range
 from bioservices_server.webservices import NetworkError, WebServices
@@ -25,7 +29,7 @@ from pygls.server import LanguageServer
 from pygls.types import (CompletionItem, CompletionItemKind, CompletionList, CompletionParams, Diagnostic, DiagnosticSeverity,
                          DidChangeTextDocumentParams,
                          DidOpenTextDocumentParams, DidSaveTextDocumentParams, Hover, InsertTextFormat, Location, MarkupContent, MarkupKind,
-                         TextDocumentContentChangeEvent, TextDocumentPositionParams)
+                         TextDocumentContentChangeEvent, TextDocumentPositionParams, Position)
 import threading
 import time
 
@@ -142,6 +146,29 @@ def sbml_file_to_ant_file(ls: LanguageServer, args):
         }
 
 @server.thread()
+@server.command('antimony.sendType')
+def get_type(ls: LanguageServer, args) -> dict[str, str]:
+    ''' get the symbol type of a symbol at given line, character and file uri
+    
+        return a dictionary with the value of 'symbol' as the symbol type in string
+    '''
+    global antfile_cache
+    global uri
+    line = args[0]
+    character = args[1]
+    uri = args[2]
+    doc = server.workspace.get_document(uri)
+    antfile_cache = get_antfile(doc)
+    position  = SrcPosition(int(line) + 1, int(character) + 1)
+    symbols= antfile_cache.symbols_at(position)[0]
+    
+    symbol = symbols[0].type.__str__()
+    vscode_logger.info("symbol: " + symbol)
+    return {
+        'symbol': symbol
+    }
+
+@server.thread()
 @server.command('antimony.sendQuery')
 def query_species(ls: LanguageServer, args):
     try:
@@ -153,6 +180,20 @@ def query_species(ls: LanguageServer, args):
             results = services.annot_search_chebi(query)
         elif database == 'uniprot':
             results = services.annot_search_uniprot(query)
+        elif database == 'rhea':
+            results = services.annot_search_rhea(query)
+        elif database == 'gontology':
+            results = services.annot_search_ontology(query, 'GO')
+        elif database == 'contology':
+            results = services.annot_search_ontology(query, 'CL')
+        elif database == 'pontology':
+            results = services.annot_search_ontology(query, 'PR')
+        elif database == 'bontology':
+            results = services.annot_search_ontology(query, 'OBI')
+        elif database == 'montology':
+            results = services.annot_search_ontology(query, 'MA')
+        elif database == 'fontology':
+            results = services.annot_search_ontology(query, 'FMA')
         else:
             # This is not supposed to happen
             raise SystemError("Unknown database '{}'".format(database))

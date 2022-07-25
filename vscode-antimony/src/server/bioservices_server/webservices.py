@@ -5,17 +5,12 @@ Author: Gary Geng
 
 # local
 from asyncio.log import logger
-# from .bioservices.chebi import ChEBI
-# from .bioservices.uniprot import UniProt
-
-from bioservices import ChEBI
-from bioservices import UniProt
-
-from io import StringIO
-from urllib.error import URLError
-
-from typing import Text
+from bioservices import ChEBI, Rhea, UniProt
 import csv
+from io import StringIO
+import logging
+from ols_client import OlsClient
+from urllib.error import URLError
 
 
 class NetworkError(Exception):
@@ -27,6 +22,8 @@ class WebServices:
     def __init__(self):
         self.chebi = None
         self.uniprot = None
+        self.rhea = None
+        self.ontology = None
 
     def init_chebi(self):
         if self.chebi is None:
@@ -41,8 +38,26 @@ class WebServices:
                 self.uniprot = UniProt()
             except Exception:
                 raise NetworkError
+            
+    def init_rhea(self):
+        if self.rhea is None:
+            try:
+                self.rhea = Rhea()
+            except Exception:
+                raise NetworkError
+            
+    def init_ontology(self):
+        if self.ontology is None:
+            try:
+                self.ontology = OlsClient()
+            except Exception:
+                raise NetworkError
 
-    def annot_search_chebi(self, query: str):
+    def annot_search_chebi(self, query: str) -> list[dict[str, str]]:
+        ''' Search ChEBI with a string query
+        
+            return a list of dictionaries representing the query result
+        '''
         self.init_chebi()
         # TODO do we want to change searchCategory and maybe THREE STARS?
         if query.strip() == '':
@@ -64,7 +79,11 @@ class WebServices:
             'prefix': 'chebi'
         } for res in results]
 
-    def annot_search_uniprot(self, query: str):
+    def annot_search_uniprot(self, query: str) -> list[dict[str, str]]:
+        ''' Search UniPort with a string query
+        
+            return a list of dictionaries representing the query result
+        '''
         self.init_uniprot()
 
         if query.strip() == '':
@@ -91,4 +110,64 @@ class WebServices:
                 'genes': genes,
                 'prefix': 'uniprot',
             })
+        return objects
+    
+    def annot_search_rhea(self, query: str) -> list[dict[str, str]]:
+        ''' Search RHEA with a string query
+
+            return a list of dictionaries representing the query result
+        '''
+        self.init_rhea()
+        
+        if query.strip() == '':
+            return list()
+
+        try:
+            result_df = self.rhea.search(query, columns='rhea-id,equation')
+        except URLError:
+            raise NetworkError
+
+        result_df = result_df[0:20]
+        result_l = result_df.values.tolist()
+        objects = list()
+        for row in result_l:
+            id_ = row[0]
+            equation = row[1]
+            id_ = id_[5:]
+            objects.append({
+                'id': id_,
+                'name': equation,
+                'detail': id_,
+                'prefix': 'rhea',
+            })
+        return objects
+    
+    def annot_search_ontology(self, query: str, ontology_id: str) -> list[dict[str, str]]:
+        ''' Search an ontology (given ontology id) with a string query
+        
+            return a list of dictionaries representing the query result
+        '''
+        self.init_ontology()
+        ontology_id = ontology_id.lower()
+        
+        if query.strip() == '':
+            return list()
+        try:
+            result_dict = self.ontology.search(query, ontology_id)
+            result_dicts = result_dict['response']['docs']
+        except URLError:
+            raise NetworkError
+        
+        objects = list()
+        
+        for dct in result_dicts:
+            iri = dct['iri']
+            name = dct['label']
+            prefix = dct['ontology_prefix']
+            if (prefix.lower() == ontology_id):
+                objects.append({
+                    'name': name,
+                    'iri': iri,
+                    'prefix': 'ontology'
+                })
         return objects

@@ -12,6 +12,34 @@ species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
+event : [event_name] "at" [event_delay] [event_condition] [event_trigger] ":" event_assignment_list
+event_name : namemaybein ":"
+event_delay : sum "after"
+
+event_condition_list : [parenthesis_list] event_condition [parenthesis_list] (boolean [parenthesis_list] event_condition [parenthesis_list])*
+event_condition : sum compare_sign sum
+
+event_trigger_list : event_trigger ("," event_trigger)*
+
+// atom has to be changed to (NUMBER | var_name)
+event_trigger : "extentconv" "=" atom
+    | "t0" "=" boolean
+    | "priority" "=" sum
+    | "fromTrigger" "=" boolean
+    | "persistent" "=" boolean
+
+event_assignment_list : event_assignment ("," event_assignment)*
+event_assignment : var_name "=" sum
+
+boolean : "true" | "false"
+
+compare_sign : ">" | "<" | ">=" | "<="
+
+parenthesis : "(" | ")"
+parenthesis_list : parenthesis (parenthesis)*
+
+logical : "&&" | "||"
+
 assignment : namemaybein ("=" | AEQ) sum 
 
 AEQ : ":="
@@ -82,6 +110,7 @@ func_call : var_name "(" [parameters] ")"
     | function_call
     | variable_in
     | is_assignment
+    | event
 
 simple_stmt_list : simple_stmt+
 

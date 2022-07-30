@@ -1,0 +1,29 @@
+{
+    "name": "antimony-extension-pack",
+    "displayName": "Antimony Extension Pack",
+    "description": "Extensions for Antimony development in Visual Studio Code.",
+    "version": "0.1.1",
+    "author": "Steve Ma, Gary Geng, Joseph Hellerstein, Herbet Sauro",
+    "icon": "images/logo.png",
+    "publisher": "stevem",
+    "engines": {
+        "vscode": "^1.63.0"
+    },
+    "categories": [
+        "Extension Packs"
+    ],
+    "extensionPack": [ 
+        "stevem.vscode-antimony",
+        "stevem.vscode-antimony-syntax"
+    ],
+	"bugs": {
+		"url": "https://github.com/sys-bio/vscode-antimony/issues",
+		"email": "bochenma@cs.washington.edu"
+	},
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sys-bio/vscode-antimony.git"
+	},
+	"homepage": "https://github.com/sys-bio/vscode-antimony/blob/master/README.md"
+}

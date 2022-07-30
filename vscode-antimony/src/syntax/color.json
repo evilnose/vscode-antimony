@@ -1,0 +1,72 @@
+{
+    "editor.tokenColorCustomizations": {
+        "textMateRules": [
+            {
+                "scope": ["type.species"],
+                "settings": {
+                    "foreground": "#cc7832"
+                }
+            },
+            {
+                "scope": ["type.compartment"],
+                "settings": {
+                    "foreground": "#9876aa"
+                }
+            },
+            {
+                "scope": ["type.const"],
+                "settings": {
+                    "foreground": "#BBB529"
+                }
+            },
+            {
+                "scope": ["type.unit"],
+                "settings": {
+                    "foreground": "#3740be"
+                }
+            },
+            {
+                "scope": ["type.var"],
+                "settings": {
+                    "foreground": "#6897BB"
+                }
+            },
+            {
+                "scope": ["type.keywords"],
+                "settings": {
+                    "foreground": "#2aa198"
+                }
+            },
+            {
+                "scope": ["type.functionmodel"],
+                "settings": {
+                    "foreground": "#6c71c4"
+                }
+            },
+            {
+                "scope": ["symbol.transform"],
+                "settings": {
+                    "foreground": "#2aa198"
+                }
+            },
+            {
+                "scope": ["type.annotation"],
+                "settings": {
+                    "foreground": "#d33682"
+                }
+            },
+            {
+                "scope": ["symbol.assign"],
+                "settings": {
+                    "foreground": "#2aa198"
+                }
+            },
+            {
+                "scope": ["symbol.operator"],
+                "settings": {
+                    "foreground": "#2aa198"
+                }
+            }
+        ]
+    }
+}

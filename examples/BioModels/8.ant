@@ -1,0 +1,92 @@
+// Created by libAntimony v2.8.0
+model *BIOMD0000000008()
+
+  // Compartments and Species:
+  compartment Cell;
+  species C in Cell, X in Cell, M in Cell, Y in Cell, Z in Cell;
+
+  // Assignment Rules:
+  V1 := C*V1p*(C + K6)^-1;
+  V3 := M*V3p;
+
+  // Reactions:
+  reaction1:  => C; reaction1_vi;
+  reaction2: C => ; C*reaction2_k1*X*(C + reaction2_K5)^-1;
+  reaction3: C => ; C*reaction3_kd;
+  reaction4:  => M; (1 + -1*M)*V1*(reaction4_K1 + -1*M + 1)^-1;
+  reaction5: M => ; M*reaction5_V2*(reaction5_K2 + M)^-1;
+  reaction6:  => X; V3*(1 + -1*X)*(reaction6_K3 + -1*X + 1)^-1;
+  reaction7: X => ; reaction7_V4*X*(reaction7_K4 + X)^-1;
+  reaction8: C + Y => Z; reaction8_a1*C*Y;
+  reaction9: Z => C + Y; reaction9_a2*Z;
+  reaction10: Z => C; reaction10_alpha*reaction10_d1*Z;
+  reaction11: Z => Y; reaction11_alpha*reaction11_kd*Z;
+  reaction12:  => Y; reaction12_vs;
+  reaction13: Y => ; reaction13_d1*Y;
+
+  // Species initializations:
+  C = 0;
+  C has substance_per_volume;
+  X = 0;
+  X has substance_per_volume;
+  M = 0;
+  M has substance_per_volume;
+  Y = 1/Cell;
+  Y has substance_per_volume;
+  Z = 1/Cell;
+  Z has substance_per_volume;
+
+  // Compartment initializations:
+  Cell = 1;
+  Cell has volume;
+
+  // Variable initializations:
+  V1p = 0.75;
+  K6 = 0.3;
+  V3p = 0.3;
+  reaction1_vi = 0.1;
+  reaction2_k1 = 0.5;
+  reaction2_K5 = 0.02;
+  reaction3_kd = 0.02;
+  reaction4_K1 = 0.1;
+  reaction5_V2 = 0.25;
+  reaction5_K2 = 0.1;
+  reaction6_K3 = 0.2;
+  reaction7_K4 = 0.1;
+  reaction7_V4 = 0.1;
+  reaction8_a1 = 0.05;
+  reaction9_a2 = 0.05;
+  reaction10_alpha = 0.1;
+  reaction10_d1 = 0.05;
+  reaction11_kd = 0.02;
+  reaction11_alpha = 0.1;
+  reaction12_vs = 0.2;
+  reaction13_d1 = 0.05;
+
+  // Other declarations:
+  var V1, V3;
+  const Cell, V1p, K6, V3p;
+
+  // Unit definitions:
+  unit volume = litre;
+  unit substance = mole;
+  unit substance_per_volume = mole / litre;
+
+  // Display Names:
+  C is "cyclin";
+  X is "protease";
+  M is "cdc2k";
+  Y is "cyclin inhibitor";
+  Z is "complex inhibitor-cyclin";
+  reaction1 is "creation of cyclin";
+  reaction2 is "cdc2 kinase triggered degration of cyclin";
+  reaction3 is "default degradation of cyclin";
+  reaction4 is "activation of cdc2 kinase";
+  reaction5 is "deactivation of cdc2 kinase";
+  reaction6 is "activation of cyclin protease";
+  reaction7 is "deactivation of cyclin protease";
+  reaction10 is "desinhibition of cyclin";
+  reaction11 is "degradation of inhibited cyclin";
+  reaction12 is "creation of cyclin inhibitor";
+  reaction13 is "degradation of cyclin inhibitor";
+end

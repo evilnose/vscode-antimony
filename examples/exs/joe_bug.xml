@@ -1,0 +1,1141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created by libAntimony version v2.12.0.3 with libSBML version 5.18.1. -->
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1">
+  <model metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR" id="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR" name="Varusai2018 - Dynamic modelling of the mTOR signalling network reveals complex emergent behaviours conferred by DEPTOR" substanceUnits="substance" volumeUnits="volume">
+    <annotation>
+      <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+        <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR">
+          <bqmodel:is>
+            <rdf:Bag>
+              <rdf:li rdf:resource="http://identifiers.org/biomodels.db/MODEL1909250003"/>
+              <rdf:li rdf:resource="http://identifiers.org/biomodels.db/BIOMD0000000823"/>
+            </rdf:Bag>
+          </bqmodel:is>
+          <bqbiol:isDescribedBy>
+            <rdf:Bag>
+              <rdf:li rdf:resource="http://identifiers.org/pubmed/29330362"/>
+            </rdf:Bag>
+          </bqbiol:isDescribedBy>
+          <bqbiol:hasProperty>
+            <rdf:Bag>
+              <rdf:li rdf:resource="http://identifiers.org/mamo/MAMO_0000046"/>
+              <rdf:li rdf:resource="http://identifiers.org/pw/PW:0000180"/>
+              <rdf:li rdf:resource="http://identifiers.org/ncit/C101595"/>
+            </rdf:Bag>
+          </bqbiol:hasProperty>
+          <bqbiol:hasTaxon>
+            <rdf:Bag>
+              <rdf:li rdf:resource="http://identifiers.org/taxonomy/9606"/>
+            </rdf:Bag>
+          </bqbiol:hasTaxon>
+        </rdf:Description>
+      </rdf:RDF>
+    </annotation>
+    <listOfFunctionDefinitions>
+      <functionDefinition id="Constant_flux__irreversible" name="Constant flux (irreversible)">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <lambda>
+            <bvar>
+              <ci> v </ci>
+            </bvar>
+            <ci> v </ci>
+          </lambda>
+        </math>
+      </functionDefinition>
+      <functionDefinition id="Henri_Michaelis_Menten__irreversible" name="Henri-Michaelis-Menten (irreversible)">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <lambda>
+            <bvar>
+              <ci> substrate </ci>
+            </bvar>
+            <bvar>
+              <ci> Km </ci>
+            </bvar>
+            <bvar>
+              <ci> V </ci>
+            </bvar>
+            <apply>
+              <divide/>
+              <apply>
+                <times/>
+                <ci> V </ci>
+                <ci> substrate </ci>
+              </apply>
+              <apply>
+                <plus/>
+                <ci> Km </ci>
+                <ci> substrate </ci>
+              </apply>
+            </apply>
+          </lambda>
+        </math>
+      </functionDefinition>
+      <functionDefinition id="HMM_Mod" name="HMM_Mod">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <lambda>
+            <bvar>
+              <ci> V </ci>
+            </bvar>
+            <bvar>
+              <ci> s </ci>
+            </bvar>
+            <bvar>
+              <ci> m </ci>
+            </bvar>
+            <bvar>
+              <ci> Km </ci>
+            </bvar>
+            <apply>
+              <divide/>
+              <apply>
+                <times/>
+                <ci> V </ci>
+                <ci> s </ci>
+                <ci> m </ci>
+              </apply>
+              <apply>
+                <plus/>
+                <ci> Km </ci>
+                <ci> s </ci>
+              </apply>
+            </apply>
+          </lambda>
+        </math>
+      </functionDefinition>
+      <functionDefinition id="Function_for_v11" name="Function_for_v11">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <lambda>
+            <bvar>
+              <ci> k11ca </ci>
+            </bvar>
+            <bvar>
+              <ci> pmTORC1 </ci>
+            </bvar>
+            <bvar>
+              <ci> DEPTOR </ci>
+            </bvar>
+            <bvar>
+              <ci> Km11a </ci>
+            </bvar>
+            <bvar>
+              <ci> pDEPTOR </ci>
+            </bvar>
+            <bvar>
+              <ci> k11cb </ci>
+            </bvar>
+            <bvar>
+              <ci> pmTORC2 </ci>
+            </bvar>
+            <bvar>
+              <ci> Km11b </ci>
+            </bvar>
+            <apply>
+              <plus/>
+              <apply>
+                <divide/>
+                <apply>
+                  <times/>
+                  <ci> k11ca </ci>
+                  <ci> pmTORC1 </ci>
+                  <ci> DEPTOR </ci>
+                </apply>
+                <apply>
+                  <plus/>
+                  <ci> Km11a </ci>
+                  <ci> pDEPTOR </ci>
+                </apply>
+              </apply>
+              <apply>
+                <divide/>
+                <apply>
+                  <times/>
+                  <ci> k11cb </ci>
+                  <ci> pmTORC2 </ci>
+                  <ci> DEPTOR </ci>
+                </apply>
+                <apply>
+                  <plus/>
+                  <ci> Km11b </ci>
+                  <ci> DEPTOR </ci>
+                </apply>
+              </apply>
+            </apply>
+          </lambda>
+        </math>
+      </functionDefinition>
+      <functionDefinition id="Function_for_v5" name="Function_for_v5">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <lambda>
+            <bvar>
+              <ci> k5ca </ci>
+            </bvar>
+            <bvar>
+              <ci> pIRS </ci>
+            </bvar>
+            <bvar>
+              <ci> Akt </ci>
+            </bvar>
+            <bvar>
+              <ci> Km5a </ci>
+            </bvar>
+            <bvar>
+              <ci> k5cb </ci>
+            </bvar>
+            <bvar>
+              <ci> pmTORC2 </ci>
+            </bvar>
+            <bvar>
+              <ci> Km5b </ci>
+            </bvar>
+            <apply>
+              <plus/>
+              <apply>
+                <divide/>
+                <apply>
+                  <times/>
+                  <ci> k5ca </ci>
+                  <ci> pIRS </ci>
+                  <ci> Akt </ci>
+                </apply>
+                <apply>
+                  <plus/>
+                  <ci> Km5a </ci>
+                  <ci> Akt </ci>
+                </apply>
+              </apply>
+              <apply>
+                <divide/>
+                <apply>
+                  <times/>
+                  <ci> k5cb </ci>
+                  <ci> pmTORC2 </ci>
+                  <ci> Akt </ci>
+                </apply>
+                <apply>
+                  <plus/>
+                  <ci> Km5b </ci>
+                  <ci> Akt </ci>
+                </apply>
+              </apply>
+            </apply>
+          </lambda>
+        </math>
+      </functionDefinition>
+    </listOfFunctionDefinitions>
+    <listOfUnitDefinitions>
+      <unitDefinition id="volume">
+        <listOfUnits>
+          <unit kind="litre" exponent="1" scale="-3" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="substance">
+        <listOfUnits>
+          <unit kind="mole" exponent="1" scale="-3" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.compartment_" id="compartment_" spatialDimensions="3" size="1" constant="true">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.compartment_">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C48694"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </compartment>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.IR" id="IR" compartment="compartment_" initialConcentration="50" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.IR">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/pr/PR:000009064"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pIR" id="pIR" compartment="compartment_" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pIR">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/pr/PR:000009064"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.IRS" id="IRS" compartment="compartment_" initialConcentration="100" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.IRS">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C28474"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pIRS" id="pIRS" compartment="compartment_" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pIRS">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C28474"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.iIRS" id="iIRS" compartment="compartment_" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.iIRS">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C28474"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.Akt" id="Akt" compartment="compartment_" initialConcentration="100" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.Akt">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/pr/PR:000029189"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pAkt" id="pAkt" compartment="compartment_" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pAkt">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/pr/PR:000029189"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.mTORC1" id="mTORC1" compartment="compartment_" initialConcentration="250" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.mTORC1">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C96314"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pmTORC1" id="pmTORC1" compartment="compartment_" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pmTORC1">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C96314"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.mTORC2" id="mTORC2" compartment="compartment_" initialConcentration="200" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.mTORC2">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C96315"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pmTORC2" id="pmTORC2" compartment="compartment_" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pmTORC2">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C96315"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.imTORC2" id="imTORC2" compartment="compartment_" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.imTORC2">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C96315"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.mTORC1_DEPTOR" id="mTORC1_DEPTOR" compartment="compartment_" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.mTORC1_DEPTOR">
+              <bqbiol:hasPart>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C96314"/>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C101595"/>
+                </rdf:Bag>
+              </bqbiol:hasPart>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.mTORC2_DEPTOR" id="mTORC2_DEPTOR" compartment="compartment_" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.mTORC2_DEPTOR">
+              <bqbiol:hasPart>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C101595"/>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/mTORC2"/>
+                </rdf:Bag>
+              </bqbiol:hasPart>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.DEPTOR" id="DEPTOR" compartment="compartment_" initialConcentration="350" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.DEPTOR">
+              <bqbiol:is>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C101595"/>
+                </rdf:Bag>
+              </bqbiol:is>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+      <species metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pDEPTOR" id="pDEPTOR" compartment="compartment_" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.pDEPTOR">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C101595"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+      </species>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="Km1" value="95" constant="true"/>
+      <parameter id="V1" value="1" constant="true"/>
+      <parameter id="Km2" value="35" constant="true"/>
+      <parameter id="V2" value="1" constant="true"/>
+      <parameter id="k3c" value="0.1" constant="true"/>
+      <parameter id="Km3" value="50" constant="true"/>
+      <parameter id="Km4" value="500" constant="true"/>
+      <parameter id="V4" value="1" constant="true"/>
+      <parameter id="k5ca" value="0.05" constant="true"/>
+      <parameter id="Km5a" value="7" constant="true"/>
+      <parameter id="k5cb" value="1.5" constant="true"/>
+      <parameter id="Km5b" value="4" constant="true"/>
+      <parameter id="Km6" value="34" constant="true"/>
+      <parameter id="V6" value="2" constant="true"/>
+      <parameter id="k7c" value="0.1" constant="true"/>
+      <parameter id="Km7" value="2" constant="true"/>
+      <parameter id="Km8" value="1" constant="true"/>
+      <parameter id="V8" value="6" constant="true"/>
+      <parameter id="k9c" value="0.3" constant="true"/>
+      <parameter id="Km9" value="160" constant="true"/>
+      <parameter id="Km10" value="7" constant="true"/>
+      <parameter id="V10" value="3" constant="true"/>
+      <parameter id="k11ca" value="0.1" constant="true"/>
+      <parameter id="Km11a" value="120" constant="true"/>
+      <parameter id="k11cb" value="0.13" constant="true"/>
+      <parameter id="Km11b" value="11" constant="true"/>
+      <parameter id="Km12" value="7" constant="true"/>
+      <parameter id="V12" value="4" constant="true"/>
+      <parameter id="k13f" value="0.001" constant="true"/>
+      <parameter id="k13r" value="0.006" constant="true"/>
+      <parameter id="k14f" value="0.007" constant="true"/>
+      <parameter id="k14r" value="0.006" constant="true"/>
+      <parameter id="k15c" value="0.1" constant="true"/>
+      <parameter id="Km15" value="50" constant="true"/>
+      <parameter id="Km16" value="50" constant="true"/>
+      <parameter id="V16" value="1" constant="true"/>
+      <parameter id="ks17" value="0" constant="true"/>
+      <parameter id="kd18" value="0" constant="true"/>
+    </listOfParameters>
+    <listOfReactions>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v1" id="v1" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v1">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016310"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="IR" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="pIR" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Henri_Michaelis_Menten__irreversible </ci>
+                <ci> IR </ci>
+                <ci> Km1 </ci>
+                <ci> V1 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v2" id="v2" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v2">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016311"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="pIR" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IR" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Henri_Michaelis_Menten__irreversible </ci>
+                <ci> pIR </ci>
+                <ci> Km2 </ci>
+                <ci> V2 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v3" id="v3" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v3">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016310"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="IRS" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="pIRS" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="pIR"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> HMM_Mod </ci>
+                <ci> k3c </ci>
+                <ci> IRS </ci>
+                <ci> pIR </ci>
+                <ci> Km3 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v4" id="v4" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v4">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016311"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="pIRS" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Henri_Michaelis_Menten__irreversible </ci>
+                <ci> pIRS </ci>
+                <ci> Km4 </ci>
+                <ci> V4 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v5" id="v5" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v5">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016310"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="Akt" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="pAkt" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="pIRS"/>
+          <modifierSpeciesReference species="pmTORC2"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Function_for_v5 </ci>
+                <ci> k5ca </ci>
+                <ci> pIRS </ci>
+                <ci> Akt </ci>
+                <ci> Km5a </ci>
+                <ci> k5cb </ci>
+                <ci> pmTORC2 </ci>
+                <ci> Km5b </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v6" id="v6" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v6">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016311"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="pAkt" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Akt" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Henri_Michaelis_Menten__irreversible </ci>
+                <ci> pAkt </ci>
+                <ci> Km6 </ci>
+                <ci> V6 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v7" id="v7" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v7">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016310"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="mTORC1" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="pmTORC1" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="pAkt"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> HMM_Mod </ci>
+                <ci> k7c </ci>
+                <ci> mTORC1 </ci>
+                <ci> pAkt </ci>
+                <ci> Km7 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v8" id="v8" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v8">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016311"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="pmTORC1" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTORC1" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Henri_Michaelis_Menten__irreversible </ci>
+                <ci> pmTORC1 </ci>
+                <ci> Km8 </ci>
+                <ci> V8 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v9" id="v9" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v9">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016310"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="mTORC2" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="pmTORC2" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="pIR"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> HMM_Mod </ci>
+                <ci> k9c </ci>
+                <ci> mTORC2 </ci>
+                <ci> pIR </ci>
+                <ci> Km9 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v10" id="v10" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v10">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016311"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="pmTORC2" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTORC2" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Henri_Michaelis_Menten__irreversible </ci>
+                <ci> pmTORC2 </ci>
+                <ci> Km10 </ci>
+                <ci> V10 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v11" id="v11" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v11">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016310"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="DEPTOR" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="pDEPTOR" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="pmTORC1"/>
+          <modifierSpeciesReference species="pmTORC2"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Function_for_v11 </ci>
+                <ci> k11ca </ci>
+                <ci> pmTORC1 </ci>
+                <ci> DEPTOR </ci>
+                <ci> Km11a </ci>
+                <ci> pDEPTOR </ci>
+                <ci> k11cb </ci>
+                <ci> pmTORC2 </ci>
+                <ci> Km11b </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v12" id="v12" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v12">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/go/GO:0016311"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="pDEPTOR" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="DEPTOR" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Henri_Michaelis_Menten__irreversible </ci>
+                <ci> pDEPTOR </ci>
+                <ci> Km12 </ci>
+                <ci> V12 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v13" id="v13" reversible="true" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v13">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C18469"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="mTORC1" stoichiometry="1" constant="true"/>
+          <speciesReference species="DEPTOR" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTORC1_DEPTOR" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <minus/>
+                <apply>
+                  <times/>
+                  <ci> k13f </ci>
+                  <ci> mTORC1 </ci>
+                  <ci> DEPTOR </ci>
+                </apply>
+                <apply>
+                  <times/>
+                  <ci> k13r </ci>
+                  <ci> mTORC1_DEPTOR </ci>
+                </apply>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v14" id="v14" reversible="true" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v14">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C18469"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="mTORC2" stoichiometry="1" constant="true"/>
+          <speciesReference species="DEPTOR" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="mTORC2_DEPTOR" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <minus/>
+                <apply>
+                  <times/>
+                  <ci> k14f </ci>
+                  <ci> mTORC2 </ci>
+                  <ci> DEPTOR </ci>
+                </apply>
+                <apply>
+                  <times/>
+                  <ci> k14r </ci>
+                  <ci> mTORC2_DEPTOR </ci>
+                </apply>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v15" id="v15" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v15">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C16983"/>
+                  <rdf:li rdf:resource="http://identifiers.org/sbo/SBO:0000169"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="IRS" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="iIRS" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="pmTORC1"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> HMM_Mod </ci>
+                <ci> k15c </ci>
+                <ci> IRS </ci>
+                <ci> pmTORC1 </ci>
+                <ci> Km15 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v16" id="v16" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v16">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C21018"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="iIRS" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="IRS" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Henri_Michaelis_Menten__irreversible </ci>
+                <ci> iIRS </ci>
+                <ci> Km16 </ci>
+                <ci> V16 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v17" id="v17" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v17">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C80450"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfProducts>
+          <speciesReference species="DEPTOR" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <apply>
+                <ci> Constant_flux__irreversible </ci>
+                <ci> ks17 </ci>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction metaid="Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v18" id="v18" reversible="false" fast="false">
+        <annotation>
+          <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#" xmlns:vCard4="http://www.w3.org/2006/vcard/ns#" xmlns:bqbiol="http://biomodels.net/biology-qualifiers/" xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+            <rdf:Description rdf:about="#Varusai2018___Dynamic_modelling_of_the_mTOR_signalling_network_reveals_complex_emergent_behaviours_conferred_by_DEPTOR.v18">
+              <bqbiol:isVersionOf>
+                <rdf:Bag>
+                  <rdf:li rdf:resource="http://identifiers.org/ncit/C61559"/>
+                </rdf:Bag>
+              </bqbiol:isVersionOf>
+            </rdf:Description>
+          </rdf:RDF>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="pDEPTOR" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> compartment_ </ci>
+              <ci> kd18 </ci>
+              <ci> pDEPTOR </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+    </listOfReactions>
+  </model>
+</sbml>

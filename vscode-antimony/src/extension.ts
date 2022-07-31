@@ -76,6 +76,17 @@ export async function activate(context: vscode.ExtensionContext) {
 		new AntCodeLensProvider()
 	)
 	context.subscriptions.push(codeLensProviderDisposable)
+
+    // decoration type for non-annotated variables
+    const decorationType = vscode.window.createTextEditorDecorationType({
+        borderWidth: '2px',
+        // backgroundColor: 'blue',
+        border: 'solid blue',
+    })
+
+    let activeEditor = vscode.window.activeTextEditor;
+
+    
 }
 
 async function startSBMLWebview(context: vscode.ExtensionContext, args: any[]) {

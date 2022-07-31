@@ -1,6 +1,6 @@
 
 import logging
-from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode
 from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -63,6 +63,7 @@ class AntTreeAnalyzer:
         self.root = root
         self.pending_is_assignments = []
         self.pending_annotations = []
+        self.pending_events = []
         base_scope = BaseScope()
         for child in root.children:
             if isinstance(child, ErrorToken):
@@ -87,6 +88,7 @@ class AntTreeAnalyzer:
                                 continue
                             {
                                 'Reaction': self.handle_reaction,
+                                'Event': self.pre_handle_event,
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.pre_handle_annotation,
@@ -116,6 +118,7 @@ class AntTreeAnalyzer:
                                 continue
                             {
                                 'Reaction': self.handle_reaction,
+                                'Event': self.pre_handle_event,
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.pre_handle_annotation,
@@ -152,6 +155,7 @@ class AntTreeAnalyzer:
                     continue
                 {
                     'Reaction': self.handle_reaction,
+                    'Event': self.pre_handle_event,
                     'Assignment': self.handle_assignment,
                     'Declaration': self.handle_declaration,
                     'Annotation': self.pre_handle_annotation,
@@ -365,6 +369,23 @@ class AntTreeAnalyzer:
         for species in chain(reaction.get_reactants(), reaction.get_products()):
             self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
         self.handle_arith_expr(scope, reaction.get_rate_law())
+        
+    def pre_handle_event(self, scope: AbstractScope, event: Event):
+        self.pending_events.append((scope, event))
+        name = event.get_name()
+        comp = None
+        if event.get_maybein() != None and event.get_maybein().is_in_comp():
+            comp = event.get_maybein().get_comp().get_name_text()
+            
+        if name is not None:
+            self.table.insert(QName(scope, name), SymbolType.Event, event, comp=comp)
+            
+        for condition in event.get_conditions():
+            self.table.insert(QName(scope, condition.get_var_name().get_name()), SymbolType.Species, comp=comp)
+
+        for assignment in event.get_assignments():
+            qname = QName(scope, assignment.get_name())
+            self.table.insert_event(qname, event)
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
         comp = None

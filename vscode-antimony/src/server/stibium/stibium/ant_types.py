@@ -7,6 +7,7 @@ from lark.tree import Tree
 
 from stibium.types import SrcRange, SymbolType, Variability
 
+vscode_logger = logging.getLogger("vscode logger: ")
 
 class TreeNode(abc.ABC):
     '''Basically either a TrunkNode or a LeafNode.
@@ -127,13 +128,29 @@ class ArithmeticExpr(TreeNode):
 @dataclass
 class Sum(ArithmeticExpr, TrunkNode):
     '''Arithmetic expression with an addition/subtraction root operator.'''
-    pass
+    def to_string(self) -> str:
+        ret = ''
+        if isinstance(self, LeafNode):
+            ret += self.text
+        else:
+            for node in self.descendants():
+                if isinstance(node, LeafNode):
+                    ret += node.text
+        return ret
 
 
 @dataclass
 class Product(ArithmeticExpr, TrunkNode):
     '''Arithmetic expression with a multiplication/division root operator.'''
-    pass
+    def to_string(self) -> str:
+        ret = ''
+        if isinstance(self, LeafNode):
+            ret += self.text
+        else:
+            for node in self.descendants():
+                if isinstance(node, LeafNode):
+                    ret += node.text
+        return ret
 
 
 @dataclass
@@ -182,6 +199,34 @@ class Number(LeafNode, ArithmeticExpr):
 @dataclass
 class Operator(LeafNode):
     pass
+
+
+@dataclass
+class Boolean(TrunkNode):
+    children: Tuple[Operator] = field(repr=False)
+    def get_bool(self):
+        return self.children[0].text
+
+
+@dataclass
+class CompareSign(TrunkNode):
+    children: Tuple[Operator] = field(repr=False)
+    def get_sign(self):
+        return self.children[0].text
+
+
+@dataclass
+class Parenthesis(TrunkNode):
+    children: Tuple[Operator] = field(repr=False)
+    def get_paren(self):
+        return self.children[0].text
+
+
+@dataclass
+class Logical(TrunkNode):
+    children: Tuple[Operator] = field(repr=False)
+    def get_logic_symbol(self):
+        return self.children[0].text
 
 
 @dataclass
@@ -350,7 +395,207 @@ class Reaction(TrunkNode):
         if self.children[6] is not None:
             return self.children[6]
         return None
+    
 
+@dataclass
+class ParenthesisList(TrunkNode):
+    def get_all_parens(self) -> List[Parenthesis]:
+        return cast(List[Parenthesis], self.children)
+    
+    def to_string(self):
+        ret = ''
+        for paren in self.get_all_parens():
+            ret += paren.get_paren()
+        return ret
+
+    def check_rep(self):
+        for child in self.children:
+            assert isinstance(child, Parenthesis)
+            assert child.text == '(' or child.text == ')'
+            
+@dataclass
+class EventDelay(TrunkNode):
+    children: Tuple[Sum, Keyword] = field(repr=False)
+    
+    def get_sum(self):
+        return self.children[0]
+    
+    def get_sum_text(self):
+        ret = ''
+        delay = self.get_sum()
+        if isinstance(delay, LeafNode):
+            ret += delay.text
+        else:
+            ret += delay.to_string()
+        ret += ' after'
+        return ret
+
+@dataclass
+class EventCondition(TrunkNode):
+    children: Tuple[VarName, CompareSign, Sum] = field(repr=False)
+    
+    def get_var_name(self) -> VarName:
+        return self.children[0]
+    
+    def get_var_name_text(self) -> str:
+        return self.get_var_name().get_name_text()
+        
+    def get_sign(self) -> CompareSign:
+        return self.children[1]
+    
+    def get_sum(self) -> Sum:
+        return self.children[2]
+    
+    def to_string(self):
+        var_name_text = self.get_var_name_text()
+        sign = str(self.get_sign().get_sign())
+        condition = self.get_sum()
+        if isinstance(condition, LeafNode):
+            sum_text = condition.text
+        elif isinstance(condition, VarName):
+            sum_text = condition.get_name_text()
+        else:
+            sum_text = self.get_sum().to_string()
+        vscode_logger.info(sign)
+        assert isinstance(sum_text, str)
+        assert isinstance(var_name_text, str)
+        assert isinstance(sign, str)
+        return var_name_text + ' ' + sign + ' ' + sum_text
+
+@dataclass
+class EventConditionList(TrunkNode):
+    def get_all_conditions(self) -> List[EventCondition]:
+        return cast(List[EventCondition], self.children[1::4])
+
+    def get_all_parens(self) -> List[Parenthesis]:
+        return cast(List[Parenthesis], self.children[::2])
+    
+    def to_string(self) -> str:
+        ret = ''
+        for sym in self.children:
+            if isinstance(sym, EventCondition):
+                ret += sym.to_string()
+            elif sym is None:
+                continue
+            elif isinstance(sym, ParenthesisList):
+                ret += sym.to_string()
+            elif isinstance(sym, Logical):
+                ret += ' ' + sym.get_logic_symbol() + ' '
+            else:
+                ret += sym.to_string()
+        return ret
+    
+@dataclass
+class EventTrigger(TrunkNode):
+    children: Tuple[Keyword, Operator, Union[Boolean, Sum, Number]] = field(repr=False)
+    def get_keyword(self):
+        return self.children[0]
+    
+    def get_trigger(self):
+        return self.children[2]
+    
+    def get_trigger_str(self):
+        if isinstance(self.get_trigger(), Boolean):
+            return self.get_trigger().get_bool()
+        elif isinstance(self.get_trigger(), Sum):
+            return self.get_trigger().to_string()
+        elif isinstance(self.get_trigger(), LeafNode):
+            return self.get_trigger().text
+        # elif isinstance(self.get_trigger(), ArithmeticExpr):
+        #     return self.get_trigger().to_string()
+    
+    def to_string(self):
+        if self.get_bool():
+            return self.children[0].get_str() + ' = ' + self.get_bool().get_bool()
+        elif self.get_sum():
+            return self.children[0].get_str() + ' = ' + self.get_sum().to_string()
+        
+    
+@dataclass
+class EventTriggerList(TrunkNode):
+    def get_all_triggers(self) -> List[EventTrigger]:
+        return cast(List[EventTrigger], self.children[1::2])
+    
+    def get_triggers(self):
+        ret = dict()
+        for trigger in self.get_all_triggers():
+            ret[trigger.get_keyword().text] = trigger.get_trigger_str()
+        return ret
+        
+    
+@dataclass
+class EventAssignment(TrunkNode):
+    children: Tuple[VarName, Operator, Sum] = field(repr=False)
+    def get_var_name(self):
+        return self.children[0]
+    
+    def get_name(self):
+        return self.get_var_name().get_name()
+        
+    def get_name_text(self):
+        return self.get_var_name().get_name_text()
+    
+    def get_value(self):
+        return self.children[2]
+
+    def get_type(self):
+        return self.unit
+    
+@dataclass
+class EventAssignmentList(TrunkNode):
+    def get_all_event_assignments(self) -> List[EventAssignment]:
+        return cast(List[EventAssignment], self.children[::2])
+
+@dataclass
+class Event(TrunkNode):
+    children: Tuple[Optional[ReactionName], Keyword, Optional[EventDelay],
+                    Optional[EventConditionList], Optional[EventTriggerList],
+                    Operator, EventAssignmentList] = field(repr=False)
+
+    def get_maybein(self):
+        if self.children[0] is None:
+            return None
+        return self.children[0].get_maybein()
+
+    def get_name(self):
+        if self.children[0] is None:
+            return None
+        return self.children[0].get_name()
+
+    def get_name_text(self):
+        if self.children[0] is None:
+            return None
+        return self.children[0].get_name_text()
+    
+    def get_event_delay(self) -> str:
+        if self.children[2] is not None:
+            return self.children[2].get_sum_text()
+        return None
+        
+    def get_condition_list(self) -> Optional[EventConditionList]:
+        return self.children[3]
+
+    def get_trigger_list(self) -> Optional[EventTriggerList]:
+        return self.children[4]
+
+    def get_conditions(self) -> List[EventCondition]:
+        slist = self.get_condition_list()
+        if slist:
+            return slist.get_all_conditions()
+        return list()
+
+    def get_triggers(self) -> List[EventTrigger]:
+        slist = self.get_trigger_list()
+        if slist:
+            return slist.get_all_triggers()
+        return list()
+    
+    def get_assignment_list(self):
+        return self.children[6]
+    
+    def get_assignments(self) -> List[EventAssignment]:
+        slist = self.get_assignment_list()
+        return slist.get_all_event_assignments()
 
 @dataclass
 class Assignment(TrunkNode):

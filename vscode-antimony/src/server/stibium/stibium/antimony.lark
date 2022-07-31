@@ -12,18 +12,17 @@ species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
-event : [event_name] "at" [event_delay] [event_condition] [event_trigger] ":" event_assignment_list
-event_name : namemaybein ":"
+event : [reaction_name] "at" [event_delay] [event_condition_list] [event_trigger_list] ":" event_assignment_list
+
 event_delay : sum "after"
 
-event_condition_list : [parenthesis_list] event_condition [parenthesis_list] (boolean [parenthesis_list] event_condition [parenthesis_list])*
-event_condition : sum compare_sign sum
+event_condition_list : [parenthesis_list] event_condition [parenthesis_list] (logical [parenthesis_list] event_condition [parenthesis_list])*
+event_condition : var_name compare_sign sum
 
-event_trigger_list : event_trigger ("," event_trigger)*
+event_trigger_list : ("," event_trigger)*
 
 // atom has to be changed to (NUMBER | var_name)
-event_trigger : "extentconv" "=" atom
-    | "t0" "=" boolean
+event_trigger :  "t0" "=" boolean
     | "priority" "=" sum
     | "fromTrigger" "=" boolean
     | "persistent" "=" boolean

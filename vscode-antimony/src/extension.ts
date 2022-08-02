@@ -103,7 +103,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			const startPos = activeEditor.document.positionAt(match.index);
 			const endPos = activeEditor.document.positionAt(match.index + match[0].length);
 			const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Non-Annotated Variable' };
-			if (match == "\\b(?:var)\\b") { // check if match is a variable and doesn't have an annotation, not sure how to approach this part
+			if (match == "\\b(?:var)\\b") { // check if match is a variable and isn't annotated, not sure how to approach this part
 				nonAnnotated.push(decoration);
 			}
 		}

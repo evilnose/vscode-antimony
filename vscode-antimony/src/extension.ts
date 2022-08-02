@@ -11,6 +11,7 @@ import {
 import { multiStepInput } from './annotationInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
+import { type } from 'os';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -77,8 +78,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	)
 	context.subscriptions.push(codeLensProviderDisposable)
 
+    // timer for non annotated variable visual indicator
+    let timeout: NodeJS.Timer | undefined = undefined;
+
     // decoration type for non-annotated variables
-    const decorationType = vscode.window.createTextEditorDecorationType({
+    const nonAnnDecorationType = vscode.window.createTextEditorDecorationType({
         borderWidth: '2px',
         // backgroundColor: 'blue',
         border: 'solid blue',
@@ -86,7 +90,55 @@ export async function activate(context: vscode.ExtensionContext) {
 
     let activeEditor = vscode.window.activeTextEditor;
 
-    
+    // change the annotation decoration of certain variables
+    function updateDecorations() {
+		if (!activeEditor) {
+			return;
+		}
+		const regEx = /\d+/g;
+		const text = activeEditor.document.getText();
+		const nonAnnotated: vscode.DecorationOptions[] = [];
+		let match;
+		while ((match = regEx.exec(text))) {
+			const startPos = activeEditor.document.positionAt(match.index);
+			const endPos = activeEditor.document.positionAt(match.index + match[0].length);
+			const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Non-Annotated Variable' };
+			if (match == "\\b(?:var)\\b") { // check if match is a variable and doesn't have an annotation, not sure how to approach this part
+				nonAnnotated.push(decoration);
+			}
+		}
+		activeEditor.setDecorations(nonAnnDecorationType, nonAnnotated);
+	}
+
+    // update the decoration when changes are made
+    function triggerUpdateDecorations(throttle = false) {
+		if (timeout) {
+			clearTimeout(timeout);
+			timeout = undefined;
+		}
+		if (throttle) {
+			timeout = setTimeout(updateDecorations, 500);
+		} else {
+			updateDecorations();
+		}
+	}
+
+    if (activeEditor) {
+		triggerUpdateDecorations();
+	}
+
+    vscode.window.onDidChangeActiveTextEditor(editor => {
+		activeEditor = editor;
+		if (editor) {
+			triggerUpdateDecorations();
+		}
+	}, null, context.subscriptions);
+
+	vscode.workspace.onDidChangeTextDocument(event => {
+		if (activeEditor && event.document === activeEditor.document) {
+			triggerUpdateDecorations(true);
+		}
+	}, null, context.subscriptions);
 }
 
 async function startSBMLWebview(context: vscode.ExtensionContext, args: any[]) {

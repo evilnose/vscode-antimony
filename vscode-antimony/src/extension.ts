@@ -83,6 +83,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // decoration type for non-annotated variables
     const nonAnnDecorationType = vscode.window.createTextEditorDecorationType({
+        // figure out if border is better or blue squiggly underline
+        
         borderWidth: '2px',
         // backgroundColor: 'blue',
         border: 'solid blue',

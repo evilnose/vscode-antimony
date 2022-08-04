@@ -551,7 +551,7 @@ class Event(TrunkNode):
     children: Tuple[Optional[ReactionName], Keyword, Optional[EventDelay],
                     Optional[EventConditionList], Optional[EventTriggerList],
                     Operator, EventAssignmentList] = field(repr=False)
-
+    unnamed_label : int = -1
     def get_maybein(self):
         if self.children[0] is None:
             return None

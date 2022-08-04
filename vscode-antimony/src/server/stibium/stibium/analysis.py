@@ -64,6 +64,7 @@ class AntTreeAnalyzer:
         self.pending_is_assignments = []
         self.pending_annotations = []
         self.pending_events = []
+        self.unnamed_events_num = 0
         base_scope = BaseScope()
         for child in root.children:
             if isinstance(child, ErrorToken):
@@ -379,6 +380,9 @@ class AntTreeAnalyzer:
             
         if name is not None:
             self.table.insert(QName(scope, name), SymbolType.Event, event, comp=comp)
+        else:
+            self.unnamed_events_num += 1
+            event.unnamed_label = self.unnamed_events_num
             
         for condition in event.get_conditions():
             self.table.insert(QName(scope, condition.get_var_name().get_name()), SymbolType.Species, comp=comp)
@@ -386,6 +390,8 @@ class AntTreeAnalyzer:
         for assignment in event.get_assignments():
             qname = QName(scope, assignment.get_name())
             self.table.insert_event(qname, event)
+        
+            
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
         comp = None

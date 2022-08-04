@@ -460,7 +460,10 @@ class AntTreeAnalyzer:
             for leaf in expression.scan_leaves():
                 if isinstance(leaf, Name) and leaf.text not in self.table.get_all_names():
                     self.warning.append(VarNotFound(leaf.range, leaf.text))
-                rate_rule_string += (leaf.text) + " "
+                if leaf.text == "+" or leaf.text == "-" or leaf.text == "*" or leaf.text == "/":
+                    rate_rule_string += " " + (leaf.text) + " "
+                else:
+                    rate_rule_string += (leaf.text)
             if var.rate_rule != None:
                 self.warning.append(RateRuleOverRidden(rate_rule.get_name().range, rate_rule.get_name().text, var))
             var.rate_rule = rate_rule_string

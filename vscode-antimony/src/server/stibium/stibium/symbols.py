@@ -247,10 +247,15 @@ class Symbol:
                     ontology_name = uri_split[-1].split('_')[0].lower()
                     iri = uri_split[-1]
                     response = requests.get('http://www.ebi.ac.uk/ols/api/ontologies/' + ontology_name + '/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F' + iri).json()
-                    response_annot = response['annotation']
-                    definition = response_annot['definition']
+                    if ontology_name == 'pr' or ontology_name == 'ma' or ontology_name == 'obi' or ontology_name == 'fma':
+                        definition = response['description']
+                    else:
+                        response_annot = response['annotation']
+                        definition = response_annot['definition']
                     name = response['label']
-                    queried =  '\n{}\n\n{}\n'.format(name, definition[0])
+                    queried =  '\n{}\n'.format(name)
+                    if definition:
+                        queried += '\n{}\n'.format(definition[0])
                     ret += queried
                     self.queried_annotations[uri] = queried
                 

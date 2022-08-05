@@ -63,6 +63,7 @@ class AntTreeAnalyzer:
         self.root = root
         self.pending_is_assignments = []
         self.pending_annotations = []
+        self.all_annotations = []
         base_scope = BaseScope()
         for child in root.children:
             if isinstance(child, ErrorToken):
@@ -429,6 +430,7 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
+        self.all_annotations.append(annotation.get_name_text())
     
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
         self.pending_is_assignments.append((scope, is_assignment))

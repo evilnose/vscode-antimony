@@ -167,6 +167,17 @@ def get_type(ls: LanguageServer, args) -> dict[str, str]:
     return {
         'symbol': symbol
     }
+    
+@server.thread()
+@server.command('antimony.getAnnotation')
+def get_annotations(ls: LanguageServer, args):
+    global antfile_cache
+    global uri
+    uri = args[0]
+    doc = server.workspace.get_document(uri)
+    antfile_cache = get_antfile(doc)
+    all_annotations: list = antfile_cache.analyzer.all_annotations
+    return all_annotations
 
 @server.thread()
 @server.command('antimony.sendQuery')

@@ -165,6 +165,7 @@
 	},
 	"scripts": {
 		"vscode:prepublish": "webpack --mode production",
+		"watch": "tsc -watch -p ./",
 		"webpack": "webpack --mode development",
 		"webpack-dev": "webpack --mode development --watch",
 		"test-compile": "webpack --mode development && npx tsc -b",

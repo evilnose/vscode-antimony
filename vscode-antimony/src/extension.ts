@@ -82,22 +82,44 @@ export async function activate(context: vscode.ExtensionContext) {
     let timeout: NodeJS.Timer | undefined = undefined;
 
     // decoration type for non-annotated variables
-    const nonAnnDecorationType = vscode.window.createTextEditorDecorationType({
+    const annDecorationType = vscode.window.createTextEditorDecorationType({
         // figure out if border is better or blue squiggly underline
-        
-        borderWidth: '2px',
+        // borderWidth: '2px',
         // backgroundColor: 'blue',
-        border: 'solid blue',
+        // border: 'solid blue',
+        textDecoration: 'underline yellow wavy',
     })
 
     let activeEditor = vscode.window.activeTextEditor;
 
-    // change the annotation decoration of certain variables
+    // change the annotation decoration of non-annotated variables
     function updateDecorations() {
-		if (!activeEditor) {
+		// if (!activeEditor) {
+		// 	return;
+		// }
+		// const regEx = /\d+/g;
+		// const text = activeEditor.document.getText();
+		// const annotated: vscode.DecorationOptions[] = [];
+		// let match;
+        // let variables: string[] = ['BLL', 'IL', 'AL', 'A', 'BL', 'B', 'DLL', 'D', 'ILL', 'DL', 'I', 'ALL', 'BwLL']
+		// for (var val of variables) {
+		// 	const startPos = activeEditor.document.positionAt(match.index);
+		// 	const endPos = activeEditor.document.positionAt(match.index + match[0].length);
+		// 	const decoration = { range: new vscode.Range(startPos, endPos) };
+        //     // variables from list of annotated variables in backend database
+		// 	// if (match == "\\b(?:var)\\b") { 
+        //         // check if match is a variable and isn't annotated, not sure how to approach this part
+        //         // might want to figure out how to run extension as well
+		// 		// annotated.push(decoration);
+        //         annotated.push(val);
+		// 	// }
+		// }
+		// activeEditor.setDecorations(annDecorationType, annotated);
+
+        if (!activeEditor) {
 			return;
 		}
-		const regEx = /\d+/g;
+		const regEx = /\bBLL\b/g;
 		const text = activeEditor.document.getText();
 		const nonAnnotated: vscode.DecorationOptions[] = [];
 		let match;
@@ -105,16 +127,20 @@ export async function activate(context: vscode.ExtensionContext) {
 			const startPos = activeEditor.document.positionAt(match.index);
 			const endPos = activeEditor.document.positionAt(match.index + match[0].length);
 			const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Non-Annotated Variable' };
-			if (match == "\\b(?:var)\\b") { // check if match is a variable and isn't annotated, not sure how to approach this part
-                // might want to figure out how to run extension as well
+             // check if match is a variable and isn't annotated, not sure how to approach this part
+            // might want to figure out how to run extension as well
 				nonAnnotated.push(decoration);
-			}
 		}
-		activeEditor.setDecorations(nonAnnDecorationType, nonAnnotated);
+		activeEditor.setDecorations(annDecorationType, nonAnnotated);
 	}
 
-    // update the decoration when changes are made
+    // update the decoration once in a certain time (throttle)
     function triggerUpdateDecorations(throttle = false) {
+        const doc = vscode.window.activeTextEditor.document;
+        const uri = doc.uri.toString();
+        vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: Array <string>) => {
+            console.log(result[0]);
+        });
 		if (timeout) {
 			clearTimeout(timeout);
 			timeout = undefined;
@@ -137,6 +163,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	}, null, context.subscriptions);
 
+    // update decorations on change to file
 	vscode.workspace.onDidChangeTextDocument(event => {
 		if (activeEditor && event.document === activeEditor.document) {
 			triggerUpdateDecorations(true);

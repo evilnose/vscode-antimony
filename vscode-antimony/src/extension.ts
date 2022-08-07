@@ -99,12 +99,19 @@ export async function activate(context: vscode.ExtensionContext) {
         const uri = doc.uri.toString();
         vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
             console.log("result: " + result);
+            // BLL ILL
             annVars = result.trim().split(/\s+/);
             console.log("annVars: " + annVars);
+            // BLL,ILL
         });
+
+        // [BLL, ILL] => string array of annotated variables
+        // /\bBLL|ILL\b/g => regex of annotated variables automatic
+        // if BLL, ILL, GOP] then /\bBLL|ILL|GOP\b/g automatic
 
         const regexFromAnnVars = new RegExp(annVars.join("|"), 'g');
         console.log("regexFromAnnVars: " + regexFromAnnVars);
+        // why do I get /(?:)/g instead of /\bBLL|ILL\b/g ??????
 
         if (!activeEditor) {
 			return;
@@ -118,8 +125,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			const startPos = activeEditor.document.positionAt(match.index);
 			const endPos = activeEditor.document.positionAt(match.index + match[0].length);
 			const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Annotated Variable' };
-             // check if match is a variable and isn't annotated, not sure how to approach this part
-            // might want to figure out how to run extension as well
 				annotated.push(decoration);
 		}
 		activeEditor.setDecorations(annDecorationType, annotated);

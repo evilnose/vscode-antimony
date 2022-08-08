@@ -83,10 +83,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // decoration type for non-annotated variables
     const annDecorationType = vscode.window.createTextEditorDecorationType({
-        // figure out if border is better or blue squiggly underline
-        // borderWidth: '2px',
         backgroundColor: 'blue',
-        // border: 'solid blue',
     })
 
     let activeEditor = vscode.window.activeTextEditor;
@@ -99,17 +96,36 @@ export async function activate(context: vscode.ExtensionContext) {
         const uri = doc.uri.toString();
         vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
             console.log("result: " + result);
-            // BLL ILL
+            // let tempArray = result.trim().split(/\s+/);
+            // console.log("temparray: " + tempArray);
+            // for (const element of tempArray) {
+            //     console.log("resultSection: " + element);
+            //     annVars.push(element);
+            // }
             annVars = result.trim().split(/\s+/);
             console.log("annVars: " + annVars);
-            // BLL,ILL
         });
+        
+        const regex = "BLL|ILL|IL";
 
-        // [BLL, ILL] => string array of annotated variables
-        // /\bBLL|ILL\b/g => regex of annotated variables automatic
-        // if BLL, ILL, GOP] then /\bBLL|ILL|GOP\b/g automatic
+        console.log(typeof regex);
+        console.log("annvar Len: " + annVars.length);
 
-        const regexFromAnnVars = new RegExp(annVars.join("|"), 'g');
+        let regex1: string;
+        regex1 = annVars.join("|");
+
+        let regexLength: number;
+        regexLength = annVars.length;
+
+        console.log("regex Length" + regexLength);
+        console.log("regex1: " + regex1);
+        console.log("type regex1: " + typeof regex1);
+
+        let regexFromAnnVarsHelp: RegExp;
+        regexFromAnnVarsHelp = new RegExp(regex,'g');
+
+        let regexFromAnnVars: RegExp;
+        regexFromAnnVars = new RegExp('\\b(' + regexFromAnnVarsHelp.source + ')\\b', 'g');
         console.log("regexFromAnnVars: " + regexFromAnnVars);
         // why do I get /(?:)/g instead of /\bBLL|ILL\b/g ??????
 
@@ -117,11 +133,10 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		const regEx = /\bBLL|ILL\b/g;
 		const text = activeEditor.document.getText();
 		const annotated: vscode.DecorationOptions[] = [];
 		let match;
-		while ((match = regEx.exec(text))) {
+		while ((match = regexFromAnnVars.exec(text))) {
 			const startPos = activeEditor.document.positionAt(match.index);
 			const endPos = activeEditor.document.positionAt(match.index + match[0].length);
 			const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Annotated Variable' };

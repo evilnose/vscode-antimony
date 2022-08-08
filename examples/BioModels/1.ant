@@ -110,4 +110,6 @@ model *BIOMD0000000001()
   BLL identity "http://identifiers.org/chebi/CHEBI:27732"
 
   ILL identity "http://identifiers.org/chebi/CHEBI:27732"
+
+  IL identity "http://identifiers.org/chebi/CHEBI:27732"
 end

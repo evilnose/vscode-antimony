@@ -90,59 +90,34 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // change the annotation decoration of non-annotated variables
     function updateDecorations() {
-        let annVars: string[] = [];
+        let annVars: string;
+        let regex: string;
+        let regexFromAnnVarsHelp: RegExp;
+        let regexFromAnnVars: RegExp;
+
 
         const doc = activeEditor.document;
         const uri = doc.uri.toString();
         vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
-            console.log("result: " + result);
-            // let tempArray = result.trim().split(/\s+/);
-            // console.log("temparray: " + tempArray);
-            // for (const element of tempArray) {
-            //     console.log("resultSection: " + element);
-            //     annVars.push(element);
-            // }
-            annVars = result.trim().split(/\s+/);
-            console.log("annVars: " + annVars);
+            annVars = result;
+            regexFromAnnVarsHelp = new RegExp(annVars,'g');
+            regexFromAnnVars = new RegExp('\\b(' + regexFromAnnVarsHelp.source + ')\\b', 'g');
+
+            if (!activeEditor) {
+                return;
+            }
+    
+            const text = activeEditor.document.getText();
+            const annotated: vscode.DecorationOptions[] = [];
+            let match;
+            while ((match = regexFromAnnVars.exec(text))) {
+                const startPos = activeEditor.document.positionAt(match.index);
+                const endPos = activeEditor.document.positionAt(match.index + match[0].length);
+                const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Annotated Variable' };
+                    annotated.push(decoration);
+            }
+            activeEditor.setDecorations(annDecorationType, annotated);
         });
-        
-        const regex = "BLL|ILL|IL";
-
-        console.log(typeof regex);
-        console.log("annvar Len: " + annVars.length);
-
-        let regex1: string;
-        regex1 = annVars.join("|");
-
-        let regexLength: number;
-        regexLength = annVars.length;
-
-        console.log("regex Length" + regexLength);
-        console.log("regex1: " + regex1);
-        console.log("type regex1: " + typeof regex1);
-
-        let regexFromAnnVarsHelp: RegExp;
-        regexFromAnnVarsHelp = new RegExp(regex,'g');
-
-        let regexFromAnnVars: RegExp;
-        regexFromAnnVars = new RegExp('\\b(' + regexFromAnnVarsHelp.source + ')\\b', 'g');
-        console.log("regexFromAnnVars: " + regexFromAnnVars);
-        // why do I get /(?:)/g instead of /\bBLL|ILL\b/g ??????
-
-        if (!activeEditor) {
-			return;
-		}
-
-		const text = activeEditor.document.getText();
-		const annotated: vscode.DecorationOptions[] = [];
-		let match;
-		while ((match = regexFromAnnVars.exec(text))) {
-			const startPos = activeEditor.document.positionAt(match.index);
-			const endPos = activeEditor.document.positionAt(match.index + match[0].length);
-			const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Annotated Variable' };
-				annotated.push(decoration);
-		}
-		activeEditor.setDecorations(annDecorationType, annotated);
 	}
 
     // update the decoration once in a certain time (throttle)

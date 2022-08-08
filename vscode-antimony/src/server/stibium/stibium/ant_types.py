@@ -660,6 +660,13 @@ class FuncCall(TrunkNode):
     def get_params(self):
         return self.children[2]
 
+@dataclass
+class Import(TrunkNode):
+    children: Tuple[Keyword, StringLiteral] = field(repr=False)
+    
+    def get_file_name(self):
+        return self.children[1].get_str
+
 # Unit
 @dataclass
 class BuiltinUnit(TrunkNode):

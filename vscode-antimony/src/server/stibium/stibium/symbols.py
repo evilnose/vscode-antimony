@@ -3,8 +3,7 @@
 import logging
 import requests
 from bioservices import ChEBI, UniProt, Rhea
-from pythonFiles.lib.python.lxml.builder import E
-from server.bioservices_server.webservices import NetworkError
+from bioservices_server.webservices import NetworkError
 from stibium.ant_types import Annotation, Name, TreeNode
 from .types import Issue, ObscuredValueCompartment, RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
 from .ant_types import VarName, Declaration, VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall

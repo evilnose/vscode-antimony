@@ -1,5 +1,8 @@
 
 import logging
+import requests
+from bioservices import ChEBI, UniProt, Rhea
+from bioservices_server.webservices import NetworkError
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
@@ -169,6 +172,7 @@ class AntTreeAnalyzer:
         # get list of warnings
         self.warning = self.table.warning
         self.handle_annotation_list()
+        self.get_annotation_descriptions()
         self.handle_is_assignment_list()
         self.pending_annotations = []
         self.pending_is_assignments = []
@@ -429,6 +433,59 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
+    
+    def get_annotation_descriptions(self):
+        for scope, annotation in self.pending_annotations:
+            self.get_annotation_description(scope, annotation)
+    
+    def get_annotation_description(self, scope: AbstractScope, annotation: Annotation):
+        name = annotation.get_var_name().get_name()
+        qname = QName(scope, name)
+        symbol = self.table.get(qname)
+        if symbol:
+            uri = annotation.get_uri()
+            if uri[0:4] != 'http':
+                return
+            if uri in symbol[0].queried_annotations.keys():
+                return
+            uri_split = uri.split('/')
+            website = uri_split[2]
+            if website == 'identifiers.org':
+                if uri_split[3] == 'chebi':
+                    chebi = ChEBI()
+                    res = chebi.getCompleteEntity(uri_split[4])
+                    name = res.chebiAsciiName
+                    definition = res.definition
+                    queried = '\n{}\n\n{}\n'.format(name, definition)
+                    symbol[0].queried_annotations[uri] = queried
+                else:
+                    return
+                    # uniport = UniProt()
+            elif website == 'www.rhea-db.org':
+                rhea = Rhea()
+                df_res = rhea.query(uri_split[4], columns="equation", limit=10)
+                equation = df_res['Equation']
+                queried = '\n{}\n'.format(equation[0])
+                df_res += queried
+                symbol[0].queried_annotations[uri] = queried
+            else:
+                ontology_name = uri_split[-1].split('_')[0].lower()
+                iri = uri_split[-1]
+                try:
+                    response = requests.get('http://www.ebi.ac.uk/ols/api/ontologies/' + ontology_name + '/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F' + iri).json()
+                    if ontology_name == 'pr' or ontology_name == 'ma' or ontology_name == 'obi' or ontology_name == 'fma':
+                        definition = response['description']
+                    else:
+                        response_annot = response['annotation']
+                        definition = response_annot['definition']
+                    name = response['label']
+                    queried =  '\n{}\n'.format(name)
+                    if definition:
+                        queried += '\n{}\n'.format(definition[0])
+                    ret += queried
+                    symbol[0].queried_annotations[uri] = queried
+                except NetworkError:
+                    return
     
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
         self.pending_is_assignments.append((scope, is_assignment))

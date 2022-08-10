@@ -42,12 +42,17 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 			await startLanguageServer(context);
 		}, 3000);
-	})
+	});
 
 	// create annotations
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.createAnnotationDialog',
 			(...args: any[]) => createAnnotationDialog(context, args)));
+
+    // switch visual annotations on/off
+    context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.switchAnnotationOnOff',
+			(...args: any[]) => switchAnnotationOnOff(context, args)));
 
 	// convertion
 	context.subscriptions.push(
@@ -71,12 +76,12 @@ export async function activate(context: vscode.ExtensionContext) {
 	const docSelector = {
 		language: 'antimony',
 		scheme: 'file',
-	}
+	};
 	let codeLensProviderDisposable = vscode.languages.registerCodeLensProvider(
 		docSelector,
 		new AntCodeLensProvider()
-	)
-	context.subscriptions.push(codeLensProviderDisposable)
+	);
+	context.subscriptions.push(codeLensProviderDisposable);
 
     // timer for non annotated variable visual indicator
     let timeout: NodeJS.Timer | undefined = undefined;
@@ -84,7 +89,8 @@ export async function activate(context: vscode.ExtensionContext) {
     // decoration type for non-annotated variables
     const annDecorationType = vscode.window.createTextEditorDecorationType({
         backgroundColor: 'blue',
-    })
+    });
+
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
     let activeEditor = vscode.window.activeTextEditor;
@@ -92,7 +98,6 @@ export async function activate(context: vscode.ExtensionContext) {
     // change the annotation decoration of non-annotated variables
     function updateDecorations() {
         let annVars: string;
-        let regex: string;
         let regexFromAnnVarsHelp: RegExp;
         let regexFromAnnVars: RegExp;
 
@@ -100,6 +105,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const doc = activeEditor.document;
         const uri = doc.uri.toString();
         vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
+
             annVars = result;
             regexFromAnnVarsHelp = new RegExp(annVars,'g');
             regexFromAnnVars = new RegExp('\\b(' + regexFromAnnVarsHelp.source + ')\\b', 'g');
@@ -160,7 +166,7 @@ async function startSBMLWebview(context: vscode.ExtensionContext, args: any[]) {
 	}
 	await client.onReady();
 
-	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
 	vscode.commands.executeCommand("vscode.openWith", 
 		vscode.window.activeTextEditor.document.uri, "antimony.sbmlEditor", 2);
@@ -219,7 +225,7 @@ async function convertSBMLToAntimony(context: vscode.ExtensionContext, args: any
 	}
 	await client.onReady();
 
-	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
 	const options: vscode.OpenDialogOptions = {
 			openLabel: "Save",
@@ -259,18 +265,18 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 		return;
 	}
 	await client.onReady();
-	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 	// dialog for annotation
-	const selection = vscode.window.activeTextEditor.selection
+	const selection = vscode.window.activeTextEditor.selection;
 	// get the selected text
-	const doc = vscode.window.activeTextEditor.document
+	const doc = vscode.window.activeTextEditor.document;
 	const uri = doc.uri.toString();
 	const selectedText = doc.getText(selection);
 	// get the position for insert
-	var line = selection.start.line
+	let line = selection.start.line;
 	while (line <= doc.lineCount - 1) {
-		const text = doc.lineAt(line).text
-		if (text.localeCompare("end", undefined, { sensitivity: 'accent' }) == 0) {
+		const text = doc.lineAt(line).text;
+		if (text.localeCompare("end", undefined, { sensitivity: 'accent' }) === 0) {
 			line -= 1;
 			break;
 		}
@@ -282,7 +288,7 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 	const initialEntity = selectedText || 'entityName';
 	let initialQuery;
 	// get current file
-	if (args.length == 2) {
+	if (args.length === 2) {
 		initialQuery = args[1];
 	} else {
 		initialQuery = selectedText;
@@ -304,6 +310,20 @@ export function deactivate(): Thenable<void> | undefined {
 	}
 	// shut down the language client
 	return client.stop();
+}
+
+async function switchAnnotationOnOff(context: vscode.ExtensionContext, args: any[]) {
+    // wait till client is ready, or the Python server might not have started yet.
+	// note: this is necessary for any command that might use the Python language server.
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+
+    
 }
 
 // ****** helper functions ******
@@ -392,8 +412,8 @@ class AntCodeLensProvider implements vscode.CodeLensProvider {
 				title: 'vscode-antimony Help Page',
 				command: 'vscode.open',
 				arguments: [vscode.Uri.parse('https://github.com/evilnose/vscode-antimony#usage')],
-			}
-			let codeLens = new vscode.CodeLens(topOfDocument, c)
+			};
+			let codeLens = new vscode.CodeLens(topOfDocument, c);
 			return [codeLens];
 		}
 
@@ -405,7 +425,7 @@ async function insertAnnotation(selectedItem, entityName, line) {
 	const entity = selectedItem.entity;
 	const id = entity['id'];
 	const prefix = entity['prefix'];
-	var snippetText;
+	let snippetText;
 	if (prefix === 'rhea') {
 		snippetText = `\n\${1:${entityName}} identity "https://www.rhea-db.org/rhea/${id}"`;
 	} else if (prefix === 'ontology') {
@@ -418,3 +438,4 @@ async function insertAnnotation(selectedItem, entityName, line) {
 	const pos = doc.lineAt(line).range.end;
 	vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
 }
+

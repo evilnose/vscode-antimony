@@ -85,6 +85,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const annDecorationType = vscode.window.createTextEditorDecorationType({
         backgroundColor: 'blue',
     })
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
     let activeEditor = vscode.window.activeTextEditor;
 

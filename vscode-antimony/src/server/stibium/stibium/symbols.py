@@ -117,6 +117,7 @@ class Symbol:
     comp: str
     is_const: bool
     is_sub: bool
+    imp: str
 
     def __init__(self, name: str, typ: SymbolType, type_name: Name,
             decl_name: Name = None,
@@ -125,7 +126,8 @@ class Symbol:
             display_name: str = None,
             comp: str = None,
             is_const: bool = False,
-            is_sub: bool = False):
+            is_sub: bool = False,
+            imp: str = None):
         self.name = name
         self.type = typ
         self.type_name = type_name
@@ -137,6 +139,7 @@ class Symbol:
         self.comp = comp
         self.is_const = is_const
         self.is_sub = is_sub
+        self.imp = imp
 
     def def_name(self):
         '''Return the Name that should be considered as the definition'''
@@ -159,6 +162,9 @@ class Symbol:
         
         if self.is_sub:
             ret += '\n{}'.format("Substance-only species")
+
+        if self.imp is not None:
+            ret += '\n{}'.format("import " + self.imp)
 
         if isinstance(self, MModelSymbol):
             name = self.name

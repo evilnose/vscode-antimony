@@ -538,8 +538,15 @@ class IsAssignment(TrunkNode):
         return self.children[2]
 
 @dataclass
+class Import(TrunkNode):
+    children: Tuple[Keyword, StringLiteral] = field(repr=False)
+    
+    def get_file_name(self):
+        return self.children[1].get_str()
+
+@dataclass
 class SimpleStmt(TrunkNode):
-    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, UnitDeclaration, UnitAssignment, VariableIn], Union[Operator, Newline]] = field(repr=False)
+    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, UnitDeclaration, UnitAssignment, VariableIn, Import], Union[Operator, Newline]] = field(repr=False)
 
     def get_stmt(self):
         return self.children[0]
@@ -659,13 +666,6 @@ class FuncCall(TrunkNode):
     
     def get_params(self):
         return self.children[2]
-
-@dataclass
-class Import(TrunkNode):
-    children: Tuple[Keyword, StringLiteral] = field(repr=False)
-    
-    def get_file_name(self):
-        return self.children[1].get_str
 
 # Unit
 @dataclass

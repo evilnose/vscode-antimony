@@ -16,7 +16,8 @@ import { type } from 'os';
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
 let lastChangeInterp = 0;
-let timestamp = new Date()
+let timestamp = new Date();
+let switchAnnotationOn = true;
 
 export async function activate(context: vscode.ExtensionContext) {
 	// start the language server
@@ -101,9 +102,9 @@ export async function activate(context: vscode.ExtensionContext) {
         let regexFromAnnVarsHelp: RegExp;
         let regexFromAnnVars: RegExp;
 
-
         const doc = activeEditor.document;
         const uri = doc.uri.toString();
+
         vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
 
             annVars = result;
@@ -179,7 +180,7 @@ async function startAntimonyWebview(context: vscode.ExtensionContext, args: any[
 	}
 	await client.onReady();
 
-	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
 	vscode.commands.executeCommand("vscode.openWith", 
 		vscode.window.activeTextEditor.document.uri, "antimony.antimonyEditor", 2);
@@ -196,7 +197,7 @@ async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any
 	}
 	await client.onReady();
 
-	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
 	const options: vscode.OpenDialogOptions = {
 		openLabel: "Select",
@@ -323,7 +324,9 @@ async function switchAnnotationOnOff(context: vscode.ExtensionContext, args: any
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
-    
+    if (switchAnnotationOn === true) {
+        
+    }
 }
 
 // ****** helper functions ******

@@ -17,7 +17,7 @@ event : [reaction_name] "at" [event_delay] [event_condition_list] [event_trigger
 event_delay : sum "after"
 
 event_condition_list : [parenthesis_list] event_condition [parenthesis_list] (logical [parenthesis_list] event_condition [parenthesis_list])*
-event_condition : var_name compare_sign sum
+event_condition : sum compare_sign sum
 
 event_trigger_list : ("," event_trigger)*
 

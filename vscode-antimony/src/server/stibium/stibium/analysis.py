@@ -1,7 +1,7 @@
 
 import logging
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode
-from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import ObscuredEventTrigger, OverridingDisplayName, SubError, UninitVar, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -230,6 +230,8 @@ class AntTreeAnalyzer:
                     self.process_is_assignment(node, scope)
                 elif type(node.get_stmt()) == Assignment:
                     self.process_maybein(node, scope)
+                elif type(node.get_stmt()) == Event:
+                    self.process_event(node, scope)
 
     def check_parse_tree_function(self, function, scope):
         # check the expression
@@ -298,6 +300,8 @@ class AntTreeAnalyzer:
                     self.process_is_assignment(node, scope)
                 elif type(node.get_stmt()) == Assignment:
                     self.process_maybein(node, scope)
+                elif type(node.get_stmt()) == Event:
+                    self.process_event(node, scope)
         self.check_param_unused(used, params)
 
     def check_rate_law(self, rate_law, scope, params=set()):
@@ -383,9 +387,16 @@ class AntTreeAnalyzer:
         else:
             self.unnamed_events_num += 1
             event.unnamed_label = self.unnamed_events_num
-            
+        event_delay = event.get_event_delay()
+        if event_delay:
+            event_delay_var = event_delay.get_sum()
+            if type(event_delay_var) == VarName:
+                self.table.insert(QName(scope, event_delay_var.get_name()), SymbolType.Unknown, comp=comp)
         for condition in event.get_conditions():
-            self.table.insert(QName(scope, condition.get_var_name().get_name()), SymbolType.Species, comp=comp)
+            if condition.get_left_var():
+                self.table.insert(QName(scope, condition.get_left().get_name()), SymbolType.Unknown, comp=comp)
+            if condition.get_right_var():
+                self.table.insert(QName(scope, condition.get_right().get_name()), SymbolType.Unknown, comp=comp)
 
         for assignment in event.get_assignments():
             qname = QName(scope, assignment.get_name())
@@ -681,6 +692,35 @@ class AntTreeAnalyzer:
         var = self.table.get(qname)
         if len(var) == 0:
             self.warning.append(VarNotFound(name.range, name.text))
+        
+        
+    def process_event(self, node, scope):
+        event: Event = node.get_stmt()
+        if event.get_event_delay():
+            if type(event.get_event_delay().get_sum()) == VarName:
+                self._check_event_var_name(event.get_event_delay().get_sum().get_name(), scope)
+        for condition in event.get_conditions():
+            if condition.get_left_var():
+                self._check_event_var_name(condition.get_left_var().get_name(), scope)
+            if condition.get_right_var():
+                self._check_event_var_name(condition.get_right_var().get_name(), scope)
+        curr_triggers = dict()
+        for trigger in event.get_triggers():
+            if trigger.get_keyword().text in curr_triggers.keys():
+                self.warning.append(ObscuredEventTrigger(curr_triggers.get(trigger.get_keyword().text).range, trigger.range, curr_triggers.get(trigger.get_keyword().text).to_string()))
+            curr_triggers[trigger.get_keyword().text] = trigger
+        for assignment in event.get_assignments():
+            var_name = assignment.get_name()
+            self._check_event_var_name(var_name, scope)
+            # var = self.table.get(QName(scope, var_name))
+            # if not var[0].type.derives_from(SymbolType.Parameter):
+            #     self.warning.append(UninitVar(var_name.range, var_name.text))
+        self.process_maybein(node, scope)
+        
+    def _check_event_var_name(self, var_name, scope):
+        var = self.table.get(QName(scope, var_name))
+        if not var[0].type.derives_from(SymbolType.Parameter):
+            self.warning.append(UninitVar(var_name.range, var_name.text))
         
 
 # def get_ancestors(node: ASTNode):

@@ -415,7 +415,7 @@ class ParenthesisList(TrunkNode):
             
 @dataclass
 class EventDelay(TrunkNode):
-    children: Tuple[Sum, Keyword] = field(repr=False)
+    children: Tuple[Union[Sum, VarName], Keyword] = field(repr=False)
     
     def get_sum(self):
         return self.children[0]
@@ -432,35 +432,38 @@ class EventDelay(TrunkNode):
 
 @dataclass
 class EventCondition(TrunkNode):
-    children: Tuple[VarName, CompareSign, Sum] = field(repr=False)
+    children: Tuple[Union[Sum, VarName], CompareSign, Union[Sum, VarName]] = field(repr=False)
     
-    def get_var_name(self) -> VarName:
+    def get_left_var(self):
+        if type(self.children[0]) == VarName:
+            return self.children[0]
+        return None
+    
+    def get_left(self):
         return self.children[0]
     
-    def get_var_name_text(self) -> str:
-        return self.get_var_name().get_name_text()
-        
     def get_sign(self) -> CompareSign:
         return self.children[1]
     
-    def get_sum(self) -> Sum:
+    def get_right_var(self):
+        if type(self.children[2]) == VarName:
+            return self.children[2]
+        return None
+    
+    def get_right(self):
         return self.children[2]
     
     def to_string(self):
-        var_name_text = self.get_var_name_text()
-        sign = str(self.get_sign().get_sign())
-        condition = self.get_sum()
-        if isinstance(condition, LeafNode):
-            sum_text = condition.text
-        elif isinstance(condition, VarName):
-            sum_text = condition.get_name_text()
+        if type(self.get_left()) == VarName:
+            left_text = self.get_left().get_name_text()
         else:
-            sum_text = self.get_sum().to_string()
-        vscode_logger.info(sign)
-        assert isinstance(sum_text, str)
-        assert isinstance(var_name_text, str)
-        assert isinstance(sign, str)
-        return var_name_text + ' ' + sign + ' ' + sum_text
+            left_text = self.get_left().to_string()
+        sign = str(self.get_sign().get_sign())
+        if type(self.get_left()) == VarName:
+            right_text = self.get_right().get_name_text()
+        else:
+            right_text = self.get_right().to_string()
+        return left_text + ' ' + sign + ' ' + right_text
 
 @dataclass
 class EventConditionList(TrunkNode):
@@ -505,10 +508,7 @@ class EventTrigger(TrunkNode):
         #     return self.get_trigger().to_string()
     
     def to_string(self):
-        if self.get_bool():
-            return self.children[0].get_str() + ' = ' + self.get_bool().get_bool()
-        elif self.get_sum():
-            return self.children[0].get_str() + ' = ' + self.get_sum().to_string()
+        return self.children[0].text + ' = ' + self.get_trigger_str()
         
     
 @dataclass
@@ -567,9 +567,12 @@ class Event(TrunkNode):
             return None
         return self.children[0].get_name_text()
     
-    def get_event_delay(self) -> str:
-        if self.children[2] is not None:
-            return self.children[2].get_sum_text()
+    def get_event_delay(self):
+        return self.children[2]
+    
+    def get_event_delay_text(self) -> str:
+        if self.get_event_delay() is not None:
+            return self.get_event_delay().get_sum_text()
         return None
         
     def get_condition_list(self) -> Optional[EventConditionList]:

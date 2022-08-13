@@ -1,6 +1,7 @@
 import abc
 from dataclasses import dataclass, field
 import logging
+from math import fabs
 from typing import List, Optional, Tuple, Union, cast
 from lark.lexer import Token
 from lark.tree import Tree
@@ -350,7 +351,39 @@ class Reaction(TrunkNode):
         if self.children[6] is not None:
             return self.children[6]
         return None
+    
+@dataclass
+class InteractionName(TrunkNode):
+    children: Tuple[NameMaybeIn, Operator] = field(repr=False)
+    
+    def get_maybein(self):
+        return self.children[0]
 
+    def get_name(self):
+        return self.get_maybein().get_var_name().get_name()
+
+    def get_name_text(self):
+        return self.get_maybein().get_var_name().get_name_text()
+
+@dataclass
+class InteractionOperator(TrunkNode):
+    children: Tuple[Operator] = field(repr=False)
+    
+    def get_opr(self):
+        return self.children[0]
+
+@dataclass 
+class Interaction(TrunkNode):
+    children: Tuple(InteractionName, Species, InteractionOperator,  NameMaybeIn)
+    
+    def getName(self):
+        return self.children[0]
+    def getOpr(self):
+        return self.children[2]
+    def getSpecies(self):
+        return self.children[1]
+    def getMaybeIn(self):
+        return self.children[3]
 
 @dataclass
 class Assignment(TrunkNode):

@@ -10,8 +10,7 @@ reaction : [reaction_name] species_list ARROW [species_list] ";" sum [in_comp]
 species_list : species ("+" species)*
 species : [NUMBER] ["$"] NAME
 interaction_symbol : ("->" | "-o" | "-|" | "-(")
-interaction_name : namemaybein ":" 
-interaction : interaction_name species interaction_symbol namemaybein
+interaction : reaction_name species interaction_symbol namemaybein
 
 ARROW : "->"
     | "=>"

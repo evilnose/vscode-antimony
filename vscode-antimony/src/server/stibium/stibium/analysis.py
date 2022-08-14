@@ -1,6 +1,5 @@
-
 import logging
-from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Interaction
 from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -9,6 +8,7 @@ from typing import Any, List, Optional, Set, cast
 from itertools import chain
 from lark.lexer import Token
 from lark.tree import Tree
+
 
 
 def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
@@ -63,6 +63,7 @@ class AntTreeAnalyzer:
         self.root = root
         self.pending_is_assignments = []
         self.pending_annotations = []
+        self.pending_interactions = []
         base_scope = BaseScope()
         for child in root.children:
             if isinstance(child, ErrorToken):
@@ -96,6 +97,7 @@ class AntTreeAnalyzer:
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
+                                'interaction' : self.pre_handle_interaction,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
             if isinstance(child, ModularModel):
@@ -125,6 +127,7 @@ class AntTreeAnalyzer:
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
+                                'interaction' : self.pre_handle_interaction,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
                     if isinstance(cchild, Parameters):
@@ -161,6 +164,7 @@ class AntTreeAnalyzer:
                     'FunctionCall' : self.handle_function_call,
                     'VariableIn' : self.handle_variable_in,
                     'IsAssignment' : self.pre_handle_is_assignment,
+                    'interaction' : self.pre_handle_interaction,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
         
@@ -170,8 +174,10 @@ class AntTreeAnalyzer:
         self.warning = self.table.warning
         self.handle_annotation_list()
         self.handle_is_assignment_list()
+        # self.handle_interactions()
         self.pending_annotations = []
         self.pending_is_assignments = []
+        
         self.check_parse_tree(self.root, BaseScope())
 
     def resolve_qname(self, qname: QName):
@@ -464,6 +470,30 @@ class AntTreeAnalyzer:
                 base_var = self.table.get(qname_b)
                 if len(base_var) != 0:
                     base_var[0].display_name = display_name
+                    
+    def pre_handle_interaction(self, scope, Interaction):
+        self.pending_interactions.append((scope, Interaction))
+    def handle_interactions(self):
+        for scope, interaction in self.pending_interactions:
+            self.handle_interaction(scope, interaction)
+    def handle_interaction(self, scope, interaction : Interaction):
+        name = interaction.getSpecies()
+        qname = QName(scope, name)
+        if len(self.table.get(qname)) != 0:
+            var = self.table.get(qname)[0]           
+            reaction = interaction.getMaybeIn()
+            opr = interaction.getOpr()
+            interaction_str = 'Specie is used for '
+            if opr == '->':
+                interaction_str += 'activation'
+            elif opr == '-o':
+                interaction_str += 'inhibition'
+            elif opr == '-|':
+                interaction_str += 'unknown interaction'
+            elif opr == '-(':
+                interaction_str += 'activation or inhibition'
+            interaction_str += ' in reaction: ' + reaction
+            var.interaction = interaction_str
     
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()

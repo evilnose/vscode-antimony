@@ -117,6 +117,7 @@ class Symbol:
     comp: str
     is_const: bool
     is_sub: bool
+    interaction: str
 
     def __init__(self, name: str, typ: SymbolType, type_name: Name,
             decl_name: Name = None,
@@ -125,7 +126,7 @@ class Symbol:
             display_name: str = None,
             comp: str = None,
             is_const: bool = False,
-            is_sub: bool = False):
+            is_sub: bool = False, interaction = None):
         self.name = name
         self.type = typ
         self.type_name = type_name
@@ -137,6 +138,7 @@ class Symbol:
         self.comp = comp
         self.is_const = is_const
         self.is_sub = is_sub
+        self.interaction = interaction
 
     def def_name(self):
         '''Return the Name that should be considered as the definition'''
@@ -156,6 +158,9 @@ class Symbol:
 
         if self.display_name != None:
             ret += '\n{}'.format(self.display_name)
+        
+        if self.interaction != None:
+            ret += '\n{}'.format(self.interaction)
         
         if self.is_sub:
             ret += '\n{}'.format("Substance-only species")
@@ -213,7 +218,7 @@ class Symbol:
             # add the first annotation
             ret += '\n***\n{}\n'.format(self.annotations[0].get_uri())
 
-        return ret
+        return ret + 'Reaction'
 
 
 def _get_init_val(node):

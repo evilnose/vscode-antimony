@@ -374,7 +374,7 @@ class InteractionOperator(TrunkNode):
 
 @dataclass 
 class Interaction(TrunkNode):
-    children: Tuple(InteractionName, Species, InteractionOperator,  NameMaybeIn)
+    children: Tuple[InteractionName, Species, InteractionOperator,  NameMaybeIn] = field(repr=False)
     
     def getName(self):
         return self.children[0]

@@ -68,10 +68,11 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'variable_in' : VariableIn,
     'is_assignment' : IsAssignment,
     'interaction' : Interaction,
+    'interaction_symbol' : Operator,
 }
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',
-             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ", "DBLQUOTE"}
+             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ", "DBLQUOTE", "__ANON_0", "__ANON_1", "__ANON_2"}
 KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL', 'FUNCTION', "UNIT", "HAS", "IS", "SUBSTANCEONLY"}
 
 for name in OPERATORS:

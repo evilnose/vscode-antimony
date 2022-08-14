@@ -318,6 +318,7 @@ class SymbolType(Enum):
     Species = 'species'
     Compartment = 'compartment'
     Reaction = 'reaction'
+    Interaction = 'interaction'
     Event = 'event'
     Constraint = 'constraint'
 
@@ -333,7 +334,7 @@ class SymbolType(Enum):
 
         derives_from_param = self in (SymbolType.Species, SymbolType.Compartment,
                                       SymbolType.Reaction,
-                                      SymbolType.Constraint)
+                                      SymbolType.Constraint, SymbolType.Interaction)
 
         if other == SymbolType.Variable:
             return derives_from_param or self == SymbolType.Parameter
@@ -344,21 +345,25 @@ class SymbolType(Enum):
         if self in (SymbolType.Species, SymbolType.Compartment,
                                       SymbolType.Reaction,
                                       SymbolType.Constraint,
-                                      SymbolType.Parameter) and other not in (SymbolType.Species, 
+                                      SymbolType.Parameter,
+                                      SymbolType.Interaction) and other not in (SymbolType.Species, 
                                       SymbolType.Compartment,
                                       SymbolType.Reaction,
                                       SymbolType.Constraint,
-                                      SymbolType.Parameter):
+                                      SymbolType.Parameter,
+                                      SymbolType.Interaction):
             return False
         
         if other in (SymbolType.Species, SymbolType.Compartment,
                                       SymbolType.Reaction,
                                       SymbolType.Constraint,
-                                      SymbolType.Parameter) and self not in (SymbolType.Species, 
+                                      SymbolType.Parameter,
+                                      SymbolType.Interaction) and self not in (SymbolType.Species, 
                                       SymbolType.Compartment,
                                       SymbolType.Reaction,
                                       SymbolType.Constraint,
-                                      SymbolType.Parameter):
+                                      SymbolType.Parameter,
+                                      SymbolType.Interaction):
             return False
 
         return False

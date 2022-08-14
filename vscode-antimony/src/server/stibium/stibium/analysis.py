@@ -9,7 +9,6 @@ from itertools import chain
 from lark.lexer import Token
 from lark.tree import Tree
 
-vscode_logger = logging.getLogger("vscode-antimony logger")
 
 
 def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
@@ -474,30 +473,27 @@ class AntTreeAnalyzer:
                     
     def pre_handle_interaction(self, scope, Interaction):
         self.pending_interactions.append((scope, Interaction))
+    
     def handle_interactions(self):
         for scope, interaction in self.pending_interactions:
             self.handle_interaction(scope, interaction)
+    
     def handle_interaction(self, scope, interaction : Interaction):
-        vscode_logger.info(interaction.getName())
-        vscode_logger.info(interaction.getSpecies())
-        vscode_logger.info(interaction.getMaybeIn())
-        name = interaction.getSpecies()
-        qname = QName(scope, name)
-        if len(self.table.get(qname)) != 0:
-            var = self.table.get(qname)[0]           
-            reaction = interaction.getMaybeIn()
-            opr = interaction.getOpr()
-            interaction_str = 'Specie is used for '
-            if opr == '->':
-                interaction_str += 'activation'
-            elif opr == '-o':
-                interaction_str += 'inhibition'
-            elif opr == '-|':
-                interaction_str += 'unknown interaction'
-            elif opr == '-(':
-                interaction_str += 'activation or inhibition'
-            interaction_str += ' in reaction: ' + reaction
-            var.interaction = interaction_str
+        name = interaction.get_species().get_name()
+        reaction = interaction.get_reaction()
+        self.table.insert(QName(scope, reaction), SymbolType.Reaction)
+        opr = interaction.get_opr().text[0].text
+        interaction_str = ''
+        if opr == '-o':
+            interaction_str += 'activation'
+        elif opr == '-|':
+            interaction_str += 'inhibition'
+        elif opr == '-(':
+            interaction_str += 'unknown interaction'
+        interaction_str += ' in reaction: ' + reaction.text
+        self.table.insert(QName(scope, name), SymbolType.Unknown)
+        self.table.insert(QName(scope, interaction.get_name().get_name()), SymbolType.Interaction)
+        self.table.get(QName(scope, interaction.get_name().get_name()))[0].interaction = interaction_str
     
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()

@@ -9,6 +9,7 @@ from itertools import chain
 from lark.lexer import Token
 from lark.tree import Tree
 
+vscode_logger = logging.getLogger("vscode-antimony logger")
 
 
 def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
@@ -97,7 +98,7 @@ class AntTreeAnalyzer:
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
-                                'interaction' : self.pre_handle_interaction,
+                                'Interaction' : self.pre_handle_interaction,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
             if isinstance(child, ModularModel):
@@ -127,7 +128,7 @@ class AntTreeAnalyzer:
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
-                                'interaction' : self.pre_handle_interaction,
+                                'Interaction' : self.pre_handle_interaction,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
                     if isinstance(cchild, Parameters):
@@ -164,7 +165,7 @@ class AntTreeAnalyzer:
                     'FunctionCall' : self.handle_function_call,
                     'VariableIn' : self.handle_variable_in,
                     'IsAssignment' : self.pre_handle_is_assignment,
-                    'interaction' : self.pre_handle_interaction,
+                    'Interaction' : self.pre_handle_interaction,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
         
@@ -174,7 +175,7 @@ class AntTreeAnalyzer:
         self.warning = self.table.warning
         self.handle_annotation_list()
         self.handle_is_assignment_list()
-        # self.handle_interactions()
+        self.handle_interactions()
         self.pending_annotations = []
         self.pending_is_assignments = []
         
@@ -477,6 +478,9 @@ class AntTreeAnalyzer:
         for scope, interaction in self.pending_interactions:
             self.handle_interaction(scope, interaction)
     def handle_interaction(self, scope, interaction : Interaction):
+        vscode_logger.info(interaction.getName())
+        vscode_logger.info(interaction.getSpecies())
+        vscode_logger.info(interaction.getMaybeIn())
         name = interaction.getSpecies()
         qname = QName(scope, name)
         if len(self.table.get(qname)) != 0:

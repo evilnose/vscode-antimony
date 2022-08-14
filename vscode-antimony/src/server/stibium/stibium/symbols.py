@@ -218,7 +218,7 @@ class Symbol:
             # add the first annotation
             ret += '\n***\n{}\n'.format(self.annotations[0].get_uri())
 
-        return ret + 'Reaction'
+        return ret
 
 
 def _get_init_val(node):

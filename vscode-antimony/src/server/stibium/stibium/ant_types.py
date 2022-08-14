@@ -2,6 +2,7 @@ import abc
 from dataclasses import dataclass, field
 import logging
 from math import fabs
+from re import L
 from typing import List, Optional, Tuple, Union, cast
 from lark.lexer import Token
 from lark.tree import Tree
@@ -366,24 +367,25 @@ class InteractionName(TrunkNode):
         return self.get_maybein().get_var_name().get_name_text()
 
 @dataclass
-class InteractionOperator(TrunkNode):
-    children: Tuple[Operator] = field(repr=False)
+class InteractionOperator(LeafNode):
     
     def get_opr(self):
-        return self.children[0]
+        return self.text
 
 @dataclass 
 class Interaction(TrunkNode):
     children: Tuple[InteractionName, Species, InteractionOperator,  NameMaybeIn] = field(repr=False)
     
     def getName(self):
-        return self.children[0]
+        return self.children[0].get_name_text()
     def getOpr(self):
-        return self.children[2]
+        return self.children[2].get_opr()
     def getSpecies(self):
-        return self.children[1]
+        return self.children[1].get_name()
+    def getSpeciesName(self):
+        return self.children[1].get_name_text()
     def getMaybeIn(self):
-        return self.children[3]
+        return self.children[3].get_var_name().get_name_text()
 
 @dataclass
 class Assignment(TrunkNode):

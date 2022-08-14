@@ -8,6 +8,8 @@ model *BIOMD0000000001()
   species I in comp1, ALL in comp1, BwLL;
 
   // Reactions:
+  i0: B -o React1;
+  i1: I -o React2;
   React0: B -> BL; comp1*(kf_0*B - kr_0*BL);
   React1: BL -> BLL; comp1*(kf_1*BL - kr_1*BLL);
   React2: BwLL -> ALL; comp1*(kf_2*BLL - kr_2*ALL);

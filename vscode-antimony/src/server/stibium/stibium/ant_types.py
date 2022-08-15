@@ -542,7 +542,7 @@ class Import(TrunkNode):
     children: Tuple[Keyword, StringLiteral] = field(repr=False)
     
     def get_file_name(self):
-        return self.children[1].get_str()
+        return self.children[1]
 
 @dataclass
 class SimpleStmt(TrunkNode):

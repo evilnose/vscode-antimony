@@ -117,7 +117,6 @@ class Symbol:
     comp: str
     is_const: bool
     is_sub: bool
-    imp: str
 
     def __init__(self, name: str, typ: SymbolType, type_name: Name,
             decl_name: Name = None,
@@ -126,8 +125,7 @@ class Symbol:
             display_name: str = None,
             comp: str = None,
             is_const: bool = False,
-            is_sub: bool = False,
-            imp: str = None):
+            is_sub: bool = False):
         self.name = name
         self.type = typ
         self.type_name = type_name
@@ -139,7 +137,6 @@ class Symbol:
         self.comp = comp
         self.is_const = is_const
         self.is_sub = is_sub
-        self.imp = imp
 
     def def_name(self):
         '''Return the Name that should be considered as the definition'''
@@ -385,7 +382,7 @@ class SymbolTable:
 
     def insert(self, qname: QName, typ: SymbolType, decl_node: TreeNode = None,
                value_node: TreeNode = None, is_const : bool = False, comp : str = None, 
-               is_sub : bool = False, imp : str = None):
+               is_sub : bool = False):
         '''Insert a variable symbol into the symbol table.'''
         # TODO create more functions like insert_var(), insert_reaction(), insert_model() and
         # create more specific symbols. Need to store things like value for types like var.
@@ -397,7 +394,7 @@ class SymbolTable:
         name = qname.name.text
         if name not in leaf_table:
             # first time parsing, insert directly in the table
-            sym = VarSymbol(name, typ, qname.name, is_const=is_const, comp=comp, is_sub=is_sub, imp=imp)
+            sym = VarSymbol(name, typ, qname.name, is_const=is_const, comp=comp, is_sub=is_sub)
             leaf_table[name] = sym
         else:
             # variable already exists
@@ -413,8 +410,6 @@ class SymbolTable:
                     sym.comp = comp
                 if is_sub:
                     sym.is_sub = is_sub
-                if not sym.imp:
-                    sym.imp = imp
             elif old_type.derives_from(typ):
                 # legal, but useless information
                 if is_const:
@@ -423,8 +418,6 @@ class SymbolTable:
                     sym.comp = comp
                 if is_sub:
                     sym.is_sub = is_sub
-                if not sym.imp:
-                    sym.imp = imp
             else:
                 old_range = sym.type_name.range
                 new_range = qname.name.range

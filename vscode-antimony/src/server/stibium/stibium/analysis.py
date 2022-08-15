@@ -447,7 +447,7 @@ class AntTreeAnalyzer:
     def handle_import(self, scope: AbstractScope, imp: Import):
         name = imp.get_file_name()
         qname = QName(scope, name)
-        self.table.insert(qname, SymbolType.Unknown, imp=imp)
+        self.table.insert(qname, SymbolType.Unknown)
     
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
         self.pending_is_assignments.append((scope, is_assignment))

@@ -17,7 +17,7 @@ let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
 let lastChangeInterp = 0;
 let timestamp = new Date();
-let switchAnnotationOn = true;
+let switchIndicationOn = true;
 
 export async function activate(context: vscode.ExtensionContext) {
 	// start the language server
@@ -52,8 +52,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // switch visual annotations on/off
     context.subscriptions.push(
-		vscode.commands.registerCommand('antimony.switchAnnotationOnOff',
-			(...args: any[]) => switchAnnotationOnOff(context, args)));
+		vscode.commands.registerCommand('antimony.switchIndicationOnOff',
+			(...args: any[]) => switchIndicationOnOff(context, args)));
 
 	// convertion
 	context.subscriptions.push(
@@ -313,7 +313,7 @@ export function deactivate(): Thenable<void> | undefined {
 	return client.stop();
 }
 
-async function switchAnnotationOnOff(context: vscode.ExtensionContext, args: any[]) {
+async function switchIndicationOnOff(context: vscode.ExtensionContext, args: any[]) {
     // wait till client is ready, or the Python server might not have started yet.
 	// note: this is necessary for any command that might use the Python language server.
 	if (!client) {
@@ -324,7 +324,7 @@ async function switchAnnotationOnOff(context: vscode.ExtensionContext, args: any
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
-    if (switchAnnotationOn === true) {
+    if (switchIndicationOn === true) {
         
     }
 }

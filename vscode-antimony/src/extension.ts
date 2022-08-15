@@ -105,36 +105,38 @@ export async function activate(context: vscode.ExtensionContext) {
         const doc = activeEditor.document;
         const uri = doc.uri.toString();
 
-        vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
+        if (switchIndicationOn === true) {
+            vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
 
-            annVars = result;
-            regexFromAnnVarsHelp = new RegExp(annVars,'g');
-            regexFromAnnVars = new RegExp('\\b(' + regexFromAnnVarsHelp.source + ')\\b', 'g');
+                annVars = result;
+                regexFromAnnVarsHelp = new RegExp(annVars,'g');
+                regexFromAnnVars = new RegExp('\\b(' + regexFromAnnVarsHelp.source + ')\\b', 'g');
 
-            if (!activeEditor) {
-                return;
-            }
-    
-            const text = activeEditor.document.getText();
-            const annotated: vscode.DecorationOptions[] = [];
-            let match;
-            while ((match = regexFromAnnVars.exec(text))) {
-                const startPos = activeEditor.document.positionAt(match.index);
-                const endPos = activeEditor.document.positionAt(match.index + match[0].length);
-                const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Annotated Variable' };
-                    annotated.push(decoration);
-            }
-            activeEditor.setDecorations(annDecorationType, annotated);
-        });
+                if (!activeEditor) {
+                    return;
+                }
+
+                const text = activeEditor.document.getText();
+                const annotated: vscode.DecorationOptions[] = [];
+                let match;
+                while ((match = regexFromAnnVars.exec(text))) {
+                    const startPos = activeEditor.document.positionAt(match.index);
+                    const endPos = activeEditor.document.positionAt(match.index + match[0].length);
+                    const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Annotated Variable' };
+                        annotated.push(decoration);
+                }
+                activeEditor.setDecorations(annDecorationType, annotated);
+            });
+        }
 	}
 
     // update the decoration once in a certain time (throttle)
     function triggerUpdateDecorations(throttle = false) {
-		if (timeout) {
+		if (timeout && switchIndicationOn === false) {
 			clearTimeout(timeout);
 			timeout = undefined;
 		}
-		if (throttle) {
+		if (throttle && switchIndicationOn === false) {
 			timeout = setTimeout(updateDecorations, 500);
 		} else {
 			updateDecorations();
@@ -325,7 +327,13 @@ async function switchIndicationOnOff(context: vscode.ExtensionContext, args: any
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
     if (switchIndicationOn === true) {
-        
+        switchIndicationOn = false;
+        this.activate();
+        console.log(switchIndicationOn);
+    } else if (switchIndicationOn === false) {
+        switchIndicationOn = true;
+        this.activate();
+        console.log(switchIndicationOn);
     }
 }
 

@@ -10,7 +10,6 @@ from lark.lexer import Token
 from lark.tree import Tree
 
 
-
 def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
     '''Returns (context, token) the given position. `token` may be None if not found.
     '''

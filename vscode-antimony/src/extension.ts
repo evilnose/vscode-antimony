@@ -17,7 +17,12 @@ let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
 let lastChangeInterp = 0;
 let timestamp = new Date();
+// decoration type for non-annotated variables
+const annDecorationType = vscode.window.createTextEditorDecorationType({
+    backgroundColor: 'blue',
+});
 let switchIndicationOn = true;
+
 
 export async function activate(context: vscode.ExtensionContext) {
 	// start the language server
@@ -86,11 +91,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // timer for non annotated variable visual indicator
     let timeout: NodeJS.Timer | undefined = undefined;
-
-    // decoration type for non-annotated variables
-    const annDecorationType = vscode.window.createTextEditorDecorationType({
-        backgroundColor: 'blue',
-    });
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
@@ -315,6 +315,22 @@ export function deactivate(): Thenable<void> | undefined {
 	return client.stop();
 }
 
+/** Prompts user to reload editor window in order for configuration change to take effect. */
+function promptToReloadWindow() {
+    const action = 'Reload';
+  
+    vscode.window
+      .showInformationMessage(
+        `Reload window in order for visual indication change in Antimony to take effect.`,
+        action
+      )
+      .then(selectedAction => {
+        if (selectedAction === action) {
+          vscode.commands.executeCommand('workbench.action.reloadWindow');
+        }
+      });
+  }
+
 async function switchIndicationOnOff(context: vscode.ExtensionContext, args: any[]) {
     // wait till client is ready, or the Python server might not have started yet.
 	// note: this is necessary for any command that might use the Python language server.
@@ -327,13 +343,10 @@ async function switchIndicationOnOff(context: vscode.ExtensionContext, args: any
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
     if (switchIndicationOn === true) {
+        annDecorationType.dispose();
         switchIndicationOn = false;
-        this.activate();
-        console.log(switchIndicationOn);
     } else if (switchIndicationOn === false) {
-        switchIndicationOn = true;
-        this.activate();
-        console.log(switchIndicationOn);
+        promptToReloadWindow();
     }
 }
 

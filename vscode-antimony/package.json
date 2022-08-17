@@ -65,17 +65,25 @@
 				"priority": "option"
 			}
 		],
-		"configuration": {
-			"title": "vscode-antimony",
-			"properties": {
-				"vscode-antimony.pythonInterpreter": {
-					"type": "string",
-					"default": "python",
-					"scope": "machine",
-					"description": "The Python interpreter (>= 3.7) used to power the language backend. Either a full path or a name (e.g. 'python36')."
-				}
-			}
-		},
+		"configuration": [
+            {
+                "title": "vscode-antimony",
+                "properties": {
+                    "vscode-antimony.pythonInterpreter": {
+                        "type": "string",
+                        "default": "python",
+                        "scope": "machine",
+                        "description": "The Python interpreter (>= 3.7) used to power the language backend. Either a full path or a name (e.g. 'python36')."
+                    },
+                    "vscode-antimony.switchIndicationOnOff": {
+                        "type": "boolean",
+                        "default": true,
+                        "scope": "machine",
+                        "description": "Switch Visual Indication of Annotated Variables On or Off."
+                    }
+                }
+		    }
+        ],
 		"commands": [
 			{
 				"command": "antimony.createAnnotationDialog",

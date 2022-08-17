@@ -342,8 +342,11 @@ async function switchIndicationOnOff(context: vscode.ExtensionContext, args: any
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
-    if (switchIndicationOn === true) {
+    let config =  vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOnOff');
+
+    if (switchIndicationOn === true && config === true) {
         annDecorationType.dispose();
+        // config = false;
         switchIndicationOn = false;
     } else if (switchIndicationOn === false) {
         promptToReloadWindow();

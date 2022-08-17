@@ -1,7 +1,7 @@
 
 import logging
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode
-from .types import ObscuredEventTrigger, OverridingDisplayName, SubError, UninitVar, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import ObscuredEventTrigger, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -720,7 +720,7 @@ class AntTreeAnalyzer:
     def _check_event_var_name(self, var_name, scope):
         var = self.table.get(QName(scope, var_name))
         if not var[0].type.derives_from(SymbolType.Parameter):
-            self.warning.append(UninitVar(var_name.range, var_name.text))
+            self.warning.append(RefUndefined(var_name.range, var_name.text))
         
 
 # def get_ancestors(node: ASTNode):

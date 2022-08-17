@@ -185,7 +185,7 @@ class IncorrectParamNum(Issue):
         self.message = ("Incorrect number of parameters, expected {}, given {}").format(val1, val2)
 
 class ParamIncorrectType(Issue):
-    def __init__(self, range, type1, type2): 
+    def __init__(self, range, type1, type2):
         super().__init__(range, IssueSeverity.Error)
         self.message = ("Incorrect type being passed in, expected {}, given {}").format(type1, type2)
 
@@ -201,11 +201,6 @@ class UninitCompt(Issue):
         self.val = val
         self.message = ("Compartment '{}' has not been initialized, using default value").format(val)
 
-class UninitVar(Issue):
-    def __init__(self, range: SrcRange, val: str):
-        super().__init__(range, IssueSeverity.Warning)
-        self.val = val
-        self.message = ("Parameter '{}' has not been initialized").format(val)
 
 class ObscuredEventTrigger(Issue):
     def __init__(self, old_range: SrcRange, new_range: SrcRange, name: str):

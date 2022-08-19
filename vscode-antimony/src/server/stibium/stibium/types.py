@@ -201,9 +201,9 @@ class UninitCompt(Issue):
         self.val = val
         self.message = ("Compartment '{}' has not been initialized, using default value").format(val)
         
-class rateRuleNotInReaction(Issue):
-     def __init__(self, range, val): 
-        super().__init__(range, IssueSeverity.Error)
+class RateRuleNotInReaction(Issue):
+     def __init__(self, range, val):
+        super().__init__(range, IssueSeverity.Wa)
         self.val = val
         self.message = ("Variable '{}' is also a non-fixed species defined in a reaction").format(val)
 

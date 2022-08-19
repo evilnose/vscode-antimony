@@ -683,7 +683,7 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         var = self.table.get(qname)
         if var[0].value_node is None:
-            self.warning.append(RefUndefined(name.range, name.text))
+            self.error.append(RefUndefined(name.range, name.text))
         
 
 # def get_ancestors(node: ASTNode):

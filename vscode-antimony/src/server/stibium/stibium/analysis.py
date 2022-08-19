@@ -718,7 +718,7 @@ class AntTreeAnalyzer:
                     if type(leaf) == Name:
                         name = self.table.get(QName(scope, leaf))
                         if name[0].value_node is None:
-                            self.warning.append(RefUndefined(leaf.range, name[0].name))
+                            self.error.append(RefUndefined(leaf.range, name[0].name))
             # var = self.table.get(QName(scope, var_name))
             # if not var[0].type.derives_from(SymbolType.Parameter):
             #     self.warning.append(UninitVar(var_name.range, var_name.text))
@@ -727,7 +727,7 @@ class AntTreeAnalyzer:
     def _check_event_var_name(self, var_name, scope):
         var = self.table.get(QName(scope, var_name))
         if not var[0].type.derives_from(SymbolType.Parameter):
-            self.warning.append(RefUndefined(var_name.range, var_name.text))
+            self.error.append(RefUndefined(var_name.range, var_name.text))
         
 
 # def get_ancestors(node: ASTNode):

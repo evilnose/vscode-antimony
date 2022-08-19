@@ -21,10 +21,11 @@ let timestamp = new Date();
 const annDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'blue',
 });
-let switchIndicationOn = true;
+let switchIndicationOnOff;
 
 
 export async function activate(context: vscode.ExtensionContext) {
+    switchIndicationOnOff = true;
 	// start the language server
 	await startLanguageServer(context);
 	vscode.workspace.onDidChangeConfiguration(async (e) => {
@@ -55,10 +56,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('antimony.createAnnotationDialog',
 			(...args: any[]) => createAnnotationDialog(context, args)));
 
-    // switch visual annotations on/off
+    // switch visual annotations on
     context.subscriptions.push(
-		vscode.commands.registerCommand('antimony.switchIndicationOnOff',
-			(...args: any[]) => switchIndicationOnOff(context, args)));
+		vscode.commands.registerCommand('antimony.switchIndicationOn',
+			(...args: any[]) => switchIndicationOn(context, args)));
+
+    // switch visual annotations off
+    context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.switchIndicationOff',
+			(...args: any[]) => switchIndicationOff(context, args)));
 
 	// convertion
 	context.subscriptions.push(
@@ -105,7 +111,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const doc = activeEditor.document;
         const uri = doc.uri.toString();
 
-        if (switchIndicationOn === true) {
+        if (switchIndicationOnOff === true) {
             vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
 
                 annVars = result;
@@ -128,15 +134,16 @@ export async function activate(context: vscode.ExtensionContext) {
                 activeEditor.setDecorations(annDecorationType, annotated);
             });
         }
+        console.log(switchIndicationOnOff);
 	}
 
     // update the decoration once in a certain time (throttle)
     function triggerUpdateDecorations(throttle = false) {
-		if (timeout && switchIndicationOn === false) {
+		if (timeout) {
 			clearTimeout(timeout);
 			timeout = undefined;
 		}
-		if (throttle && switchIndicationOn === false) {
+		if (throttle) {
 			timeout = setTimeout(updateDecorations, 500);
 		} else {
 			updateDecorations();
@@ -331,7 +338,7 @@ function promptToReloadWindow() {
       });
   }
 
-async function switchIndicationOnOff(context: vscode.ExtensionContext, args: any[]) {
+async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]) {
     // wait till client is ready, or the Python server might not have started yet.
 	// note: this is necessary for any command that might use the Python language server.
 	if (!client) {
@@ -342,15 +349,33 @@ async function switchIndicationOnOff(context: vscode.ExtensionContext, args: any
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
-    let config =  vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOnOff');
+    // let configOn =  vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOnOff');
 
-    if (switchIndicationOn === true && config === true) {
-        annDecorationType.dispose();
-        // config = false;
-        switchIndicationOn = false;
-    } else if (switchIndicationOn === false) {
-        promptToReloadWindow();
-    }
+    annDecorationType.dispose();
+
+    switchIndicationOnOff = false;
+
+    console.log(switchIndicationOnOff);
+}
+
+async function switchIndicationOn(context: vscode.ExtensionContext, args: any[]) {
+    // wait till client is ready, or the Python server might not have started yet.
+	// note: this is necessary for any command that might use the Python language server.
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+
+    // let configOff =  vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOff');
+
+    switchIndicationOnOff = true;
+
+    console.log(switchIndicationOnOff);
+
+    promptToReloadWindow();
 }
 
 // ****** helper functions ******

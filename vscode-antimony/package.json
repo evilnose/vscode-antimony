@@ -23,7 +23,8 @@
 	"activationEvents": [
 		"onLanguage:antimony",
 		"onCommand:antimony.createAnnotationDialog",
-        "onCommand:antimony.switchIndicationOnOff",
+        "onCommand:antimony.switchIndicationOn",
+        "onCommand:antimony.switchIndicationOff",
 		"onCommand:antimony.convertAntimonyToSBML",
 		"onCommand:antimony.convertSBMLToAntimony",
 		"onCommand:antimony.startSBMLWebview",
@@ -74,12 +75,6 @@
                         "default": "python",
                         "scope": "machine",
                         "description": "The Python interpreter (>= 3.7) used to power the language backend. Either a full path or a name (e.g. 'python36')."
-                    },
-                    "vscode-antimony.switchIndicationOnOff": {
-                        "type": "boolean",
-                        "default": true,
-                        "scope": "machine",
-                        "description": "Switch Visual Indication of Annotated Variables On or Off."
                     }
                 }
 		    }
@@ -90,8 +85,12 @@
 				"title": "Create Annotation"
 			},
             {
-				"command": "antimony.switchIndicationOnOff",
-				"title": "Switch Indication On/Off"
+				"command": "antimony.switchIndicationOn",
+				"title": "Switch Indication On"
+			},
+            {
+				"command": "antimony.switchIndicationOff",
+				"title": "Switch Indication Off"
 			},
 			{
 				"command": "antimony.convertAntimonyToSBML",
@@ -134,10 +133,15 @@
 					"when": "editorLangId == antimony"
 				},
                 {
-					"command": "antimony.switchIndicationOnOff",
-					"title": "Switch Indication On/Off",
+                    "command": "antimony.switchIndicationOn",
+                    "title": "Switch Visual Indications On",
                     "group": "1_modification"
-				},
+                },
+                {
+                    "command": "antimony.switchIndicationOff",
+                    "title": "Switch Visual Indications Off",
+                    "group": "1_modification"
+                },
 				{
 					"command": "antimony.convertAntimonyToSBML",
 					"title": "Convert to SBML",

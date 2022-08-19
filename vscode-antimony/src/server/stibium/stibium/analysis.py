@@ -401,6 +401,7 @@ class AntTreeAnalyzer:
         for assignment in event.get_assignments():
             qname = QName(scope, assignment.get_name())
             self.table.insert_event(qname, event)
+            self.handle_arith_expr(scope, assignment)
         
             
 
@@ -712,6 +713,12 @@ class AntTreeAnalyzer:
         for assignment in event.get_assignments():
             var_name = assignment.get_name()
             self._check_event_var_name(var_name, scope)
+            if issubclass(type(assignment.get_value()), TrunkNode):
+                for leaf in assignment.get_value().descendants():
+                    if type(leaf) == Name:
+                        name = self.table.get(QName(scope, leaf))
+                        if name[0].value_node is None:
+                            self.warning.append(RefUndefined(leaf.range, name[0].name))
             # var = self.table.get(QName(scope, var_name))
             # if not var[0].type.derives_from(SymbolType.Parameter):
             #     self.warning.append(UninitVar(var_name.range, var_name.text))

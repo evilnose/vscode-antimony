@@ -196,7 +196,7 @@ class UnusedParameter(Issue):
         self.message = ("Parameter '{}' defined but not used").format(val)
 
 class UninitCompt(Issue):
-    def __init__(self, range, val): 
+    def __init__(self, range, val):
         super().__init__(range, IssueSeverity.Warning)
         self.val = val
         self.message = ("Compartment '{}' has not been initialized, using default value").format(val)

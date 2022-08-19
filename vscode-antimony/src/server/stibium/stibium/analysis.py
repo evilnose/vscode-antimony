@@ -231,6 +231,8 @@ class AntTreeAnalyzer:
                     self.process_is_assignment(node, scope)
                 elif type(node.get_stmt()) == Assignment:
                     self.process_maybein(node, scope)
+                elif type(node.get_stmt()) == Sboterm or type(node.get_stmt()) == Annotation:
+                    self.process_annotation(node, scope)
 
     def check_parse_tree_function(self, function, scope):
         # check the expression
@@ -299,6 +301,8 @@ class AntTreeAnalyzer:
                     self.process_is_assignment(node, scope)
                 elif type(node.get_stmt()) == Assignment:
                     self.process_maybein(node, scope)
+                elif type(node.get_stmt()) == Sboterm or type(node.get_stmt()) == Annotation:
+                    self.process_annotation(node, scope)
         self.check_param_unused(used, params)
 
     def check_rate_law(self, rate_law, scope, params=set()):
@@ -673,6 +677,13 @@ class AntTreeAnalyzer:
         var = self.table.get(qname)
         if len(var) == 0:
             self.warning.append(VarNotFound(name.range, name.text))
+            
+    def process_annotation(self, node, scope):
+        name = node.get_stmt().get_var_name().get_name()
+        qname = QName(scope, name)
+        var = self.table.get(qname)
+        if var[0].value_node is None:
+            self.warning.append(RefUndefined(name.range, name.text))
         
 
 # def get_ancestors(node: ASTNode):

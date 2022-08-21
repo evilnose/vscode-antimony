@@ -1,17 +1,13 @@
 import * as vscode from 'vscode';
 import * as utils from './utils/utils';
 import * as path from 'path';
-import * as cp from "child_process";
 import {
 	LanguageClient,
 	LanguageClientOptions,
-	ServerOptions,
-	TransportKind
-} from 'vscode-languageclient/node';
+	ServerOptions} from 'vscode-languageclient/node';
 import { multiStepInput } from './annotationInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
-import { type } from 'os';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -21,11 +17,11 @@ let timestamp = new Date();
 const annDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'blue',
 });
-let switchIndicationOnOff;
+let switchIndicationOnOrOff: boolean | null = null;
 
 
 export async function activate(context: vscode.ExtensionContext) {
-    switchIndicationOnOff = true;
+    switchIndicationOnOrOff = true;
 	// start the language server
 	await startLanguageServer(context);
 	vscode.workspace.onDidChangeConfiguration(async (e) => {
@@ -111,7 +107,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const doc = activeEditor.document;
         const uri = doc.uri.toString();
 
-        if (switchIndicationOnOff === true) {
+        if (switchIndicationOnOrOff === true) {
             vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
 
                 annVars = result;
@@ -134,7 +130,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 activeEditor.setDecorations(annDecorationType, annotated);
             });
         }
-        console.log(switchIndicationOnOff);
+        console.log(switchIndicationOnOrOff);
 	}
 
     // update the decoration once in a certain time (throttle)
@@ -353,9 +349,9 @@ async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]
 
     annDecorationType.dispose();
 
-    switchIndicationOnOff = false;
+    switchIndicationOnOrOff = false;
 
-    console.log(switchIndicationOnOff);
+    console.log(switchIndicationOnOrOff);
 }
 
 async function switchIndicationOn(context: vscode.ExtensionContext, args: any[]) {
@@ -371,9 +367,9 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 
     // let configOff =  vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOff');
 
-    switchIndicationOnOff = true;
+    switchIndicationOnOrOff = true;
 
-    console.log(switchIndicationOnOff);
+    console.log(switchIndicationOnOrOff);
 
     promptToReloadWindow();
 }

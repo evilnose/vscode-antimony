@@ -132,7 +132,6 @@ export async function activate(context: vscode.ExtensionContext) {
                 activeEditor.setDecorations(annDecorationType, annotated);
             });
         }
-        console.log(switchIndicationOnOrOff);
 	}
 
     // update the decoration once in a certain time (throttle)
@@ -350,8 +349,6 @@ async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]
     annDecorationType.dispose();
 
     switchIndicationOnOrOff = false;
-
-    console.log(switchIndicationOnOrOff);
 }
 
 async function switchIndicationOn(context: vscode.ExtensionContext, args: any[]) {
@@ -366,8 +363,6 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
     switchIndicationOnOrOff = true;
-
-    console.log(switchIndicationOnOrOff);
 
     promptToReloadWindow();
 }

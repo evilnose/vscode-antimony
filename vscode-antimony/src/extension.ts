@@ -19,7 +19,6 @@ const annDecorationType = vscode.window.createTextEditorDecorationType({
 });
 let switchIndicationOnOrOff: boolean | null = null;
 
-
 export async function activate(context: vscode.ExtensionContext) {
     switchIndicationOnOrOff = true;
 	// start the language server
@@ -365,8 +364,6 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 	await client.onReady();
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
-
-    // let configOff =  vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOff');
 
     switchIndicationOnOrOff = true;
 

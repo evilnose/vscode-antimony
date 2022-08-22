@@ -91,6 +91,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 	context.subscriptions.push(codeLensProviderDisposable);
 
+    // User Setting Configuration for Switching Annotations On/Off
+
     // timer for non annotated variable visual indicator
     let timeout: NodeJS.Timer | undefined = undefined;
 
@@ -103,11 +105,12 @@ export async function activate(context: vscode.ExtensionContext) {
         let annVars: string;
         let regexFromAnnVarsHelp: RegExp;
         let regexFromAnnVars: RegExp;
+        let config =  vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOnOrOff');
 
         const doc = activeEditor.document;
         const uri = doc.uri.toString();
 
-        if (switchIndicationOnOrOff === true) {
+        if (switchIndicationOnOrOff === true && config === true) {
             vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
 
                 annVars = result;
@@ -344,8 +347,6 @@ async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]
 	await client.onReady();
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
-
-    // let configOn =  vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOnOff');
 
     annDecorationType.dispose();
 

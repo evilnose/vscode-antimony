@@ -289,6 +289,12 @@ class OverrodeValue(Issue):
         )
 
 
+class InvalidFileType(Issue):
+    def __init__(self, range):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = "Invalid file type, please enter a StringLiteral"
+
+
 class AntimonySyntaxError(Exception):
     # TODO this is far from complete. To include: filename, possible token choices,
     # and possibly even parser state?

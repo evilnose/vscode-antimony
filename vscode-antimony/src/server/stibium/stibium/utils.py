@@ -9,6 +9,7 @@ from .types import ASTNode, SrcPosition, SrcRange
 from lark.lexer import Token
 
 import pathlib
+import antimony
 
 
 def get_abs_path(filename: str):
@@ -62,3 +63,23 @@ def formatted_code(node: Optional[TreeNode]):
 
 def to_uri(path: str) -> str:
     return pathlib.Path(path).as_uri()
+
+# Need to return proper errors and Antimony string
+def get_file_info(file: str):
+    antimony.clearPreviousLoads()
+    antimony.freeAll()
+    isfile = os.path.isfile(os.path.abspath(file))
+    if isfile:
+        ant_file = antimony.loadSBMLFile(file)
+        if ant_file >= 0:
+            module = antimony.getMainModuleName()
+            ant_str = antimony.getSBMLString(module)
+            return ant_str
+        ant_file = antimony.loadAntimonyFile(file)
+        if ant_file >= 0:
+            module = antimony.getMainModuleName()
+            ant_str = antimony.getAntimonyString(module)
+            return ant_str
+        return ("ant_file < 0 and {filepath}").format(filepath=os.path.abspath(file))
+        
+    return get_abs_path(file)

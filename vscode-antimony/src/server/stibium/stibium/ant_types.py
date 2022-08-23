@@ -543,6 +543,11 @@ class Import(TrunkNode):
     
     def get_file_name(self):
         return self.children[1]
+    
+    def get_file(self):
+        from stibium.utils import get_file_info
+        file_str = get_file_info(self.get_file_name().get_str())
+        return file_str
 
 @dataclass
 class SimpleStmt(TrunkNode):

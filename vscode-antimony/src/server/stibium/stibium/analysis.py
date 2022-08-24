@@ -684,6 +684,13 @@ class AntTreeAnalyzer:
         var = self.table.get(qname)
         if var[0].value_node is None:
             self.error.append(RefUndefined(name.range, name.text))
+            
+    def process_sbo(self, node, scope):
+        name = node.get_stmt().get_var_name().get_name()
+        qname = QName(scope, name)
+        var = self.table.get(qname)
+        if var[0].value_node is None:
+            self.error.append(RefUndefined(name.range, name.text))
         
 
 # def get_ancestors(node: ASTNode):

@@ -75,11 +75,15 @@ def get_file_info(file: str):
             module = antimony.getMainModuleName()
             ant_str = antimony.getSBMLString(module)
             return ant_str
-        ant_file = antimony.loadAntimonyFile(file)
-        if ant_file >= 0:
-            module = antimony.getMainModuleName()
-            ant_str = antimony.getAntimonyString(module)
-            return ant_str
+        if (file[-4:] == ".txt"):
+            with open(file, "r") as open_file:
+                content = open_file.read()
+            return content
+        #ant_file = antimony.loadAntimonyString(content)
+        #if ant_file >= 0:
+        #    module = antimony.getMainModuleName()
+        #    ant_str = antimony.getAntimonyString(module)
+        #    return ant_str
         return ("ant_file < 0 and {filepath}").format(filepath=os.path.abspath(file))
         
-    return get_abs_path(file)
+    return None

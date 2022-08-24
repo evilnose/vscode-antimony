@@ -289,6 +289,12 @@ class OverrodeValue(Issue):
         )
 
 
+class NoImportFile(Issue):
+    def __init__(self, range):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = "No such import file found"
+
+
 class InvalidFileType(Issue):
     def __init__(self, range):
         super().__init__(range, IssueSeverity.Error)

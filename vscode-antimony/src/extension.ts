@@ -4,7 +4,8 @@ import * as path from 'path';
 import {
 	LanguageClient,
 	LanguageClientOptions,
-	ServerOptions} from 'vscode-languageclient/node';
+	ServerOptions,
+    WorkspaceChange} from 'vscode-languageclient/node';
 import { multiStepInput } from './annotationInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
@@ -20,7 +21,7 @@ const annDecorationType = vscode.window.createTextEditorDecorationType({
 let switchIndicationOnOrOff: boolean | null = null;
 
 export async function activate(context: vscode.ExtensionContext) {
-    switchIndicationOnOrOff = true;
+    switchIndicationOnOrOff = vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOnOrOff');
 	// start the language server
 	await startLanguageServer(context);
 	vscode.workspace.onDidChangeConfiguration(async (e) => {
@@ -349,6 +350,7 @@ async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]
     annDecorationType.dispose();
 
     switchIndicationOnOrOff = false;
+    vscode.workspace.getConfiguration('vscode-antimony').update('switchIndicationOnOrOff', false, true);
 }
 
 async function switchIndicationOn(context: vscode.ExtensionContext, args: any[]) {
@@ -363,6 +365,7 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
     switchIndicationOnOrOff = true;
+    vscode.workspace.getConfiguration('vscode-antimony').update('switchIndicationOnOrOff', true, true);
 
     promptToReloadWindow();
 }

@@ -12,4 +12,32 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
 		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
 	});
+
+    test("LoadConfiguration - Shows error when configuration can't be loaded", async () => {
+        let settings = vscode.workspace.getConfiguration('vscode-antimony');
+        await settings.update("switchIndicationOnOrOff", true);
+    
+        // await ConfigurationLoader.LoadConfiguration()
+    
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchIndicationOnOrOff") === true) {
+            assert(true);
+        } else {
+            assert(false);
+        }
+    });
+    
+    test("LoadConfiguration - Shows error when configuration can't be loaded", async () => {
+        let settings = vscode.workspace.getConfiguration('vscode-antimony');
+        await settings.update("switchIndicationOnOrOff", false);
+    
+        // await ConfigurationLoader.LoadConfiguration()
+    
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchIndicationOnOrOff") === false) {
+            assert(true);
+        } else {
+            assert(false);
+        }
+    });
 });
+
+

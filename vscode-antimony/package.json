@@ -141,12 +141,14 @@
                 {
                     "command": "antimony.switchIndicationOn",
                     "title": "Switch Visual Indications On",
-                    "group": "1_modification"
+                    "group": "1_modification",
+                    "when": "config.vscode-antimony.switchIndicationOnOrOff == false"
                 },
                 {
                     "command": "antimony.switchIndicationOff",
                     "title": "Switch Visual Indications Off",
-                    "group": "1_modification"
+                    "group": "1_modification",
+                    "when": "config.vscode-antimony.switchIndicationOnOrOff == true"
                 },
 				{
 					"command": "antimony.convertAntimonyToSBML",

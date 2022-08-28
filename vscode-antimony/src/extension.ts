@@ -110,7 +110,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const doc = activeEditor.document;
         const uri = doc.uri.toString();
 
-        if (switchIndicationOnOrOff === true && config === true) {
+        if (config === true) {
             vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
 
                 annVars = result;
@@ -364,7 +364,6 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
-    switchIndicationOnOrOff = true;
     vscode.workspace.getConfiguration('vscode-antimony').update('switchIndicationOnOrOff', true, true);
 
     promptToReloadWindow();

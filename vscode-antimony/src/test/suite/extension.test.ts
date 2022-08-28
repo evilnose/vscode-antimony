@@ -15,7 +15,7 @@ suite('Extension Test Suite', () => {
 
     test("LoadConfiguration - Shows error when configuration can't be loaded", async () => {
         let settings = vscode.workspace.getConfiguration('vscode-antimony');
-        await settings.update("switchIndicationOnOrOff", true);
+        await settings.update("switchIndicationOnOrOff", true, true);
     
         // await ConfigurationLoader.LoadConfiguration()
     
@@ -28,7 +28,7 @@ suite('Extension Test Suite', () => {
     
     test("LoadConfiguration - Shows error when configuration can't be loaded", async () => {
         let settings = vscode.workspace.getConfiguration('vscode-antimony');
-        await settings.update("switchIndicationOnOrOff", false);
+        await settings.update("switchIndicationOnOrOff", false, true);
     
         // await ConfigurationLoader.LoadConfiguration()
     

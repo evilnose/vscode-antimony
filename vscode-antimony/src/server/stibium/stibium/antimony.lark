@@ -49,9 +49,6 @@ ANNOT_KEYWORD: "identity"
     | "taxon"
 
 
-
-
-
 declaration : decl_modifiers decl_item ("," decl_item)*
 decl_modifiers : VAR_MODIFIER
     | TYPE_MODIFIER

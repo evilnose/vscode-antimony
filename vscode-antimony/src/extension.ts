@@ -9,6 +9,7 @@ import {
 import { multiStepInput } from './annotationInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
+import { doesNotMatch } from 'assert';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -364,6 +365,7 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
+    switchIndicationOnOrOff = true;
     vscode.workspace.getConfiguration('vscode-antimony').update('switchIndicationOnOrOff', true, true);
 
     promptToReloadWindow();

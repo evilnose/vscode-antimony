@@ -13,12 +13,11 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
 	});
 
-    test("LoadConfiguration - Shows error when configuration can't be loaded", async () => {
+    // Testing VSCode User Settings Switch Indication On
+    test("Testing VSCode User Settings Switch Indication On", async () => {
         let settings = vscode.workspace.getConfiguration('vscode-antimony');
         await settings.update("switchIndicationOnOrOff", true, true);
-    
-        // await ConfigurationLoader.LoadConfiguration()
-    
+        
         if (vscode.workspace.getConfiguration('vscode-antimony').get("switchIndicationOnOrOff") === true) {
             assert(true);
         } else {
@@ -26,12 +25,39 @@ suite('Extension Test Suite', () => {
         }
     });
     
-    test("LoadConfiguration - Shows error when configuration can't be loaded", async () => {
+    // Testing VSCode User Settings Switch Indication Off
+    test("Testing VSCode User Settings Switch Indication Off", async () => {
         let settings = vscode.workspace.getConfiguration('vscode-antimony');
         await settings.update("switchIndicationOnOrOff", false, true);
-    
-        // await ConfigurationLoader.LoadConfiguration()
-    
+        
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchIndicationOnOrOff") === false) {
+            assert(true);
+        } else {
+            assert(false);
+        }
+    });
+
+    // Testing VSCode Context Menu Switch On and Setting Syncing
+    test("Testing VSCode Context Menu Switch On and Both Settings Syncing", async (done) => {
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchIndicationOnOrOff") === false) {
+            vscode.commands.executeCommand('vscode.antimony.switchIndicationOn');
+        }
+
+        done();
+
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchIndicationOnOrOff") === true) {
+            assert(true);
+        } else {
+            assert(false);
+        }
+    });
+
+    // Testing VSCode Context Menu Switch Off and Both Settings Syncing
+    test("Testing VSCode Context Menu Switch Off and Both Settings Syncing", async () => {
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchIndicationOnOrOff") === true) {
+            await vscode.commands.executeCommand('antimony.switchIndicationOff');
+        }
+        
         if (vscode.workspace.getConfiguration('vscode-antimony').get("switchIndicationOnOrOff") === false) {
             assert(true);
         } else {

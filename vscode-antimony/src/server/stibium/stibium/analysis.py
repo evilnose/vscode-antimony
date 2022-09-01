@@ -10,7 +10,7 @@ from typing import Any, List, Optional, Set, cast
 from itertools import chain
 from lark.lexer import Token
 from lark.tree import Tree
-
+vscode_logger = logging.getLogger("vscode-antimony logger")
 
 def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
     '''Returns (context, token) the given position. `token` may be None if not found.
@@ -449,11 +449,9 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         file_str = imp.get_file()
         if file_str is None:
-            self.error.append(InvalidFileType(name.range))
-        if type(name) != StringLiteral:
             self.error.append(NoImportFile(name.range))
-        # Only inserting for testing purposes, to check file data
-        self.table.insert(qname, SymbolType.Unknown, comp=file_str)
+        if type(name) != StringLiteral:
+            self.error.append(InvalidFileType(name.range))
     
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
         self.pending_is_assignments.append((scope, is_assignment))

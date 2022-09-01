@@ -1,6 +1,7 @@
 
 import os
 from typing import Optional
+import logging
 
 from lark.tree import Tree
 from stibium.ant_types import Atom, ErrorToken, LeafNode, Name, Newline, Number, Operator, SimpleStmt, StringLiteral, TreeNode, TrunkNode
@@ -11,7 +12,7 @@ from lark.lexer import Token
 import pathlib
 import antimony
 
-
+vscode_logger = logging.getLogger("vscode-antimony logger")
 def get_abs_path(filename: str):
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), filename)
 
@@ -70,20 +71,19 @@ def get_file_info(file: str):
     antimony.freeAll()
     isfile = os.path.isfile(os.path.abspath(file))
     if isfile:
+        from .api import AntFile
         ant_file = antimony.loadSBMLFile(file)
         if ant_file >= 0:
-            module = antimony.getMainModuleName()
-            ant_str = antimony.getSBMLString(module)
+            ant_str = antimony.getSBMLString()
             return ant_str
         if (file[-4:] == ".txt"):
             with open(file, "r") as open_file:
                 content = open_file.read()
-            return content
-        #ant_file = antimony.loadAntimonyString(content)
-        #if ant_file >= 0:
-        #    module = antimony.getMainModuleName()
-        #    ant_str = antimony.getAntimonyString(module)
-        #    return ant_str
+            return AntFile(os.path.abspath(file), content)
+        ant_file = antimony.loadAntimonyFile(file)
+        if ant_file >= 0:
+            ant_str = antimony.getAntimonyString()
+            return AntFile(os.path.abspath(file), ant_str)
         return ("ant_file < 0 and {filepath}").format(filepath=os.path.abspath(file))
         
     return None

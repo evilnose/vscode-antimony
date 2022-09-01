@@ -546,7 +546,10 @@ class Import(TrunkNode):
     
     def get_file(self):
         from stibium.utils import get_file_info
+        from .api import AntFile
         file_str = get_file_info(self.get_file_name().get_str())
+        if type(file_str) == AntFile:
+            return file_str.text
         return file_str
 
 @dataclass

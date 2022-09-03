@@ -76,11 +76,17 @@
                         "scope": "machine",
                         "description": "The Python interpreter (>= 3.7) used to power the language backend. Either a full path or a name (e.g. 'python36')."
                     },
-                    "vscode-antimony.switchIndicationOnOrOff": {
+                    "vscode-antimony.switchAnnotatedVariableIndicationsOnOrOff": {
                         "type": "boolean",
                         "default": "true",
                         "scope": "machine",
-                        "description": "Switch Visual Indication of Annotated Variables On or Off."
+                        "description": "Switch Visual Indications (Colored Highlights) of Annotated Variables On or Off."
+                    },
+                    "vscode-antimony.highlightColor": {
+                        "type": "string",
+                        "default": "indigo",
+                        "scope": "machine",
+                        "description": "Set Visual Indications (Colored Highlights) to a Preferred Color (e.g. red, orange, yellow, green, blue, indigo)"
                     }
                 }
 		    }
@@ -92,11 +98,11 @@
 			},
             {
 				"command": "antimony.switchIndicationOn",
-				"title": "Switch Indication On"
+				"title": "Switch Annotated Variable Indications On"
 			},
             {
 				"command": "antimony.switchIndicationOff",
-				"title": "Switch Indication Off"
+				"title": "Switch Annotated Variable Indications Off"
 			},
 			{
 				"command": "antimony.convertAntimonyToSBML",
@@ -140,15 +146,15 @@
 				},
                 {
                     "command": "antimony.switchIndicationOn",
-                    "title": "Switch Visual Indications On",
+                    "title": "Switch Annotated Variable Indications On",
                     "group": "1_modification",
-                    "when": "config.vscode-antimony.switchIndicationOnOrOff == false"
+                    "when": "config.vscode-antimony.switchAnnotatedVariableIndicationsOnOrOff == false"
                 },
                 {
                     "command": "antimony.switchIndicationOff",
-                    "title": "Switch Visual Indications Off",
+                    "title": "Switch Annotated Variable Indications Off",
                     "group": "1_modification",
-                    "when": "config.vscode-antimony.switchIndicationOnOrOff == true"
+                    "when": "config.vscode-antimony.switchAnnotatedVariableIndicationsOnOrOff == true"
                 },
 				{
 					"command": "antimony.convertAntimonyToSBML",

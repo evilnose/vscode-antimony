@@ -10,19 +10,22 @@ import { multiStepInput } from './annotationInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
 import { doesNotMatch } from 'assert';
+import { config } from 'process';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
 let lastChangeInterp = 0;
 let timestamp = new Date();
+let decorationColor = 'blue';
+let highlightColor = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo']
 // decoration type for non-annotated variables
 const annDecorationType = vscode.window.createTextEditorDecorationType({
-    backgroundColor: 'blue',
+    backgroundColor: vscode.workspace.getConfiguration('vscode-antimony').get('highlightColor'),
 });
-let switchIndicationOnOrOff: boolean | null = null;
+let switchAnnotatedVariableIndicationsOnOrOff: boolean | null = null;
 
 export async function activate(context: vscode.ExtensionContext) {
-    switchIndicationOnOrOff = vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOnOrOff');
+    switchAnnotatedVariableIndicationsOnOrOff = vscode.workspace.getConfiguration('vscode-antimony').get('switchAnnotatedVariableIndicationsOnOrOff');
 	// start the language server
 	await startLanguageServer(context);
 	vscode.workspace.onDidChangeConfiguration(async (e) => {
@@ -106,7 +109,7 @@ export async function activate(context: vscode.ExtensionContext) {
         let annVars: string;
         let regexFromAnnVarsHelp: RegExp;
         let regexFromAnnVars: RegExp;
-        let config =  vscode.workspace.getConfiguration('vscode-antimony').get('switchIndicationOnOrOff');
+        let config =  vscode.workspace.getConfiguration('vscode-antimony').get('switchAnnotatedVariableIndicationsOnOrOff');
 
         const doc = activeEditor.document;
         const uri = doc.uri.toString();
@@ -350,8 +353,8 @@ async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]
 
     annDecorationType.dispose();
 
-    switchIndicationOnOrOff = false;
-    vscode.workspace.getConfiguration('vscode-antimony').update('switchIndicationOnOrOff', false, true);
+    switchAnnotatedVariableIndicationsOnOrOff = false;
+    vscode.workspace.getConfiguration('vscode-antimony').update('switchAnnotatedVariableIndicationsOnOrOff', false, true);
 }
 
 async function switchIndicationOn(context: vscode.ExtensionContext, args: any[]) {
@@ -365,11 +368,18 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
-    switchIndicationOnOrOff = true;
-    vscode.workspace.getConfiguration('vscode-antimony').update('switchIndicationOnOrOff', true, true);
+    switchAnnotatedVariableIndicationsOnOrOff = true;
+    vscode.workspace.getConfiguration('vscode-antimony').update('switchAnnotatedVariableIndicationsOnOrOff', true, true);
 
     promptToReloadWindow();
 }
+
+vscode.workspace.onDidChangeConfiguration(async (e) => {
+    if (!e.affectsConfiguration('vscode-antimony.highlightColor')) {
+        return;
+    }
+    promptToReloadWindow();
+});
 
 // ****** helper functions ******
 

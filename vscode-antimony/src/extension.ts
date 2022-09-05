@@ -14,12 +14,53 @@ let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
 let lastChangeInterp = 0;
 let timestamp = new Date();
+
 let highlightColor = "indigo";
-// decoration type for non-annotated variables
+
+// Decoration type for annotated variables
 const annDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: vscode.workspace.getConfiguration('vscode-antimony').get('highlightColor'),
 });
+
+// User Setting Configuration for Switching Annotations On/Off
 let annotatedVariableIndicatorOn: boolean | null = null;
+
+let activeEditor = vscode.window.activeTextEditor;
+
+// change the annotation decoration of non-annotated variables
+function updateDecorations() {
+	let annVars: string;
+	let regexFromAnnVarsHelp: RegExp;
+	let regexFromAnnVars: RegExp;
+	let config =  vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
+
+	const doc = activeEditor.document;
+	const uri = doc.uri.toString();
+
+	if (config === true) {
+		vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
+
+			annVars = result;
+			regexFromAnnVarsHelp = new RegExp(annVars,'g');
+			regexFromAnnVars = new RegExp('\\b(' + regexFromAnnVarsHelp.source + ')\\b', 'g');
+
+			if (!activeEditor) {
+				return;
+			}
+
+			const text = activeEditor.document.getText();
+			const annotated: vscode.DecorationOptions[] = [];
+			let match;
+			while ((match = regexFromAnnVars.exec(text))) {
+				const startPos = activeEditor.document.positionAt(match.index);
+				const endPos = activeEditor.document.positionAt(match.index + match[0].length);
+				const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Annotated Variable' };
+					annotated.push(decoration);
+			}
+			activeEditor.setDecorations(annDecorationType, annotated);
+		});
+	}
+}
 
 export async function activate(context: vscode.ExtensionContext) {
     annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
@@ -92,49 +133,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 	context.subscriptions.push(codeLensProviderDisposable);
 
-    // User Setting Configuration for Switching Annotations On/Off
-
     // timer for non annotated variable visual indicator
     let timeout: NodeJS.Timer | undefined = undefined;
-
-	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
-
-    let activeEditor = vscode.window.activeTextEditor;
-
-    // change the annotation decoration of non-annotated variables
-    function updateDecorations() {
-        let annVars: string;
-        let regexFromAnnVarsHelp: RegExp;
-        let regexFromAnnVars: RegExp;
-        let config =  vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
-
-        const doc = activeEditor.document;
-        const uri = doc.uri.toString();
-
-        if (config === true) {
-            vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
-
-                annVars = result;
-                regexFromAnnVarsHelp = new RegExp(annVars,'g');
-                regexFromAnnVars = new RegExp('\\b(' + regexFromAnnVarsHelp.source + ')\\b', 'g');
-
-                if (!activeEditor) {
-                    return;
-                }
-
-                const text = activeEditor.document.getText();
-                const annotated: vscode.DecorationOptions[] = [];
-                let match;
-                while ((match = regexFromAnnVars.exec(text))) {
-                    const startPos = activeEditor.document.positionAt(match.index);
-                    const endPos = activeEditor.document.positionAt(match.index + match[0].length);
-                    const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Annotated Variable' };
-                        annotated.push(decoration);
-                }
-                activeEditor.setDecorations(annDecorationType, annotated);
-            });
-        }
-	}
 
     // update the decoration once in a certain time (throttle)
     function triggerUpdateDecorations(throttle = false) {

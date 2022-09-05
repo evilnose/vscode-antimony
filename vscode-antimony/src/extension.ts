@@ -22,10 +22,10 @@ let highlightColor = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo']
 const annDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: vscode.workspace.getConfiguration('vscode-antimony').get('highlightColor'),
 });
-let switchAnnotatedVariableIndicationsOnOrOff: boolean | null = null;
+let annotatedVariableIndicatorOn: boolean | null = null;
 
 export async function activate(context: vscode.ExtensionContext) {
-    switchAnnotatedVariableIndicationsOnOrOff = vscode.workspace.getConfiguration('vscode-antimony').get('switchAnnotatedVariableIndicationsOnOrOff');
+    annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
 	// start the language server
 	await startLanguageServer(context);
 	vscode.workspace.onDidChangeConfiguration(async (e) => {
@@ -109,7 +109,7 @@ export async function activate(context: vscode.ExtensionContext) {
         let annVars: string;
         let regexFromAnnVarsHelp: RegExp;
         let regexFromAnnVars: RegExp;
-        let config =  vscode.workspace.getConfiguration('vscode-antimony').get('switchAnnotatedVariableIndicationsOnOrOff');
+        let config =  vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
 
         const doc = activeEditor.document;
         const uri = doc.uri.toString();
@@ -353,8 +353,8 @@ async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]
 
     annDecorationType.dispose();
 
-    switchAnnotatedVariableIndicationsOnOrOff = false;
-    vscode.workspace.getConfiguration('vscode-antimony').update('switchAnnotatedVariableIndicationsOnOrOff', false, true);
+    annotatedVariableIndicatorOn = false;
+    vscode.workspace.getConfiguration('vscode-antimony').update('annotatedVariableIndicatorOn', false, true);
 }
 
 async function switchIndicationOn(context: vscode.ExtensionContext, args: any[]) {
@@ -368,8 +368,8 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
-    switchAnnotatedVariableIndicationsOnOrOff = true;
-    vscode.workspace.getConfiguration('vscode-antimony').update('switchAnnotatedVariableIndicationsOnOrOff', true, true);
+    annotatedVariableIndicatorOn = true;
+    vscode.workspace.getConfiguration('vscode-antimony').update('annotatedVariableIndicatorOn', true, true);
 
     promptToReloadWindow();
 }

@@ -9,8 +9,6 @@ import {
 import { multiStepInput } from './annotationInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
-import { doesNotMatch } from 'assert';
-import { config } from 'process';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;

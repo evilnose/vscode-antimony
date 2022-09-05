@@ -146,6 +146,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			timeout = setTimeout(updateDecorations, 500);
 		} else {
 			updateDecorations();
+			console.log("Decorations are updated");
 		}
 	}
 
@@ -349,7 +350,7 @@ async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
     annDecorationType.dispose();
-
+	
     annotatedVariableIndicatorOn = false;
     vscode.workspace.getConfiguration('vscode-antimony').update('annotatedVariableIndicatorOn', false, true);
 }

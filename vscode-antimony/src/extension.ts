@@ -14,8 +14,7 @@ let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
 let lastChangeInterp = 0;
 let timestamp = new Date();
-let decorationColor = 'blue';
-let highlightColor = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo']
+let highlightColor = "indigo";
 // decoration type for non-annotated variables
 const annDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: vscode.workspace.getConfiguration('vscode-antimony').get('highlightColor'),

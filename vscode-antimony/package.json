@@ -23,8 +23,8 @@
 	"activationEvents": [
 		"onLanguage:antimony",
 		"onCommand:antimony.createAnnotationDialog",
-            "onCommand:antimony.switchIndicationOn",
-            "onCommand:antimony.switchIndicationOff",
+        "onCommand:antimony.switchIndicationOn",
+        "onCommand:antimony.switchIndicationOff",
 		"onCommand:antimony.convertAntimonyToSBML",
 		"onCommand:antimony.convertSBMLToAntimony",
 		"onCommand:antimony.startSBMLWebview",

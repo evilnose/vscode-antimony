@@ -5,7 +5,7 @@ import {
 	LanguageClient,
 	LanguageClientOptions,
 	ServerOptions,
-    WorkspaceChange} from 'vscode-languageclient/node';
+} from 'vscode-languageclient/node';
 import { multiStepInput } from './annotationInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';

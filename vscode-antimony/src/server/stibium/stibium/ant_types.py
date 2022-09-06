@@ -304,7 +304,7 @@ class SpeciesList(TrunkNode):
 @dataclass
 class Reaction(TrunkNode):
     children: Tuple[Optional[ReactionName], SpeciesList, Operator, SpeciesList, Operator,
-                    ArithmeticExpr, Optional[InComp]] = field(repr=False)
+                    Optional[ArithmeticExpr], Optional[InComp]] = field(repr=False)
 
     def get_maybein(self):
         if self.children[0] is None:
@@ -326,6 +326,13 @@ class Reaction(TrunkNode):
 
     def get_product_list(self) -> Optional[SpeciesList]:
         return self.children[3]
+    
+    def get_reactant_product_num(self) -> str:
+        '''
+        get the number of reactant and product in a reaction, return in string form:
+        for example, a reaction with one reactant and two products will return '12'
+        '''
+        return '' + len(self.get_reactants()) + len(self.get_products())
 
     def get_reactants(self) -> List[Species]:
         slist = self.get_reactant_list()
@@ -340,7 +347,9 @@ class Reaction(TrunkNode):
         return list()
 
     def get_rate_law(self):
-        return self.children[5]
+        if self.children[5] is not None:
+            return self.children[5]
+        return None
 
     def is_reversible(self):
         assert self.children[2].text in ('->', '=>')

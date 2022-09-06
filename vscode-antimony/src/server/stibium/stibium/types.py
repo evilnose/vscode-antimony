@@ -179,6 +179,14 @@ class UninitFunction(Issue):
         self.val = val
         self.message = ("Function '{}' not defined").format(val)
 
+class UninitRateLaw(Issue):
+    def __init__(self, range, val): 
+        super().__init__(range, IssueSeverity.Warning)
+        if val is None:
+            val = ''
+        self.val = val
+        self.message = ("Reaction '{}' missing rate law").format(val)
+
 class IncorrectParamNum(Issue):
     def __init__(self, range, val1, val2): 
         super().__init__(range, IssueSeverity.Error)

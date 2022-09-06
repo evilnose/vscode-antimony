@@ -1,12 +1,8 @@
 import os
 import sys
 import orjson
-from collections import defaultdict
-from server.stibium.stibium.analysis import AntTreeAnalyzer
-from stibium.analysis import get_qname_at_position
-from stibium.ant_types import SimpleStmt, Reaction
+from stibium.ant_types import SimpleStmt
 from stibium.parse import AntimonyParser
-from stibium.types import SrcPosition
 
 
 class RateLawReader:
@@ -49,15 +45,6 @@ def substitute_rate_law(rate_law_str: str, substitute_dict: dict):
     for key in substitute_dict.keys():
         rate_law_str.replace(key, substitute_dict[key])
     return rate_law_str
-    
-def get_reaction_substrate_product_num(position: SrcPosition):
-    '''
-    get the number of substrates and products of a reaction given a position (the line that reaction is at)
-    return in string form:
-    for example, reaction with one substrate and two products will return '12'.
-    '''
-    # get_qname_at_position(position)
-    pass
     
 def get_reaction_substrate_product_num(text: str):
     '''

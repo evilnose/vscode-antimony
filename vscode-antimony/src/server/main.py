@@ -19,6 +19,8 @@ from stibium.symbols import QName, Symbol, SymbolTable
 
 from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
 
+from stibium.rate_law_reader import RateLawReader
+
 from bioservices_server.utils import AntFile, pygls_range, sb_position, get_antfile, sb_range
 from bioservices_server.webservices import NetworkError, WebServices
 
@@ -208,6 +210,53 @@ def query_species(ls: LanguageServer, args):
         return {
             'error': 'Connection Error!'
         }
+        
+@server.command('antimony.getRateLawDict')
+def get_rate_law_dict(ls: LanguageServer, args):
+    '''
+    get a list of rate laws that are relevant to the line that user right clicks at
+    list element form: 
+    {
+        'name': rate law name,
+        'orig_expr': the original expression to display to users
+        'expression': the substituted expression(includes the real reactants and products),
+        'constants': constants,
+    }
+    '''
+    text = args[0] # the line of text that user right clicks at
+    reader = RateLawReader(text)
+    if reader.reactant_product_num == '_error':
+        return {
+            'error': 'Did not select a reaction'
+        }
+    if reader.no_rate_law_check() == '_error':
+        return {
+            'error': 'Rate law already exists'
+        }
+    return reader.relevant_rate_laws
+
+@server.command('antimony.getRateLawStr')
+def substitute_rate_law_constants(ls: LanguageServer, args):
+    '''
+    substitute a rate law string with a dictionary of constants to be substituted
+    :param args[0]: The rate law string
+    :param args[1]: The dictionary which keys are constants names and values are real constants to be substituted
+    '''
+    rate_law = args[0]
+    substitute_dict = args[1]
+    
+    keys = list(substitute_dict.keys())
+    keys.sort(reverse=True, key=len)
+    new_substitute_dict = dict()
+    indicator = 0
+    for key in keys:
+        sub_key = 'zzz' + indicator + 'zzz'
+        new_substitute_dict[sub_key] = substitute_dict[key]
+        rate_law.replace(key, sub_key)
+        indicator += 1
+    for key in substitute_dict.keys():
+        rate_law.replace(key, substitute_dict[key])
+    return rate_law
 
 #### Hover for displaying information ####
 @server.feature(HOVER)

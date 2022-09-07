@@ -1,64 +1,67 @@
 import os
 import sys
 import orjson
-from stibium.ant_types import SimpleStmt
+from stibium.ant_types import SimpleStmt, Reaction
 from stibium.parse import AntimonyParser
 
 
 class RateLawReader:
-    def __init__(self):
-        self.substrate_product_dict = dict()
-        
-        f = open(os.path.join(sys.path[0], "db.json"), "r")
-        data = f.read()
-        rate_laws = orjson.loads(data)
-        self.list_of_rate_laws = rate_laws['rateml']['listOfRateLaws']['law']
-        self.rate_law_name_expression_dict = dict()
-        for rate_law in self.list_of_rate_laws:
-            substrate_product_string = ''
-            substrate_product_string += rate_law['_numSubstrates'] + rate_law['_numProducts']
-            constants = rate_law['listOfParameters']['parameter']
-            self.rate_law_name_expression_dict[rate_law['_description']] = rate_law['_infixExpression']
-            if substrate_product_string not in self.substrate_product_dict.keys():
-                self.substrate_product_dict[substrate_product_string] = dict()
-            self.substrate_product_dict[substrate_product_string][rate_law['_displayName']] = constants
-    
-    def get_rate_law(self, name: str):
+    def __init__(self, text: str):
         '''
-        get the rate law expression with the given name
+        :param text: The reaction string
+        self.reactant_product_num = '_error' the text given is not a reaction
         '''
-        if name in self.rate_law_name_expression_dict.keys():
-            return self.rate_law_name_expression_dict[name]
-        else:
+        self.relevant_rate_laws = list()
+        parser = AntimonyParser()
+        tree = parser.parse(text, recoverable=True)
+        self.reactant_product_num = '_error'
+        self.reaction = None
+        for child in reversed(tree):
+            if isinstance(child, SimpleStmt):
+                stmt = child.get_stmt()
+                if stmt is None:
+                    continue
+                if stmt.__class__.__name__ == 'Reaction':
+                    self.reactant_product_num = stmt.get_reactant_product_num()
+                    self.reaction = stmt
+                    break
+        if self.reaction is not None:
+            f = open(os.path.join(sys.path[0], "db.json"), "r")
+            data = f.read()
+            rate_laws = orjson.loads(data)
+            for rate_law in rate_laws['rateml']['listOfRateLaws']['law']:
+                substrate_product_num = ''
+                substrate_product_num += rate_law['_numSubstrates'] + rate_law['_numProducts']
+                
+                constants: list = rate_law['listOfParameters']['parameter']
+                if substrate_product_num == self.reactant_product_num:
+                    expression = substitute_rate_law_participants(rate_law['_infixExpression'], self.reaction)
+                    self.relevant_rate_laws.append({
+                        'name': rate_law['_displayName'],
+                        'orig_expr': rate_law['_infixExpression'],
+                        'expression': expression,
+                        'constants': constants,
+                    })
+
+    def no_rate_law_check(self):
+        '''
+        check if there is no rate law exist
+        '''
+        assert isinstance(self.reaction, Reaction)
+        if self.reaction.get_rate_law():
             return '_error'
+        return 'correct'
     
-def substitute_rate_law(rate_law_str: str, substitute_dict: dict):
-    keys = list(substitute_dict.keys())
-    keys.sort(reverse=True)
-    new_substitute_dict = dict()
-    indicator = 0
-    for key in keys:
-        sub_key = 'zzz' + indicator + 'zzz'
-        new_substitute_dict[sub_key] = substitute_dict[key]
-        rate_law_str.replace(key, sub_key)
+def substitute_rate_law_participants(rate_law_str: str, reaction: Reaction):
+    '''
+    substitute a raw rate law string with a reaction
+    '''
+    indicator = 1
+    for substrate in reaction.get_reactants():
+        rate_law_str.replace('___S' + indicator + '___', substrate.get_name_text())
         indicator += 1
-    for key in substitute_dict.keys():
-        rate_law_str.replace(key, substitute_dict[key])
+    indicator = 1
+    for product in reaction.get_products():
+        rate_law_str.replace('___P' + indicator + '___', product.get_name_text())
+        indicator += 1
     return rate_law_str
-    
-def get_reaction_substrate_product_num(text: str):
-    '''
-    get the number of substrates and products of a reaction given a string (the text of reaction)
-    return in string form:
-    for example, reaction with one substrate and two products will return '12'.
-    '''
-    parser = AntimonyParser()
-    tree = parser.parse(text, recoverable=True)
-    for child in reversed(tree):
-        if isinstance(child, SimpleStmt):
-            stmt = child.get_stmt()
-            if stmt is None:
-                continue
-            if stmt.__class__.__name__ == 'Reaction':
-                return stmt.get_reactant_product_num()
-    return '_error'

@@ -300,6 +300,11 @@ class InvalidFileType(Issue):
         super().__init__(range, IssueSeverity.Error)
         self.message = "Invalid file type, please enter a StringLiteral"
 
+class GrammarHasIssues(Issue):
+    def __init__(self, range):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = "The grammar contains issues, please fix before importing"
+
 
 class AntimonySyntaxError(Exception):
     # TODO this is far from complete. To include: filename, possible token choices,
@@ -322,6 +327,7 @@ class SymbolType(Enum):
     Function = 'function'
     Unit = 'unit'
     ModularModel = 'mmodel'
+    Import = 'import'
 
     # Subtype of VARIABLE. Also known as "formula"
     Parameter = 'parameter'

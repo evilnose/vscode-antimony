@@ -11,9 +11,9 @@ suite('Extension Test Suite', () => {
     // Testing VSCode Configuration User Settings Visual Indication Highlight Switch Indication On
     test("Testing VSCode User Settings Visual Indication Highlight Switch Indication On", async () => {
         let settings = vscode.workspace.getConfiguration('vscode-antimony');
-        await settings.update("switchAnnotatedVariableIndicationsOnOrOff", true, true);
+        await settings.update("annotatedVariableIndicatorOn", true, true);
         
-        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchAnnotatedVariableIndicationsOnOrOff") === true) {
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("annotatedVariableIndicatorOn") === true) {
             assert(true);
         } else {
             assert(false);
@@ -23,9 +23,9 @@ suite('Extension Test Suite', () => {
     // Testing VSCode Configuration User Settings Visual Indication Highlight Switch Indication Off
     test("Testing VSCode User Settings Visual Indication Highlight Switch Indication Off", async () => {
         let settings = vscode.workspace.getConfiguration('vscode-antimony');
-        await settings.update("switchAnnotatedVariableIndicationsOnOrOff", false, true);
+        await settings.update("annotatedVariableIndicatorOn", false, true);
         
-        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchAnnotatedVariableIndicationsOnOrOff") === false) {
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("annotatedVariableIndicatorOn") === false) {
             assert(true);
         } else {
             assert(false);
@@ -50,13 +50,13 @@ suite('Extension Test Suite', () => {
 
     // Testing VSCode Context Menu Visual Indication Highlight Switch On and Setting Syncing
     test("Testing VSCode Context Menu Visual Indication Highlight Switch On and Both Settings Syncing", async (done) => {
-        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchAnnotatedVariableIndicationsOnOrOff") === false) {
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("annotatedVariableIndicatorOn") === false) {
             vscode.commands.executeCommand('antimony.switchIndicationOn');
         }
 
         done();
 
-        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchAnnotatedVariableIndicationsOnOrOff") === true) {
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("annotatedVariableIndicatorOn") === true) {
             assert(true);
         } else {
             assert(false);
@@ -65,11 +65,11 @@ suite('Extension Test Suite', () => {
 
     // Testing VSCode Context Menu Visual Indication Highlight Switch Off and Both Settings Syncing
     test("Testing VSCode Context Menu Visual Indication Highlight Switch Off and Both Settings Syncing", async () => {
-        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchAnnotatedVariableIndicationsOnOrOff") === true) {
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("annotatedVariableIndicatorOn") === true) {
             await vscode.commands.executeCommand('antimony.switchIndicationOff');
         }
         
-        if (vscode.workspace.getConfiguration('vscode-antimony').get("switchAnnotatedVariableIndicationsOnOrOff") === false) {
+        if (vscode.workspace.getConfiguration('vscode-antimony').get("annotatedVariableIndicatorOn") === false) {
             assert(true);
         } else {
             assert(false);

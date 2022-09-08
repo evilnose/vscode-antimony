@@ -220,6 +220,7 @@ def get_rate_law_dict(ls: LanguageServer, args):
         'name': rate law name,
         'orig_expr': the original expression to display to users
         'expression': the substituted expression(includes the real reactants and products),
+        'latex': the rate law in latex form
         'constants': constants,
     }
     '''

@@ -40,6 +40,7 @@ class RateLawReader:
                         'name': rate_law['_displayName'],
                         'orig_expr': rate_law['_infixExpression'],
                         'expression': expression,
+                        'latex': rate_law['_display'],
                         'constants': constants,
                     })
 

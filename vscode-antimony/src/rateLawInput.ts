@@ -17,14 +17,20 @@ import { Stats } from 'webpack';
  * This first part uses the helper class `MultiStepInput` that wraps the API for the multi-step case.
  */
 export async function rateLawMultiStepInput(context: ExtensionContext, initialEntity: string = null) {
-    var databases;
+    var databases = [];
+    var rateLawDict;
     // const doc = vscode.window.activeTextEditor.document
     // const uri = doc.uri.toString();
     vscode.commands.executeCommand('antimony.getRateLawDict', initialEntity).then(async (result) => {
-        databases = result;
-        // console.log(result)
-    
-    console.log(databases)
+        rateLawDict = result;
+        
+        console.log(rateLawDict[0].latex)
+
+        for (let i = 0; i < rateLawDict.length; i++) {
+            databases.push(rateLawDict[i].latex.toString());
+        }
+
+        console.log(databases)
 
 
     interface State {

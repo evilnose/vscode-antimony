@@ -332,7 +332,7 @@ class Reaction(TrunkNode):
         get the number of reactant and product in a reaction, return in string form:
         for example, a reaction with one reactant and two products will return '12'
         '''
-        return '' + len(self.get_reactants()) + len(self.get_products())
+        return '' + str(len(self.get_reactants())) + str(len(self.get_products()))
 
     def get_reactants(self) -> List[Species]:
         slist = self.get_reactant_list()

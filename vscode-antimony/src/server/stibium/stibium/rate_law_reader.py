@@ -16,7 +16,7 @@ class RateLawReader:
         tree = parser.parse(text, recoverable=True)
         self.reactant_product_num = '_error'
         self.reaction = None
-        for child in tree:
+        for child in tree.children:
             if isinstance(child, SimpleStmt):
                 stmt = child.get_stmt()
                 if stmt is None:

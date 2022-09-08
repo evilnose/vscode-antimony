@@ -22,8 +22,10 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
     // const uri = doc.uri.toString();
     vscode.commands.executeCommand('antimony.getRateLawDict', initialEntity).then(async (result) => {
         databases = result;
-        console.log(result)
-    });
+        // console.log(result)
+    
+    console.log(databases)
+
 
     interface State {
         title: string;
@@ -107,6 +109,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
         'entity': state.entity
     }
     // window.showInformationMessage(`Creating Application Service '${state.name}'`);
+    });
 }
 
 

@@ -7,6 +7,7 @@ import {
 	ServerOptions,
 } from 'vscode-languageclient/node';
 import { multiStepInput } from './annotationInput';
+import { rateLawMultiStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
 
@@ -48,8 +49,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// insert rate law
 	context.subscriptions.push(
-		vscode.commands.registerCommand('antimony.insertRateLaw',
-			(...args: any[]) => createAnnotationDialog(context, args)));
+		vscode.commands.registerCommand('antimony.insertRateLawDialog',
+			(...args: any[]) => insertRateLawDialog(context, args)));
 
 	// convertion
 	context.subscriptions.push(
@@ -235,7 +236,7 @@ export function deactivate(): Thenable<void> | undefined {
 }
 
 // insert rate law
-async function insertRateLaw(context: vscode.ExtensionContext, args: any[]) {
+async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]) {
 	// wait till client is ready, or the Python server might not have started yet.
 	// note: this is necessary for any command that might use the Python language server.
 	if (!client) {
@@ -277,29 +278,8 @@ async function insertRateLaw(context: vscode.ExtensionContext, args: any[]) {
 	vscode.commands.executeCommand('antimony.sendType', lineStr, charStr, uri).then(async (result) => {
 		const selectedType = await getResult(result);
 		const selectedItem = await multiStepInput(context, initialQuery, selectedType);
-		await insertAnnotation(selectedItem, initialEntity, line);
+		await insertRateLaw(selectedItem, line);
 	});
-
-	// const position = selection.active;
-	// vscode.commands.executeCommand('antimony.getRateLawDict', selectedText, uri).then(async (result) => {
-	// 	// const selectedType = await getResult(result);
-	// 	// const selectedItem = await multiStepInput(context, initialQuery, selectedType);
-	// 	// await insertAnnotation(selectedItem, initialEntity, line);
-	// });
-	
-	// let line = selection.start.line
-
-	// const positionAt = selection.anchor;
-	// const lineStr = positionAt.line.toString();
-	// const charStr = positionAt.character.toString();
-	// const initialEntity = selectedText || 'entityName';
-	// let initialQuery;
-	// // get current file
-	// if (args.length == 2) {
-	// 	initialQuery = args[1];
-	// } else {
-	// 	initialQuery = selectedText;
-	// }
 }
 
 // ****** helper functions ******
@@ -409,6 +389,15 @@ async function insertAnnotation(selectedItem, entityName, line) {
 	} else {
 		snippetText = `\n\${1:${entityName}} identity "http://identifiers.org/${prefix}/${id}"`;
 	}
+	const snippetStr = new vscode.SnippetString(snippetText);
+	const doc = vscode.window.activeTextEditor.document;
+	const pos = doc.lineAt(line).range.end;
+	vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
+}
+
+async function insertRateLaw(selectedRateLaw, line) {
+	let snippetText;
+	snippetText = `${selectedRateLaw}`;
 	const snippetStr = new vscode.SnippetString(snippetText);
 	const doc = vscode.window.activeTextEditor.document;
 	const pos = doc.lineAt(line).range.end;

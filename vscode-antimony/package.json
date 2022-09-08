@@ -82,7 +82,7 @@
 				"title": "Create Annotation"
 			},
 			{
-				"command": "antimony.insertRateLaw",
+				"command": "antimony.insertRateLawDialog",
 				"title": "Insert Rate Law"
 			},
 			{
@@ -126,7 +126,7 @@
 					"when": "editorLangId == antimony"
 				},
 				{
-					"command": "antimony.insertRateLaw",
+					"command": "antimony.insertRateLawDialog",
 					"title": "Insert Rate Law",
 					"group": "1_modification",
 					"when": "editorLangId == antimony"

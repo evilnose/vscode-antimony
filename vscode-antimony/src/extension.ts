@@ -245,41 +245,35 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 	}
 	await client.onReady();
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
-	// dialog for rate law
+	// dialog for annotation
 	const selection = vscode.window.activeTextEditor.selection
 	// get the selected text
 	const doc = vscode.window.activeTextEditor.document
-	const uri = doc.uri.toString();
 	const selectedText = doc.getText(selection);
+	console.log(selectedText)
 	// get the position for insert
-	let line = selection.start.line
-	// while (line <= doc.lineCount - 1) {
-	// 	const text = doc.lineAt(line).text
-	// 	if (text.localeCompare("end", undefined, { sensitivity: 'accent' }) == 0) {
-	// 		line -= 1;
-	// 		break;
-	// 	}
-	// 	line += 1;
+	const selectedLine = selection.anchor.line
+	console.log(selectedLine);
+	
+	// const selectedReaction = selectedText || 'entityName';
+	// let initialQuery;
+	// // get current file
+	// if (args.length == 2) {
+	// 	initialQuery = args[1];
+	// } else {
+	// 	initialQuery = selectedText;
 	// }
-	vscode.commands.executeCommand('antimony.getRateLawDict', selectedText, uri).then(async (result) => {
-		
-	});
-	const positionAt = selection.anchor;
-	const lineStr = positionAt.line.toString();
-	const charStr = positionAt.character.toString();
-	const initialEntity = selectedText || 'entityName';
-	let initialQuery;
-	// get current file
-	if (args.length == 2) {
-		initialQuery = args[1];
-	} else {
-		initialQuery = selectedText;
-	}
-	vscode.commands.executeCommand('antimony.sendType', lineStr, charStr, uri).then(async (result) => {
-		const selectedType = await getResult(result);
-		const selectedItem = await rateLawMultiStepInput(context, initialQuery, selectedType);
-		await insertRateLaw(selectedItem, line);
-	});
+
+	// initialQuery is selectedReaction
+	const selectedItem = await rateLawMultiStepInput(context, selectedText);
+	// 	await insertRateLaw(selectedRateLaw, line);
+
+
+	// vscode.commands.executeCommand('antimony.sendType', lineStr, charStr, uri).then(async (result) => {
+	// 	const selectedType = await getResult(result);
+	// 	const selectedItem = await rateLawMultiStepInput(context, initialQuery, selectedType);
+	// 	await insertAnnotation(selectedItem, selectedReaction, line);
+	// });
 }
 
 // ****** helper functions ******

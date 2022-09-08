@@ -16,16 +16,14 @@ import { Stats } from 'webpack';
  * 
  * This first part uses the helper class `MultiStepInput` that wraps the API for the multi-step case.
  */
-export async function rateLawMultiStepInput(context: ExtensionContext, initialEntity: string = null, selectedType: string = null) {
-    console.log("selected type: " + selectedType);
+export async function rateLawMultiStepInput(context: ExtensionContext, initialEntity: string = null) {
     var databases;
-    if (selectedType === 'reaction') {
-        const doc = vscode.window.activeTextEditor.document
-        const uri = doc.uri.toString();
-        vscode.commands.executeCommand('antimony.getRateLawDict', selectedType, uri).then(async (result) => {
-            databases = result;
-        });
-    }
+    // const doc = vscode.window.activeTextEditor.document
+    // const uri = doc.uri.toString();
+    vscode.commands.executeCommand('antimony.getRateLawDict', initialEntity).then(async (result) => {
+        databases = result;
+        console.log(result)
+    });
 
     interface State {
         title: string;
@@ -48,7 +46,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
         const pick = await input.showQuickPick({
             title,
             step: 1,
-            totalSteps: 2,
+            totalSteps: 4,
             placeholder: 'Pick rate law which matches to the reaction',
             items: databases,
             activeItem: state.database,

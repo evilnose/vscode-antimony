@@ -6,7 +6,7 @@ import {
 	LanguageClientOptions,
 	ServerOptions,
 } from 'vscode-languageclient/node';
-import { multiStepInput } from './annotationInput';
+import { annotationMultiStepInput } from './annotationInput';
 import { rateLawMultiStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';

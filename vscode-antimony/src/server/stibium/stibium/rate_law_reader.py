@@ -58,10 +58,10 @@ def substitute_rate_law_participants(rate_law_str: str, reaction: Reaction):
     '''
     indicator = 1
     for substrate in reaction.get_reactants():
-        rate_law_str.replace('___S' + indicator + '___', substrate.get_name_text())
+        rate_law_str.replace('___S' + str(indicator) + '___', substrate.get_name_text())
         indicator += 1
     indicator = 1
     for product in reaction.get_products():
-        rate_law_str.replace('___P' + indicator + '___', product.get_name_text())
+        rate_law_str.replace('___P' + str(indicator) + '___', product.get_name_text())
         indicator += 1
     return rate_law_str

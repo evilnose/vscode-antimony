@@ -218,7 +218,7 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 	}
 	vscode.commands.executeCommand('antimony.sendType', lineStr, charStr, uri).then(async (result) => {
 		const selectedType = await getResult(result);
-		const selectedItem = await multiStepInput(context, initialQuery, selectedType);
+		const selectedItem = await annotationMultiStepInput(context, initialQuery, selectedType);
 		await insertAnnotation(selectedItem, initialEntity, line);
 	});
 }
@@ -277,7 +277,7 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 	}
 	vscode.commands.executeCommand('antimony.sendType', lineStr, charStr, uri).then(async (result) => {
 		const selectedType = await getResult(result);
-		const selectedItem = await multiStepInput(context, initialQuery, selectedType);
+		const selectedItem = await rateLawMultiStepInput(context, initialQuery, selectedType);
 		await insertRateLaw(selectedItem, line);
 	});
 }

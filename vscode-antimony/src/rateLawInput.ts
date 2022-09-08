@@ -46,8 +46,8 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
         const pick = await input.showQuickPick({
             title,
             step: 1,
-            totalSteps: 4,
-            placeholder: 'Pick rate law which matches to the reaction',
+            totalSteps: 2,
+            placeholder: 'Select rate law',
             items: databases,
             activeItem: state.database,
             shouldResume: shouldResume,
@@ -63,9 +63,9 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
     async function inputQuery(input: MultiStepInput, state: Partial<State>) {
         const pick = await input.showQuickPick({
             title,
-            step: 4,
-            totalSteps: 4,
-            placeholder: 'Select rate law',
+            step: 2,
+            totalSteps: 2,
+            placeholder: 'Input constant',
             items: [],
             activeItem: null,
             shouldResume: shouldResume,

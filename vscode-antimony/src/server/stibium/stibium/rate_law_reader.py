@@ -26,7 +26,7 @@ class RateLawReader:
                     self.reaction = stmt
                     break
         if self.reaction is not None:
-            f = open(os.path.join(sys.path[0], "db.json"), "r")
+            f = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "db.json"), "r")
             data = f.read()
             rate_laws = orjson.loads(data)
             for rate_law in rate_laws['rateml']['listOfRateLaws']['law']:

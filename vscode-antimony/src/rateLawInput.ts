@@ -27,7 +27,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
         console.log(rateLawDict[0].latex)
 
         for (let i = 0; i < rateLawDict.length; i++) {
-            databases.push(rateLawDict[i].latex.toString());
+            databases.push({id: rateLawDict[i].latex.toString(), label: rateLawDict[i].name}); 
         }
 
         console.log(databases)

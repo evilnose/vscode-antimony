@@ -75,7 +75,6 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
             shouldResume: shouldResume,
             onInputChanged: (value) => {onQueryUpdated(state.database['id'], value, state.database['label'], input)}
         });
-        console.log(state.database['label'])
         state.entity = pick;
     }
 
@@ -89,9 +88,6 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
             return;
         }
 
-        console.log(rateLawDict[0])
-        console.log(rateLawName)
-
         let index;
         for (let i = 0; i < rateLawDict.length; i++) {
             if (rateLawDict[i].name === rateLawName) {
@@ -100,28 +96,20 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
             }
         }
 
-        console.log(index)
-
-        console.log(query)
-
-        console.log(rateLawDict[index].constants.length)
-
         const constantDict = [];
 
         for (let i = 0; i < rateLawDict[index].constants.length; i++) {
             constantDict.push({constant: rateLawDict[index].constants[i]._name, input: query});
         }
 
-        console.log(rateLawDict[0].constants[0]._name)
-        console.log(constantDict)
         window.withProgress({
 			location: ProgressLocation.Notification,
 			title: "Instantiating rate law...",
 			cancellable: true
 		}, (progress, token) => {
             return commands.executeCommand('antimony.getRateLawStr', expresion, constantDict).then(async (result) => {
-                await input.onQueryResults(result);
                 console.log(result)
+                await input.onQueryResults(result);
             });
         })
     }

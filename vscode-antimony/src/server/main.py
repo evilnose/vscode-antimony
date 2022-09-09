@@ -256,10 +256,10 @@ def substitute_rate_law_constants(ls: LanguageServer, args):
     for key in keys:
         sub_key = 'zzz' + str(indicator) + 'zzz'
         new_substitute_dict[sub_key] = d[key]
-        rate_law.replace(key, sub_key)
+        rate_law = rate_law.replace(key, sub_key)
         indicator += 1
-    for key in d.keys():
-        rate_law.replace(key, d[key])
+    for key in new_substitute_dict.keys():
+        rate_law = rate_law.replace(key, new_substitute_dict[key])
     return rate_law
 
 #### Hover for displaying information ####

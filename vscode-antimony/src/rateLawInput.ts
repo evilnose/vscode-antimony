@@ -27,7 +27,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
         console.log(rateLawDict[0].latex)
 
         for (let i = 0; i < rateLawDict.length; i++) {
-            databases.push({id: rateLawDict[i].latex.toString(), label: rateLawDict[i].name}); 
+            databases.push({id: rateLawDict[i].expression, label: rateLawDict[i].name}); 
         }
 
         console.log(databases)
@@ -77,12 +77,12 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
             items: [],
             activeItem: null,
             shouldResume: shouldResume,
-            onInputChanged: (value) => onQueryUpdated(state.database.toString(), value, input),
+            onInputChanged: (value) => onQueryUpdated(state.database['id'], value, input),
         });
         state.entity = pick;
     }
 
-    async function onQueryUpdated(database: string, query: string, input: MultiStepInput) {
+    async function onQueryUpdated(expresion: string, query: string, input: MultiStepInput) {
         await sleep(666);
         if (input.current && input.current.step === 2 && input.instanceOfQuickPick(input.current)) {
             if (input.current.value !== query) {
@@ -96,7 +96,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
 			title: "Instantiating rate law...",
 			cancellable: true
 		}, (progress, token) => {
-            return commands.executeCommand('antimony.getRateLawStr', query, database).then(async (result) => {
+            return commands.executeCommand('antimony.getRateLawStr', expresion, query,).then(async (result) => {
                 await input.onQueryResults(result);
             });
         })

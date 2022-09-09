@@ -250,24 +250,21 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 	// get the selected text
 	const doc = vscode.window.activeTextEditor.document
 	const selectedText = doc.getText(selection);
-	console.log(selectedText)
+
 	// get the position for insert
 	const selectedLine = selection.anchor.line
-	console.log(selectedLine);
-	
-	// const selectedReaction = selectedText || 'entityName';
-	// let initialQuery;
-	// // get current file
-	// if (args.length == 2) {
-	// 	initialQuery = args[1];
-	// } else {
-	// 	initialQuery = selectedText;
-	// }
 
-	// initialQuery is selectedReaction
-	const selectedItem = await rateLawMultiStepInput(context, selectedText);
-	// 	await insertRateLaw(selectedRateLaw, line);
+	console.log(selectedText)
 
+	let selectedItem;
+	selectedItem = await new Promise<void>((resolve, reject) => {
+		rateLawMultiStepInput(context, selectedText, selectedLine); 
+		resolve()
+    });
+
+	console.log(selectedItem);
+
+	// await insertRateLaw(selectedItem, selectedLine);
 
 	// vscode.commands.executeCommand('antimony.sendType', lineStr, charStr, uri).then(async (result) => {
 	// 	const selectedType = await getResult(result);
@@ -389,11 +386,11 @@ async function insertAnnotation(selectedItem, entityName, line) {
 	vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
 }
 
-async function insertRateLaw(selectedRateLaw, line) {
-	let snippetText;
-	snippetText = `${selectedRateLaw}`;
-	const snippetStr = new vscode.SnippetString(snippetText);
-	const doc = vscode.window.activeTextEditor.document;
-	const pos = doc.lineAt(line).range.end;
-	vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
-}
+// async function insertRateLaw(selectedRateLaw, line) {
+// 	let snippetText;
+// 	snippetText = `${selectedRateLaw}`;
+// 	const snippetStr = new vscode.SnippetString(snippetText);
+// 	const doc = vscode.window.activeTextEditor.document;
+// 	const pos = doc.lineAt(line).range.end;
+// 	vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
+// }

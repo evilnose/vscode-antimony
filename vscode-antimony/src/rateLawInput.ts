@@ -16,7 +16,7 @@ import { Stats } from 'webpack';
  * 
  * This first part uses the helper class `MultiStepInput` that wraps the API for the multi-step case.
  */
-export async function rateLawMultiStepInput(context: ExtensionContext, initialEntity: string = null) {
+export async function rateLawMultiStepInput(context: ExtensionContext, initialEntity: string = null, line: number) {
     var databases = [];
     var rateLawDict;
     // const doc = vscode.window.activeTextEditor.document
@@ -110,6 +110,13 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
             return commands.executeCommand('antimony.getRateLawStr', expresion, constantDict).then(async (result) => {
                 console.log(result)
                 await input.onQueryResults(result);
+                // return result;
+                let snippetText;
+                snippetText = result;
+                const snippetStr = new vscode.SnippetString(" " + snippetText + ";");
+                const doc = vscode.window.activeTextEditor.document;
+                const pos = doc.lineAt(line).range.end;
+                vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
             });
         })
     }
@@ -263,33 +270,30 @@ export class MultiStepInput {
 
     async onQueryResults(result) {
         if (this.current && this.current.step === 2) {
-            if (this.instanceOfQuickPick(this.current)) {
-                if (result.error) {
-                    this.current.items = [];
+            // if (this.instanceOfQuickPick(this.current)) {
+            //     if (result.error) {
+            //         this.current.items = [];
 
-                    // Don't display errors too often
-                    const curMillis = new Date().getTime();
-                    if (curMillis - this.lastErrorMillis < 1000) {
-                        return;
-                    }
-                    this.lastErrorMillis = curMillis;
-                    window.showErrorMessage(`Could not perform query: ${result.error}`).then(() => console.log('finished'));
-                    return;
-                }
+            //         // Don't display errors too often
+            //         const curMillis = new Date().getTime();
+            //         if (curMillis - this.lastErrorMillis < 1000) {
+            //             return;
+            //         }
+            //         this.lastErrorMillis = curMillis;
+            //         window.showErrorMessage(`Could not perform query: ${result.error}`).then(() => console.log('finished'));
+            //         return;
+            //     }
 
-                if (this.current.value === result.query) {
-                    if (result.items.length == 0) {
-                        window.showInformationMessage("Annotation not found")
-                    }
-                    this.current.items = result.items.map((item) => {
-                        item['label'] = item['name'];
-                        item['detail'] = item['detail'];
-                        item['description'] = 'description';
-                        item['alwaysShow'] = true;
-                        return item;
-                    });
-                }
-            }
+            //     if (this.current.value === result.query) {
+            //         if (result.items.length == 0) {
+            //             window.showInformationMessage("Annotation not found")
+            //         }
+            //         console.log(result)
+            //         return result;
+            //     }
+            // }
+            console.log(result)
+            return result;
         }
     }
 

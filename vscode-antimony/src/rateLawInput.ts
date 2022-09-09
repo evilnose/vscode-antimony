@@ -77,7 +77,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
             items: [],
             activeItem: null,
             shouldResume: shouldResume,
-            onInputChanged: (value) => onQueryUpdated(state.database['id'], value, input),
+            onInputChanged: (value) => onQueryUpdated(state.database.toString(), value, input),
         });
         state.entity = pick;
     }
@@ -93,10 +93,10 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
         }
         window.withProgress({
 			location: ProgressLocation.Notification,
-			title: "Searching for rate laws...",
+			title: "Instantiating rate law...",
 			cancellable: true
 		}, (progress, token) => {
-            return commands.executeCommand('antimony.sendQuery', database, query).then(async (result) => {
+            return commands.executeCommand('antimony.getRateLawStr', query, database).then(async (result) => {
                 await input.onQueryResults(result);
             });
         })

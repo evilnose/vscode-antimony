@@ -19,7 +19,6 @@ import { Stats } from 'webpack';
 export async function rateLawMultiStepInput(context: ExtensionContext, initialEntity: string = null) {
     var databases = [];
     var rateLawDict;
-    const constantDict = new Map();
     // const doc = vscode.window.activeTextEditor.document
     // const uri = doc.uri.toString();
     vscode.commands.executeCommand('antimony.getRateLawDict', initialEntity).then(async (result) => {
@@ -107,13 +106,14 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
 
         console.log(rateLawDict[index].constants.length)
 
+        const constantDict = [];
+
         for (let i = 0; i < rateLawDict[index].constants.length; i++) {
-            constantDict.set(rateLawDict[index].constants[i]._name, query);
+            constantDict.push(query);
         }
 
         console.log(rateLawDict[0].constants[0]._name)
         console.log(constantDict)
-        console.log(constantDict.keys)
         window.withProgress({
 			location: ProgressLocation.Notification,
 			title: "Instantiating rate law...",

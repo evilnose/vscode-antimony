@@ -19,19 +19,15 @@ import { Stats } from 'webpack';
 export async function rateLawMultiStepInput(context: ExtensionContext, initialEntity: string = null) {
     var databases = [];
     var rateLawDict;
+    const constantDict = new Map();
     // const doc = vscode.window.activeTextEditor.document
     // const uri = doc.uri.toString();
     vscode.commands.executeCommand('antimony.getRateLawDict', initialEntity).then(async (result) => {
         rateLawDict = result;
         
-        console.log(rateLawDict[0].latex)
-
         for (let i = 0; i < rateLawDict.length; i++) {
-            databases.push({id: rateLawDict[i].expression, label: rateLawDict[i].name}); 
+            databases.push({id: rateLawDict[i].expression, label: rateLawDict[i].name, index: i}); 
         }
-
-        console.log(databases)
-
 
     interface State {
         title: string;
@@ -73,16 +69,18 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
             title,
             step: 2,
             totalSteps: 2,
+            // Later implement dynamic constant and displaying dynamic number of constants and have the user input multiple constants separated by a comma so we can parse
             placeholder: 'Input constant',
             items: [],
             activeItem: null,
             shouldResume: shouldResume,
-            onInputChanged: (value) => onQueryUpdated(state.database['id'], value, input),
+            onInputChanged: (value) => {onQueryUpdated(state.database['id'], value, state.database['label'], input)}
         });
+        console.log(state.database['label'])
         state.entity = pick;
     }
 
-    async function onQueryUpdated(expresion: string, query: string, input: MultiStepInput) {
+    async function onQueryUpdated(expresion: string, query: string, rateLawName: string, input: MultiStepInput) {
         await sleep(666);
         if (input.current && input.current.step === 2 && input.instanceOfQuickPick(input.current)) {
             if (input.current.value !== query) {
@@ -91,13 +89,39 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
         } else {
             return;
         }
+
+        console.log(rateLawDict[0])
+        console.log(rateLawName)
+
+        let index;
+        for (let i = 0; i < rateLawDict.length; i++) {
+            if (rateLawDict[i].name === rateLawName) {
+                index = i;
+                break;
+            }
+        }
+
+        console.log(index)
+
+        console.log(query)
+
+        console.log(rateLawDict[index].constants.length)
+
+        for (let i = 0; i < rateLawDict[index].constants.length; i++) {
+            constantDict.set(rateLawDict[index].constants[i]._name, query);
+        }
+
+        console.log(rateLawDict[0].constants[0]._name)
+        console.log(constantDict)
+        console.log(constantDict.keys)
         window.withProgress({
 			location: ProgressLocation.Notification,
 			title: "Instantiating rate law...",
 			cancellable: true
 		}, (progress, token) => {
-            return commands.executeCommand('antimony.getRateLawStr', expresion, query,).then(async (result) => {
+            return commands.executeCommand('antimony.getRateLawStr', expresion, constantDict).then(async (result) => {
                 await input.onQueryResults(result);
+                console.log(result)
             });
         })
     }

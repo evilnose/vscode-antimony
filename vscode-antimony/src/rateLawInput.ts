@@ -109,7 +109,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
         const constantDict = [];
 
         for (let i = 0; i < rateLawDict[index].constants.length; i++) {
-            constantDict.push(query);
+            constantDict.push({rateLawDict[index].constants[i]._name,query});
         }
 
         console.log(rateLawDict[0].constants[0]._name)

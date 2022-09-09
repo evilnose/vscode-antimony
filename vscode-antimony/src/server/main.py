@@ -245,18 +245,21 @@ def substitute_rate_law_constants(ls: LanguageServer, args):
     '''
     rate_law = args[0]
     substitute_dict = args[1]
-    
-    keys = list(substitute_dict.keys())
+    keys = list()
+    d = dict()
+    for item in substitute_dict:
+        keys.append(item.constant)
+        d[item.constant] = item.input
     keys.sort(reverse=True, key=len)
     new_substitute_dict = dict()
     indicator = 0
     for key in keys:
-        sub_key = 'zzz' + indicator + 'zzz'
-        new_substitute_dict[sub_key] = substitute_dict[key]
+        sub_key = 'zzz' + str(indicator) + 'zzz'
+        new_substitute_dict[sub_key] = d[key]
         rate_law.replace(key, sub_key)
         indicator += 1
-    for key in substitute_dict.keys():
-        rate_law.replace(key, substitute_dict[key])
+    for key in d.keys():
+        rate_law.replace(key, d[key])
     return rate_law
 
 #### Hover for displaying information ####

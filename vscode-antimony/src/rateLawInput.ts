@@ -5,11 +5,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import { QuickPickItem, window, Disposable, CancellationToken, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, Uri, commands, QuickPick } from 'vscode';
-import { integer, LogMessageNotification } from 'vscode-languageclient';
+import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, commands, QuickPick } from 'vscode';
 import { sleep } from './utils/utils';
 import { ProgressLocation } from 'vscode'
-import { Stats } from 'webpack';
 
 /**
  * A multi-step input using window.createQuickPick() and window.createInputBox().
@@ -19,8 +17,6 @@ import { Stats } from 'webpack';
 export async function rateLawMultiStepInput(context: ExtensionContext, initialEntity: string = null, line: number) {
     var databases = [];
     var rateLawDict;
-    // const doc = vscode.window.activeTextEditor.document
-    // const uri = doc.uri.toString();
     vscode.commands.executeCommand('antimony.getRateLawDict', initialEntity).then(async (result) => {
         rateLawDict = result;
         
@@ -56,9 +52,6 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
             shouldResume: shouldResume,
             onInputChanged: null,
         });
-        // if (pick instanceof MyButton) {
-        // 	return (input: MultiStepInput) => inputResourceGroupName(input, state);
-        // }
         state.database = pick;
         return (input: MultiStepInput) => inputQuery(input, state);
     }
@@ -68,7 +61,8 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
             title,
             step: 2,
             totalSteps: 2,
-            // Later implement dynamic constant and displaying dynamic number of constants and have the user input multiple constants separated by a comma so we can parse
+            // Later implement dynamic constant and displaying dynamic number of constants 
+            // and have the user input multiple constants separated by a comma so we can parse
             placeholder: 'Input constant',
             items: [],
             activeItem: null,
@@ -98,8 +92,8 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
 
         const constantDict = [];
 
-        for (let i = 0; i < rateLawDict[index].constants.length; i++) {
-            constantDict.push({constant: rateLawDict[index].constants[i]._name, input: query});
+        for (const element of rateLawDict[index].constants) {
+            constantDict.push({constant: element._name, input: query});
         }
 
         window.withProgress({
@@ -108,9 +102,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
 			cancellable: true
 		}, (progress, token) => {
             return commands.executeCommand('antimony.getRateLawStr', expresion, constantDict).then(async (result) => {
-                console.log(result)
-                await input.onQueryResults(result);
-                // return result;
+                // await input.onQueryResults(result);
                 let snippetText;
                 snippetText = result;
                 const snippetStr = new vscode.SnippetString(" " + snippetText + ";");
@@ -270,29 +262,6 @@ export class MultiStepInput {
 
     async onQueryResults(result) {
         if (this.current && this.current.step === 2) {
-            // if (this.instanceOfQuickPick(this.current)) {
-            //     if (result.error) {
-            //         this.current.items = [];
-
-            //         // Don't display errors too often
-            //         const curMillis = new Date().getTime();
-            //         if (curMillis - this.lastErrorMillis < 1000) {
-            //             return;
-            //         }
-            //         this.lastErrorMillis = curMillis;
-            //         window.showErrorMessage(`Could not perform query: ${result.error}`).then(() => console.log('finished'));
-            //         return;
-            //     }
-
-            //     if (this.current.value === result.query) {
-            //         if (result.items.length == 0) {
-            //             window.showInformationMessage("Annotation not found")
-            //         }
-            //         console.log(result)
-            //         return result;
-            //     }
-            // }
-            console.log(result)
             return result;
         }
     }

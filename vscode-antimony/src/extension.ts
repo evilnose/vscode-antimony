@@ -254,23 +254,10 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 	// get the position for insert
 	const selectedLine = selection.anchor.line
 
-	console.log(selectedText)
-
-	let selectedItem;
-	selectedItem = await new Promise<void>((resolve, reject) => {
+	await new Promise<void>((resolve, reject) => {
 		rateLawMultiStepInput(context, selectedText, selectedLine); 
 		resolve()
     });
-
-	console.log(selectedItem);
-
-	// await insertRateLaw(selectedItem, selectedLine);
-
-	// vscode.commands.executeCommand('antimony.sendType', lineStr, charStr, uri).then(async (result) => {
-	// 	const selectedType = await getResult(result);
-	// 	const selectedItem = await rateLawMultiStepInput(context, initialQuery, selectedType);
-	// 	await insertAnnotation(selectedItem, selectedReaction, line);
-	// });
 }
 
 // ****** helper functions ******
@@ -363,7 +350,6 @@ class AntCodeLensProvider implements vscode.CodeLensProvider {
 			let codeLens = new vscode.CodeLens(topOfDocument, c)
 			return [codeLens];
 		}
-
 		return [];
 	}
 }
@@ -385,12 +371,3 @@ async function insertAnnotation(selectedItem, entityName, line) {
 	const pos = doc.lineAt(line).range.end;
 	vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
 }
-
-// async function insertRateLaw(selectedRateLaw, line) {
-// 	let snippetText;
-// 	snippetText = `${selectedRateLaw}`;
-// 	const snippetStr = new vscode.SnippetString(snippetText);
-// 	const doc = vscode.window.activeTextEditor.document;
-// 	const pos = doc.lineAt(line).range.end;
-// 	vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
-// }

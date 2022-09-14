@@ -176,8 +176,11 @@ def get_annotations(ls: LanguageServer, args):
     uri = args[0]
     doc = server.workspace.get_document(uri)
     antfile_cache = get_antfile(doc)
-    all_annotations: list = antfile_cache.analyzer.all_annotations
-    return "|".join(all_annotations)
+    all_annotations: list = antfile_cache.analyzer.pending_annotations
+    annotation_texts = list()
+    for tup in all_annotations:
+        annotation_texts.append(tup[1].get_name_text())
+    return "|".join(annotation_texts)
 
 @server.thread()
 @server.command('antimony.sendQuery')

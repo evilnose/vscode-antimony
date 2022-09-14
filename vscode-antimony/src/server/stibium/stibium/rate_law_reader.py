@@ -1,5 +1,4 @@
 import os
-import sys
 import orjson
 from stibium.ant_types import SimpleStmt, Reaction
 from stibium.parse import AntimonyParser
@@ -29,12 +28,15 @@ class RateLawReader:
             f = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "db.json"), "r")
             data = f.read()
             rate_laws = orjson.loads(data)
+            reversibility = 'Irreversible'
+            if self.reaction.is_reversible():
+                reversibility = 'Reversible'
             for rate_law in rate_laws['rateml']['listOfRateLaws']['law']:
                 substrate_product_num = ''
                 substrate_product_num += rate_law['_numSubstrates'] + rate_law['_numProducts']
                 
                 constants: list = rate_law['listOfParameters']['parameter']
-                if substrate_product_num == self.reactant_product_num:
+                if substrate_product_num == self.reactant_product_num and reversibility in rate_law['_property']:
                     expression = substitute_rate_law_participants(rate_law['_infixExpression'], self.reaction)
                     self.relevant_rate_laws.append({
                         'name': rate_law['_displayName'],

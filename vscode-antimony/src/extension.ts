@@ -19,7 +19,7 @@ let highlightColor = "indigo";
 
 // Decoration type for annotated variables
 const annDecorationType = vscode.window.createTextEditorDecorationType({
-    backgroundColor: vscode.workspace.getConfiguration('vscode-antimony').get('highlightColor'),
+	backgroundColor: vscode.workspace.getConfiguration('vscode-antimony').get('highlightColor'),
 });
 
 // User Setting Configuration for Switching Annotations On/Off
@@ -63,7 +63,7 @@ function updateDecorations() {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-    annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
+	annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
 	// start the language server
 	await startLanguageServer(context);
 	vscode.workspace.onDidChangeConfiguration(async (e) => {
@@ -94,13 +94,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('antimony.createAnnotationDialog',
 			(...args: any[]) => createAnnotationDialog(context, args)));
 
-    // switch visual annotations on
-    context.subscriptions.push(
+	// switch visual annotations on
+	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.switchIndicationOn',
 			(...args: any[]) => switchIndicationOn(context, args)));
 
-    // switch visual annotations off
-    context.subscriptions.push(
+	// switch visual annotations off
+	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.switchIndicationOff',
 			(...args: any[]) => switchIndicationOff(context, args)));
 
@@ -133,11 +133,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 	context.subscriptions.push(codeLensProviderDisposable);
 
-    // timer for non annotated variable visual indicator
-    let timeout: NodeJS.Timer | undefined = undefined;
+	// timer for non annotated variable visual indicator
+	let timeout: NodeJS.Timer | undefined = undefined;
 
-    // update the decoration once in a certain time (throttle)
-    function triggerUpdateDecorations(throttle = false) {
+	// update the decoration once in a certain time (throttle)
+	function triggerUpdateDecorations(throttle = false) {
 		if (timeout) {
 			clearTimeout(timeout);
 			timeout = undefined;
@@ -150,18 +150,18 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	}
 
-    if (activeEditor) {
+	if (activeEditor) {
 		triggerUpdateDecorations();
 	}
 
-    vscode.window.onDidChangeActiveTextEditor(editor => {
+	vscode.window.onDidChangeActiveTextEditor(editor => {
 		activeEditor = editor;
 		if (editor) {
 			triggerUpdateDecorations();
 		}
 	}, null, context.subscriptions);
 
-    // update decorations on change to file
+	// update decorations on change to file
 	vscode.workspace.onDidChangeTextDocument(event => {
 		if (activeEditor && event.document === activeEditor.document) {
 			triggerUpdateDecorations(true);
@@ -217,11 +217,11 @@ async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any
 			'SBML': ['xml']
 		},
 		title: "Select a location to save your SBML file"
-    };
+	};
    vscode.window.showOpenDialog(options).then(fileUri => {
 	   if (fileUri && fileUri[0]) {
-	   		vscode.commands.executeCommand('antimony.antFiletoSBMLFile', vscode.window.activeTextEditor.document, 
-			   	fileUri[0].fsPath).then(async (result) => {
+			   vscode.commands.executeCommand('antimony.antFiletoSBMLFile', vscode.window.activeTextEditor.document, 
+				   fileUri[0].fsPath).then(async (result) => {
 				await checkConversionResult(result, "SBML");
 			});
 	   }
@@ -324,22 +324,22 @@ export function deactivate(): Thenable<void> | undefined {
 
 /** Prompts user to reload editor window in order for configuration change to take effect. */
 function promptToReloadWindow() {
-    const action = 'Reload';
+	const action = 'Reload';
   
-    vscode.window
-      .showInformationMessage(
-        `Reload window in order for visual indication change in Antimony to take effect.`,
-        action
-      )
-      .then(selectedAction => {
-        if (selectedAction === action) {
-          vscode.commands.executeCommand('workbench.action.reloadWindow');
-        }
-      });
+	vscode.window
+	  .showInformationMessage(
+		`Reload window in order for visual indication change in Antimony to take effect.`,
+		action
+	  )
+	  .then(selectedAction => {
+		if (selectedAction === action) {
+		  vscode.commands.executeCommand('workbench.action.reloadWindow');
+		}
+	  });
   }
 
 async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]) {
-    // wait till client is ready, or the Python server might not have started yet.
+	// wait till client is ready, or the Python server might not have started yet.
 	// note: this is necessary for any command that might use the Python language server.
 	if (!client) {
 		utils.pythonInterpreterError();
@@ -349,14 +349,14 @@ async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
-    annDecorationType.dispose();
+	annDecorationType.dispose();
 	
-    annotatedVariableIndicatorOn = false;
-    vscode.workspace.getConfiguration('vscode-antimony').update('annotatedVariableIndicatorOn', false, true);
+	annotatedVariableIndicatorOn = false;
+	vscode.workspace.getConfiguration('vscode-antimony').update('annotatedVariableIndicatorOn', false, true);
 }
 
 async function switchIndicationOn(context: vscode.ExtensionContext, args: any[]) {
-    // wait till client is ready, or the Python server might not have started yet.
+	// wait till client is ready, or the Python server might not have started yet.
 	// note: this is necessary for any command that might use the Python language server.
 	if (!client) {
 		utils.pythonInterpreterError();
@@ -366,24 +366,24 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
-    annotatedVariableIndicatorOn = true;
-    vscode.workspace.getConfiguration('vscode-antimony').update('annotatedVariableIndicatorOn', true, true);
+	annotatedVariableIndicatorOn = true;
+	vscode.workspace.getConfiguration('vscode-antimony').update('annotatedVariableIndicatorOn', true, true);
 
-    promptToReloadWindow();
+	promptToReloadWindow();
 }
 
 vscode.workspace.onDidChangeConfiguration(async (e) => {
-    if (!e.affectsConfiguration('vscode-antimony.highlightColor')) {
-        return;
-    }
-    promptToReloadWindow();
+	if (!e.affectsConfiguration('vscode-antimony.highlightColor')) {
+		return;
+	}
+	promptToReloadWindow();
 });
 
 // ****** helper functions ******
 
 // starting language server
 async function startLanguageServer(context: vscode.ExtensionContext) {
-    pythonInterpreter = getPythonInterpreter();
+	pythonInterpreter = getPythonInterpreter();
 	// verify the interpreter
 	const error = await verifyInterpreter(pythonInterpreter);
 	if (error !== 0) {

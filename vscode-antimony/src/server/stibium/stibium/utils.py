@@ -65,7 +65,6 @@ def formatted_code(node: Optional[TreeNode]):
 def to_uri(path: str) -> str:
     return pathlib.Path(path).as_uri()
 
-# Need to return proper errors and Antimony string
 def get_file_info(file: str):
     antimony.clearPreviousLoads()
     antimony.freeAll()

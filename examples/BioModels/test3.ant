@@ -1,0 +1,8 @@
+model tester_model()
+  R = 1
+  U = 2
+  UR = 4
+  J1: R + U -> UR; k3*U - k4*UR
+  k3 = 0.2
+  k4 = 0.6
+end

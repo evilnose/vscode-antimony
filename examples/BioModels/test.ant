@@ -1,0 +1,47 @@
+# This creates a model 'side_reaction', exposing the variables 'S' and 'k1':
+import "test2.ant"
+import "5.ant"
+import "test3.ant"
+
+model side_reaction(S, k1)
+  ES = 2
+  S = 1
+  J0: S + E -> SE; k1*k2*S*E - k2*ES
+  E = 3
+  SE = E+S
+  k2 = 0.4
+end
+
+model test3()
+  G = 1
+  A = 2
+  GA = 4
+  J1: G + A -> GA; k3*G - k4*A
+  k3 = 0.2
+  k4 = 0.6
+end
+
+# In this model, 'side_reaction' is imported twice:
+model full_pathway
+    -> S1; k1
+  S1 -> S2; k2*S1
+  S2 ->   ; k3*S2
+  AE: BIOMD0000000005()
+  A: side_reaction(S1, k4)
+  B: side_reaction(S2, k5)
+  W: test3()
+  TM: tester_model()
+  T2: test2(S2, k2)
+  #AE.M = 3
+  #W.G = 2
+  #Y.Q = 2
+
+  S1 = 0
+  S2 = 0
+  k1 = 0.3
+  k2 = 2.3
+  k3 = 3.5
+  k4 = 0.0004
+  k5 = 1
+
+end

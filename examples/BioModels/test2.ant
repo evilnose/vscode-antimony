@@ -1,0 +1,18 @@
+model test()
+  G = 1
+  A = 2
+  GA = 4
+  J1: G + A -> GA; k3*G - k4*A
+  k3 = 0.2
+  k4 = 0.6
+end
+
+model test2(Q, k4)
+  Q = 1
+  D = 2
+  QD = 4
+  J1: Q + D -> QD; k3*Q - k4*D
+  k3 = 0.2
+  k4 = 0.6
+  k7 = 0.4
+end

@@ -2,7 +2,7 @@
 import logging
 from tkinter.messagebox import YES
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
-from .types import GrammarHasIssues, InvalidFileType, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import FileAlreadyImported, GrammarHasIssues, InvalidFileType, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -443,7 +443,7 @@ class AntTreeAnalyzer:
         for scope, imp in self.pending_imports:
             self.handle_import(scope, imp)
 
-    # Handle each import
+    # Handle import
     def handle_import(self, scope: AbstractScope, imp: Import):
         name = imp.get_file_name()
         qname = QName(scope, name)
@@ -451,12 +451,18 @@ class AntTreeAnalyzer:
         if file_str is None:
             self.error.append(NoImportFile(name.range))
         elif file_str.get_issues():
-            self.error.append(GrammarHasIssues(name.range))
+            issues = list()
+            for issue in file_str.get_issues():
+                issues.append(issue.message.strip())
+            self.error.append(GrammarHasIssues(name.range, issues))
         elif type(name) != StringLiteral:
             self.error.append(InvalidFileType(name.range))
         else:
+            for node in file_str.tree.children:
+                if isinstance(node, ModularModel):
+                    self.handle_mmodel(node)
             self.table.insert(qname, SymbolType.Import, imp=file_str.text)
-        
+            
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
         self.pending_is_assignments.append((scope, is_assignment))
     

@@ -301,10 +301,18 @@ class InvalidFileType(Issue):
         self.message = "Invalid file type, please enter a StringLiteral"
 
 class GrammarHasIssues(Issue):
-    def __init__(self, range):
+    def __init__(self, range, issues: list()):
         super().__init__(range, IssueSeverity.Error)
-        self.message = "The grammar contains issues, please fix before importing"
+        issue_list = "The grammar contains issues, please fix before importing\n"
+        for issue in issues:
+            issue_list += "{}\n".format(issue)
+        self.message = issue_list
 
+class FileAlreadyImported(Issue):
+    def __init__(self, range, file: str):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("'{file}' has already been imported, please remove any extra "
+                        "import statements for '{file}'").format(file=file)
 
 class AntimonySyntaxError(Exception):
     # TODO this is far from complete. To include: filename, possible token choices,

@@ -5,18 +5,17 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, commands, QuickPick } from 'vscode';
+import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, commands, QuickPick, ProgressLocation } from 'vscode';
 import { sleep } from './utils/utils';
-import { ProgressLocation } from 'vscode'
 
 /**
  * A multi-step input using window.createQuickPick() and window.createInputBox().
  * 
  * This first part uses the helper class `MultiStepInput` that wraps the API for the multi-step case.
  */
-export async function rateLawMultiStepInput(context: ExtensionContext, initialEntity: string = null, line: number) {
-    var databases = [];
-    var rateLawDict;
+export async function rateLawMultiStepInput(context: ExtensionContext, line: number, initialEntity: string = null,) {
+    let databases = [];
+    let rateLawDict;
     vscode.commands.executeCommand('antimony.getRateLawDict', initialEntity).then(async (result) => {
         rateLawDict = result;
         
@@ -53,34 +52,27 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
             onInputChanged: null,
         });
         state.database = pick;
-        return (input: MultiStepInput) => inputQuery(input, state);
+        onQueryUpdated(state.database['id'], state.database['label'], input)
     }
 
-    async function inputQuery(input: MultiStepInput, state: Partial<State>) {
-        const pick = await input.showQuickPick({
-            title,
-            step: 2,
-            totalSteps: 2,
-            // Later implement dynamic constant and displaying dynamic number of constants 
-            // and have the user input multiple constants separated by a comma so we can parse
-            placeholder: 'Input constant',
-            items: [],
-            activeItem: null,
-            shouldResume: shouldResume,
-            onInputChanged: (value) => {onQueryUpdated(state.database['id'], value, state.database['label'], input)}
-        });
-        state.entity = pick;
-    }
+    // async function inputQuery(input: MultiStepInput, state: Partial<State>) {
+    //     const pick = await input.showQuickPick({
+    //         title,
+    //         step: 2,
+    //         totalSteps: 2,
+    //         // Later implement dynamic constant and displaying dynamic number of constants 
+    //         // and have the user input multiple constants separated by a comma so we can parse
+    //         placeholder: 'Input constant',
+    //         items: [],
+    //         activeItem: null,
+    //         shouldResume: shouldResume,
+    //         onInputChanged: (value) => {onQueryUpdated(state.database['id'], value, state.database['label'], input)}
+    //     });
+    //     state.entity = pick;
+    // }
 
-    async function onQueryUpdated(expresion: string, query: string, rateLawName: string, input: MultiStepInput) {
+    async function onQueryUpdated(expresion: string, rateLawName: string, input: MultiStepInput) {
         await sleep(666);
-        if (input.current && input.current.step === 2 && input.instanceOfQuickPick(input.current)) {
-            if (input.current.value !== query) {
-                return;
-            }
-        } else {
-            return;
-        }
 
         let index;
         for (let i = 0; i < rateLawDict.length; i++) {
@@ -93,7 +85,8 @@ export async function rateLawMultiStepInput(context: ExtensionContext, initialEn
         const constantDict = [];
 
         for (const element of rateLawDict[index].constants) {
-            constantDict.push({constant: element._name, input: query});
+            console.log(element)
+            constantDict.push({constant: element._name});
         }
 
         window.withProgress({

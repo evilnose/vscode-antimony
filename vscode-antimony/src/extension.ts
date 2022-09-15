@@ -255,7 +255,7 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 	const selectedLine = selection.anchor.line
 
 	await new Promise<void>((resolve, reject) => {
-		rateLawMultiStepInput(context, selectedText, selectedLine); 
+		rateLawMultiStepInput(context, selectedLine, selectedText); 
 		resolve()
     });
 }

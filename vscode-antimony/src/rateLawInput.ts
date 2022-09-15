@@ -72,38 +72,10 @@ export async function rateLawMultiStepInput(context: ExtensionContext, line: num
     // }
 
     async function onQueryUpdated(expresion: string, rateLawName: string, input: MultiStepInput) {
-        await sleep(666);
-
-        let index;
-        for (let i = 0; i < rateLawDict.length; i++) {
-            if (rateLawDict[i].name === rateLawName) {
-                index = i;
-                break;
-            }
-        }
-
-        const constantDict = [];
-
-        for (const element of rateLawDict[index].constants) {
-            console.log(element)
-            constantDict.push({constant: element._name});
-        }
-
-        window.withProgress({
-			location: ProgressLocation.Notification,
-			title: "Instantiating rate law...",
-			cancellable: true
-		}, (progress, token) => {
-            return commands.executeCommand('antimony.getRateLawStr', expresion, constantDict).then(async (result) => {
-                // await input.onQueryResults(result);
-                let snippetText;
-                snippetText = result;
-                const snippetStr = new vscode.SnippetString(" " + snippetText + ";");
-                const doc = vscode.window.activeTextEditor.document;
-                const pos = doc.lineAt(line).range.end;
-                vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
-            });
-        })
+        const snippetStr = new vscode.SnippetString(" " + expresion + ";");
+        const doc = vscode.window.activeTextEditor.document;
+        const pos = doc.lineAt(line).range.end;
+        vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
     }
 
     function shouldResume() {

@@ -245,17 +245,22 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 	}
 	await client.onReady();
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
-	// dialog for annotation
-	const selection = vscode.window.activeTextEditor.selection
-	// get the selected text
+	
+	// Get the current focused document
 	const doc = vscode.window.activeTextEditor.document
-	const selectedText = doc.getText(selection);
 
-	// get the position for insert
-	const selectedLine = selection.anchor.line
+	// Obtain line number position of cursor right click
+	const selectionCol = vscode.window.activeTextEditor.selection.active
+	const lineNum = doc.lineAt(selectionCol).lineNumber;
+	console.log(lineNum)
+
+	// Obtain text of the line number position
+	const selectedLine = doc.lineAt(selectionCol);
+	const selectedText = selectedLine.text;
+	console.log(selectedText)
 
 	await new Promise<void>((resolve, reject) => {
-		rateLawMultiStepInput(context, selectedLine, selectedText); 
+		rateLawMultiStepInput(context, lineNum, selectedText); 
 		resolve()
     });
 }

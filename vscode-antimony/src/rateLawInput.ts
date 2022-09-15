@@ -17,10 +17,26 @@ export async function rateLawMultiStepInput(context: ExtensionContext, line: num
     let databases = [];
     let rateLawDict;
     vscode.commands.executeCommand('antimony.getRateLawDict', initialEntity).then(async (result) => {
+        console.log(result)
+
         rateLawDict = result;
-        
-        for (let i = 0; i < rateLawDict.length; i++) {
-            databases.push({id: rateLawDict[i].expression, label: rateLawDict[i].name, index: i}); 
+
+        if (rateLawDict.error === "Rate law already exists") {
+            vscode.window
+	            .showInformationMessage(
+		        `Rate law already exists.`,
+	            )
+            return;
+        } else if (rateLawDict.error === "Did not select a reaction") {
+            vscode.window
+	            .showInformationMessage(
+		        `Did not select a reaction.`,
+	            )
+            return;
+        } else {        
+            for (let i = 0; i < rateLawDict.length; i++) {
+                databases.push({id: rateLawDict[i].expression, label: rateLawDict[i].name, index: i}); 
+            }
         }
 
     interface State {
@@ -44,7 +60,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, line: num
         const pick = await input.showQuickPick({
             title,
             step: 1,
-            totalSteps: 2,
+            totalSteps: 1,
             placeholder: 'Select rate law',
             items: databases,
             activeItem: state.database,

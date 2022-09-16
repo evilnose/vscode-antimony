@@ -23,13 +23,13 @@ export async function rateLawMultiStepInput(context: ExtensionContext, line: num
 
         if (rateLawDict.error === "Rate law already exists") {
             vscode.window
-	            .showInformationMessage(
+	            .showErrorMessage(
 		        `Rate law already exists.`,
 	            )
             return;
         } else if (rateLawDict.error === "Did not select a reaction") {
             vscode.window
-	            .showInformationMessage(
+            .showErrorMessage(
 		        `Did not select a reaction.`,
 	            )
             return;

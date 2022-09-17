@@ -236,32 +236,6 @@ def get_rate_law_dict(ls: LanguageServer, args):
         }
     return reader.relevant_rate_laws
 
-@server.command('antimony.getRateLawStr')
-def substitute_rate_law_constants(ls: LanguageServer, args):
-    '''
-    substitute a rate law string with a dictionary of constants to be substituted
-    :param args[0]: The rate law string
-    :param args[1]: The dictionary which keys are constants names and values are real constants to be substituted
-    '''
-    rate_law = args[0]
-    substitute_dict = args[1]
-    keys = list()
-    d = dict()
-    for item in substitute_dict:
-        keys.append(item.constant)
-        d[item.constant] = item.input
-    keys.sort(reverse=True, key=len)
-    new_substitute_dict = dict()
-    indicator = 0
-    for key in keys:
-        sub_key = 'zzz' + str(indicator) + 'zzz'
-        new_substitute_dict[sub_key] = d[key]
-        rate_law = rate_law.replace(key, sub_key)
-        indicator += 1
-    for key in new_substitute_dict.keys():
-        rate_law = rate_law.replace(key, new_substitute_dict[key])
-    return rate_law
-
 #### Hover for displaying information ####
 @server.feature(HOVER)
 def hover(params: TextDocumentPositionParams):

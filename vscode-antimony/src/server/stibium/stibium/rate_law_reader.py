@@ -41,7 +41,7 @@ class RateLawReader:
                     expression = substitute_rate_law_participants(rate_law['_infixExpression'], self.reaction)
                     expression = create_snippet(expression, constants)
                     self.relevant_rate_laws.append({
-                        'name': rate_law['_displayName'],
+                        'name': rate_law['_displayName'].strip(),
                         'orig_expr': rate_law['_infixExpression'],
                         'expression': expression,
                         'latex': rate_law['_display'],

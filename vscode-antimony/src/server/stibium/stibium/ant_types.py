@@ -6,6 +6,7 @@ from lark.lexer import Token
 from lark.tree import Tree
 
 from stibium.types import SrcRange, SymbolType, Variability
+vscode_logger = logging.getLogger("vscode-antimony logger")
 
 
 class TreeNode(abc.ABC):

@@ -12,7 +12,7 @@ from stibium.symbols import QName, BaseScope
 from stibium.tree_builder import Species, transform_tree
 from stibium.types import Issue, SrcLocation, SrcPosition
 from stibium.utils import to_uri
-
+vscode_logger = logging.getLogger("vscode-antimony logger")
 
 class AntCompletionKind(Enum):
     TEXT = auto()
@@ -52,6 +52,7 @@ class Completer:
         # TODO replace None with qname.token after get_qname_at_position is fixed
         puppet = parser.get_puppet_at_position(text, position)
         basics = [AntCompletion(name, AntCompletionKind.TEXT) for name in analyzer.get_all_names()]
+        imports = [AntCompletion(name, AntCompletionKind.TEXT) for name in analyzer.get_all_import_names()]
 
         # special rate law completions
         rate_laws = list()
@@ -86,7 +87,7 @@ class Completer:
                                                 reaction.is_reversible())
             rate_laws.append(AntCompletion(snippet, AntCompletionKind.RATE_LAW))
 
-        self._completions = basics + rate_laws
+        self._completions = basics + imports + rate_laws
 
     def _mass_action_ratelaw(self, name: str, reactants: List[Species], products: List[Species],
                              reversible: bool):

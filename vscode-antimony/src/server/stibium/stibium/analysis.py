@@ -1,6 +1,9 @@
 
 import logging
+from operator import truediv
+from queue import Empty
 from tkinter.messagebox import YES
+from pandas.tests import base
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
 from .types import FileAlreadyImported, GrammarHasIssues, InvalidFileType, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
@@ -61,6 +64,7 @@ def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
 class AntTreeAnalyzer:
     def __init__(self, root: FileNode):
         self.table = SymbolTable()
+        self.import_table = SymbolTable()
         self.root = root
         self.pending_is_assignments = []
         self.pending_annotations = []
@@ -85,6 +89,9 @@ class AntTreeAnalyzer:
                             if isinstance(st, ErrorNode):
                                 continue
                             stmt = st.get_stmt()
+                            if isinstance(stmt, Import):
+                                self.pre_handle_import(scope, stmt)
+                                continue
                             if stmt is None:
                                 continue
                             {
@@ -98,9 +105,8 @@ class AntTreeAnalyzer:
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
-                                'Import' : self.pre_handle_import,
-                            }[stmt.__class__.__name__](scope, stmt)
-                            self.handle_child_incomp(scope, stmt)
+                            }[stmt.__class__.__name__](scope, stmt, False)
+                            self.handle_child_incomp(scope, stmt, False)
             if isinstance(child, ModularModel):
                 scope = ModularModelScope(str(child.get_name()))
                 for cchild in child.children:
@@ -115,6 +121,9 @@ class AntTreeAnalyzer:
                             if isinstance(st, ErrorNode):
                                 continue
                             stmt = st.get_stmt()
+                            if isinstance(stmt, Import):
+                                self.pre_handle_import(scope, stmt)
+                                continue
                             if stmt is None:
                                 continue
                             {
@@ -128,12 +137,11 @@ class AntTreeAnalyzer:
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
-                                'Import' : self.pre_handle_import,
-                            }[stmt.__class__.__name__](scope, stmt)
-                            self.handle_child_incomp(scope, stmt)
+                            }[stmt.__class__.__name__](scope, stmt, False)
+                            self.handle_child_incomp(scope, stmt, False)
                     if isinstance(cchild, Parameters):
-                        self.handle_parameters(scope, cchild)
-                self.handle_mmodel(child)
+                        self.handle_parameters(scope, cchild, False)
+                self.handle_mmodel(child, False)
             if isinstance(child, Function):
                 scope = FunctionScope(str(child.get_name()))
                 for cchild in child.children:
@@ -142,16 +150,19 @@ class AntTreeAnalyzer:
                     if isinstance(cchild, ErrorNode):
                         continue
                     if isinstance(cchild, ArithmeticExpr):
-                        self.handle_arith_expr(scope, cchild)
+                        self.handle_arith_expr(scope, cchild, False)
                     if isinstance(cchild, Parameters):
-                        self.handle_parameters(scope, cchild)
-                self.handle_function(child, scope)
+                        self.handle_parameters(scope, cchild, False)
+                self.handle_function(child, scope, False)
             if isinstance(child, SimpleStmt):
                 if isinstance(child, ErrorToken):
                     continue
                 if isinstance(child, ErrorNode):
                     continue
                 stmt = child.get_stmt()
+                if isinstance(stmt, Import):
+                    self.pre_handle_import(base_scope, stmt)
+                    continue
                 if stmt is None:
                     continue
                 {
@@ -165,9 +176,8 @@ class AntTreeAnalyzer:
                     'FunctionCall' : self.handle_function_call,
                     'VariableIn' : self.handle_variable_in,
                     'IsAssignment' : self.pre_handle_is_assignment,
-                    'Import' : self.pre_handle_import,
-                }[stmt.__class__.__name__](base_scope, stmt)
-                self.handle_child_incomp(base_scope, stmt)
+                }[stmt.__class__.__name__](base_scope, stmt, False)
+                self.handle_child_incomp(base_scope, stmt, False)
         
         # get list of errors from the symbol table
         self.error = self.table.error
@@ -179,13 +189,23 @@ class AntTreeAnalyzer:
         self.pending_annotations = []
         self.pending_is_assignments = []
         self.check_parse_tree(self.root, BaseScope())
+        vscode_logger.info("the table:")
+        vscode_logger.info(str(self.table.get_all_names()))
+        vscode_logger.info("the import table:")
+        vscode_logger.info(str(self.import_table.get_all_names()))
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
+    
+    def resolve_import_qname(self, qname: QName):
+        return self.import_table.get(qname)
 
     def get_all_names(self) -> Set[str]:
         # TODO temporary method to satisfy auto-completion
         return self.table.get_all_names()
+
+    def get_all_import_names(self) -> Set[str]:
+        return self.import_table.get_all_names()
 
     def get_issues(self) -> List[Issue]:
         return (self.warning + self.error).copy()
@@ -308,6 +328,8 @@ class AntTreeAnalyzer:
                 function_name = leaf.get_function_name().get_name()
                 function = self.table.get(QName(BaseScope(), function_name))
                 if len(function) == 0:
+                    function = self.import_table.get(QName(BaseScope(), function_name))
+                if len(function) == 0:
                     self.error.append(UninitFunction(function_name.range, function_name.text))
                 else:
                     call_params = leaf.get_params().get_items() if leaf.get_params() is not None else []
@@ -319,6 +341,8 @@ class AntTreeAnalyzer:
                             expec_type = expec.type if expec is not None else None
                             call = leaf.get_params().get_items()[index]
                             call_name = self.table.get(QName(scope, call))
+                            if len(call_name) == 0:
+                                call_name = self.import_table.get(QName(scope, call))
                             call_type = call_name[0].type if len(call_name) != 0 else None
                             if not expec_type is None and not call_type is None and not call_type.derives_from(expec_type):
                                 self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
@@ -333,31 +357,43 @@ class AntTreeAnalyzer:
                     self.warning.append(SpeciesUndefined(leaf.range, text))
         return used
 
-    def get_unique_name(self, prefix: str):
-        return self.table.get_unique_name(prefix)
+    def get_unique_name(self, prefix: str, insert: bool):
+        if insert is True:
+            return self.import_table.get_unique_name(prefix)
+        else:
+            return self.table.get_unique_name(prefix)
 
-    def handle_child_incomp(self, scope: AbstractScope, node: TrunkNode):
+    def handle_child_incomp(self, scope: AbstractScope, node: TrunkNode, insert: bool):
         '''Find all `incomp` nodes among the descendants of node and record the compartment names.'''
         for child in node.descendants():
             # isinstance() is too slow here
             if child and type(child) == InComp:
                 child = cast(InComp, child)
-                self.table.insert(QName(scope, child.get_comp().get_name()), SymbolType.Compartment)
+                if insert is True:
+                    self.import_table.insert(QName(scope, child.get_comp().get_name()), SymbolType.Compartment)
+                else:
+                    self.table.insert(QName(scope, child.get_comp().get_name()), SymbolType.Compartment)
 
-    def handle_arith_expr(self, scope: AbstractScope, expr: TreeNode):
+    def handle_arith_expr(self, scope: AbstractScope, expr: TreeNode, insert: bool):
         # TODO handle dummy tokens
         if not hasattr(expr, 'children'):
             if type(expr) == Name:
                 leaf = cast(Name, expr)
-                self.table.insert(QName(scope, leaf), SymbolType.Parameter)
+                if insert is True:
+                    self.import_table.insert(QName(scope, leaf), SymbolType.Parameter)
+                else:
+                    self.table.insert(QName(scope, leaf), SymbolType.Parameter)
         else:
             expr = cast(TrunkNode, expr)
             for leaf in expr.scan_leaves():
                 if type(leaf) == Name:
                     leaf = cast(Name, leaf)
-                    self.table.insert(QName(scope, leaf), SymbolType.Parameter)
+                    if insert is True:
+                        self.import_table.insert(QName(scope, leaf), SymbolType.Parameter)
+                    else:
+                        self.table.insert(QName(scope, leaf), SymbolType.Parameter)
 
-    def handle_reaction(self, scope: AbstractScope, reaction: Reaction):
+    def handle_reaction(self, scope: AbstractScope, reaction: Reaction, insert: bool):
         name = reaction.get_name()
         comp = None
         if reaction.get_maybein() != None and reaction.get_maybein().is_in_comp():
@@ -366,19 +402,28 @@ class AntTreeAnalyzer:
             comp = reaction.get_comp().get_comp().get_name_text()
 
         if name is not None:
-            self.table.insert(QName(scope, name), SymbolType.Reaction, reaction, comp=comp)
+            if insert is True:
+                self.import_table.insert(QName(scope, name), SymbolType.Reaction, reaction, comp=comp)
+            else:
+                self.table.insert(QName(scope, name), SymbolType.Reaction, reaction, comp=comp)
 
         for species in chain(reaction.get_reactants(), reaction.get_products()):
-            self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
-        self.handle_arith_expr(scope, reaction.get_rate_law())
+            if insert is True:
+                self.import_table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
+            else:
+                self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
+        self.handle_arith_expr(scope, reaction.get_rate_law(), insert)
 
-    def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
+    def handle_assignment(self, scope: AbstractScope, assignment: Assignment, insert: bool):
         comp = None
         if assignment.get_maybein() != None and assignment.get_maybein().is_in_comp():
             comp = assignment.get_maybein().get_comp().get_name_text()
-        self.table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
+        if insert is True:
+            self.import_table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter)
+        else:
+            self.table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
                             value_node=assignment, comp=comp)
-        self.handle_arith_expr(scope, assignment.get_value())
+        self.handle_arith_expr(scope, assignment.get_value(), insert)
 
     def resolve_variab(self, tree) -> Variability:
         return {
@@ -393,7 +438,7 @@ class AntTreeAnalyzer:
             'formula': SymbolType.Parameter,
         }[tree.data]
 
-    def handle_declaration(self, scope: AbstractScope, declaration: Declaration):
+    def handle_declaration(self, scope: AbstractScope, declaration: Declaration, insert: bool):
         modifiers = declaration.get_modifiers()
         variab = modifiers.get_variab()
         sub = modifiers.get_sub_modifier()
@@ -416,25 +461,33 @@ class AntTreeAnalyzer:
             # as the value node. Otherwise put None. See that we can't directly put "value" as
             # argument "valud_node" since they are different things
             value_node = item if value else None
-            self.table.insert(QName(scope, name), stype, declaration, value_node, 
+            if insert is True:
+                self.import_table.insert(QName(scope, name), stype, declaration, value_node,
+                                is_const=is_const, comp=comp, is_sub=is_sub)
+            else:
+                self.table.insert(QName(scope, name), stype, declaration, value_node, 
                                 is_const=is_const, comp=comp, is_sub=is_sub)
             if value:
-                self.handle_arith_expr(scope, value)
+                self.handle_arith_expr(scope, value, insert)
     
-    def pre_handle_annotation(self, scope: AbstractScope, annotation: Annotation):
-        self.pending_annotations.append((scope, annotation))
+    def pre_handle_annotation(self, scope: AbstractScope, annotation: Annotation, insert: bool):
+        self.pending_annotations.append((scope, annotation, insert))
     
     def handle_annotation_list(self):
-        for scope, annotation in self.pending_annotations:
-            self.handle_annotation(scope, annotation)
+        for scope, annotation, insert in self.pending_annotations:
+            self.handle_annotation(scope, annotation, insert)
     
-    def handle_annotation(self, scope: AbstractScope, annotation: Annotation):
+    def handle_annotation(self, scope: AbstractScope, annotation: Annotation, insert: bool):
         name = annotation.get_var_name().get_name()
         # TODO(Gary) maybe we can have a narrower type here, since annotation is restricted only to
         # species or compartments? I'm not sure. If that's the case though, we'll need union types.
         qname = QName(scope, name)
-        self.table.insert(qname, SymbolType.Parameter)
-        self.table.insert_annotation(qname, annotation)
+        if insert is True:
+            self.import_table.insert(qname, SymbolType.Parameter)
+            self.import_table.insert_annotation(qname, annotation)
+        else:
+            self.table.insert(qname, SymbolType.Parameter)
+            self.table.insert_annotation(qname, annotation)
     
     def pre_handle_import(self, scope: AbstractScope, imp: Import):
         self.pending_imports.append((scope, imp))
@@ -460,54 +513,110 @@ class AntTreeAnalyzer:
         else:
             for node in file_str.tree.children:
                 if isinstance(node, ModularModel):
-                    self.handle_mmodel(node)
-            self.table.insert(qname, SymbolType.Import, imp=file_str.text)
-            
-    def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
-        self.pending_is_assignments.append((scope, is_assignment))
+                    scope = ModularModelScope(str(node.get_name()))
+                    for child in node.children:
+                        if isinstance(child, ErrorToken):
+                            continue
+                        if isinstance(child, ErrorNode):
+                            continue
+                        if isinstance(child, SimpleStmtList):
+                            for st in child.children:
+                                if isinstance(st, ErrorToken):
+                                    continue
+                                if isinstance(st, ErrorNode):
+                                    continue
+                                stmt = st.get_stmt()
+                                if stmt is None:
+                                    continue
+                                {
+                                    'Reaction': self.handle_reaction,
+                                    'Assignment': self.handle_assignment,
+                                    'Declaration': self.handle_declaration,
+                                    'Annotation': self.pre_handle_annotation,
+                                    'UnitDeclaration': self.handle_unit_declaration,
+                                    'UnitAssignment' : self.handle_unit_assignment,
+                                    'ModularModelCall' : self.handle_mmodel_call,
+                                    'FunctionCall' : self.handle_function_call,
+                                    'VariableIn' : self.handle_variable_in,
+                                    'IsAssignment' : self.pre_handle_is_assignment,
+                                }[stmt.__class__.__name__](scope, stmt, True)
+                                self.handle_child_incomp(scope, stmt, True)
+                        if isinstance(child, Parameters):
+                            self.handle_parameters(scope, child, True)
+                    self.handle_mmodel(node, True)
+            self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
+            #vscode_logger.info("the import table:")
+            #vscode_logger.info(str(self.import_table.get_all_names()))
+
+    def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
+        self.pending_is_assignments.append((scope, is_assignment, insert))
     
     def handle_is_assignment_list(self):
-        for scope, is_assignment in self.pending_is_assignments:
-            self.handle_is_assignment(scope, is_assignment)
+        for scope, is_assignment, insert in self.pending_is_assignments:
+            self.handle_is_assignment(scope, is_assignment, insert)
     
-    def handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
+    def handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         name = is_assignment.get_var_name()
         qname = QName(scope, name)
-        var = self.table.get(qname)
+        if insert is True:
+            var = self.import_table.get(qname)
+        else:
+            var = self.table.get(qname)
         display_name = is_assignment.get_display_name().text
         if len(var) != 0:
             if var[0].display_name != None:
-                self.table.insert_warning(OverridingDisplayName(is_assignment.range, name.text))
+                if insert is True:
+                    self.import_table.insert_warning(OverridingDisplayName(is_assignment.range, name.text))
+                else:
+                    self.table.insert_warning(OverridingDisplayName(is_assignment.range, name.text))
             var[0].display_name = display_name
             if isinstance(var[0], FuncSymbol):
                 qname_f = QName(FunctionScope(str(var[0].type_name)), name)
-                f_var = self.table.get(qname_f)
+                if insert is True:
+                    f_var = self.import_table.get(qname_f)
+                else:
+                    f_var = self.table.get(qname_f)
                 if len(f_var) != 0:
                     f_var[0].display_name = display_name
                 qname_b = QName(BaseScope(), name)
-                base_var = self.table.get(qname_b)
+                if insert is True:
+                    base_var = self.import_table.get(qname_b)
+                else:
+                    base_var = self.table.get(qname_b)
                 if len(base_var) != 0:
                     base_var[0].display_name = display_name
             elif isinstance(var[0], MModelSymbol):
                 qname_m = QName(ModularModelScope(str(var[0].type_name)), name)
-                m_var = self.table.get(qname_m)
+                if insert is True:
+                    m_var = self.import_table.get(qname_m)
+                else:
+                    m_var = self.table.get(qname_m)
                 if len(m_var) != 0:
                     m_var[0].display_name = display_name
                 qname_b = QName(BaseScope(), name)
-                base_var = self.table.get(qname_b)
+                if insert is True:
+                    base_var = self.import_table.get(qname_b)
+                else:
+                    base_var = self.table.get(qname_b)
                 if len(base_var) != 0:
                     base_var[0].display_name = display_name
     
-    def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
+    def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration, insert: bool):
         varname = unitdec.get_var_name().get_name()
         unit_sum = unitdec.get_sum()
         qname = QName(scope, varname)
-        self.table.insert(qname, SymbolType.Unit)
+        if insert is True:
+            self.import_table.insert(qname, SymbolType.Unit)
+        else:
+            self.table.insert(qname, SymbolType.Unit)
     
-    def handle_unit_assignment(self, scope: AbstractScope, unitdec: UnitDeclaration):
+    def handle_unit_assignment(self, scope: AbstractScope, unitdec: UnitDeclaration, insert: bool):
         varname = unitdec.get_var_name().get_name()
         unit_sum = unitdec.get_sum()
-        symbols = self.table.get(QName(scope, varname))
+        if insert is True:
+            symbols = self.import_table.get(QName(scope, varname))
+        else:
+            symbols = self.table.get(QName(scope, varname))
         if symbols:
             sym = symbols[0]
             value_node = sym.value_node
@@ -517,7 +626,7 @@ class AntTreeAnalyzer:
                 decl_assignment = value_node.children[1]
                 decl_assignment.unit = unit_sum
     
-    def handle_mmodel_call(self, scope: AbstractScope, mmodel_call: ModularModelCall):
+    def handle_mmodel_call(self, scope: AbstractScope, mmodel_call: ModularModelCall, insert: bool):
         if mmodel_call.get_name() is None:
             name = mmodel_call.get_mmodel_name()
         else:
@@ -525,28 +634,41 @@ class AntTreeAnalyzer:
         comp = None
         if mmodel_call.get_maybein() != None and mmodel_call.get_maybein().is_in_comp():
             comp = mmodel_call.get_maybein().get_comp().get_name_text()
-        self.table.insert(QName(scope, name), SymbolType.Parameter,
+        if insert is True:
+            self.import_table.insert(QName(scope, name), SymbolType.Parameter,
                     value_node=mmodel_call, comp=comp)
-        
-    def handle_function_call(self, scope: AbstractScope, function_call: FunctionCall):
+        else:
+            self.table.insert(QName(scope, name), SymbolType.Parameter,
+                        value_node=mmodel_call, comp=comp)
+
+    def handle_function_call(self, scope: AbstractScope, function_call: FunctionCall, insert: bool):
         comp = None
         if function_call.get_maybein() != None and function_call.get_maybein().is_in_comp():
             comp = function_call.get_maybein().get_comp().get_name_text()
-        self.table.insert(QName(scope, function_call.get_name()), SymbolType.Parameter,
+        if insert is True:
+            self.import_table.insert(QName(scope, function_call.get_name()), SymbolType.Parameter,
                     value_node=function_call, comp=comp)
+        else:
+            self.table.insert(QName(scope, function_call.get_name()), SymbolType.Parameter,
+                        value_node=function_call, comp=comp)
 
-    def handle_variable_in(self, scope: AbstractScope, variable_in: VariableIn):
+    def handle_variable_in(self, scope: AbstractScope, variable_in: VariableIn, insert: bool):
         name = variable_in.get_name().get_name()
         comp = variable_in.get_incomp().get_comp().get_name_text()
-        self.table.insert(QName(scope, name), SymbolType.Variable, decl_node=variable_in, comp=comp)
+        if insert is True:
+            self.import_table.insert(QName(scope, name), SymbolType.Variable, decl_node=variable_in, comp=comp)
+        else:
+            self.table.insert(QName(scope, name), SymbolType.Variable, decl_node=variable_in, comp=comp)
 
-
-    def handle_parameters(self, scope: AbstractScope, parameters: Parameters):
+    def handle_parameters(self, scope: AbstractScope, parameters: Parameters, insert: bool):
         for parameter in parameters.get_items():
             qname = QName(scope, parameter)
-            self.table.insert(qname, SymbolType.Parameter)
+            if insert is True:
+                self.import_table.insert(qname, SymbolType.Parameter)
+            else:
+                self.table.insert(qname, SymbolType.Parameter)
     
-    def handle_function(self, function, scope):
+    def handle_function(self, function, scope, insert: bool):
         if function.get_params() is not None:
             params = function.get_params().get_items()
         else:
@@ -555,13 +677,20 @@ class AntTreeAnalyzer:
         parameters = []
         for name in params:
             # get symbols
-            qname = self.resolve_qname(QName(scope, name))
+            if insert is True:
+                qname = self.resolve_import_qname(QName(scope, name))
+            else:
+                qname = self.resolve_qname(QName(scope, name))
             parameters.append(qname)
-        self.table.insert_function(QName(BaseScope(), function), SymbolType.Function, parameters)
-        self.table.insert_function(QName(FunctionScope(str(function.get_name())), function), SymbolType.Function, parameters)
+        if insert is True:
+            self.import_table.insert_function(QName(BaseScope(), function), SymbolType.Function, parameters)
+            self.import_table.insert_function(QName(FunctionScope(str(function.get_name())), function),
+                                    SymbolType.Function, parameters)
+        else:
+            self.table.insert_function(QName(BaseScope(), function), SymbolType.Function, parameters)
+            self.table.insert_function(QName(FunctionScope(str(function.get_name())), function), SymbolType.Function, parameters)
 
-    def handle_mmodel(self, mmodel):
-        # find all type information
+    def handle_mmodel(self, mmodel, insert: bool):
         if mmodel.get_params() is not None:
             params = mmodel.get_params().get_items()
         else:
@@ -569,11 +698,29 @@ class AntTreeAnalyzer:
         scope = ModularModelScope(str(mmodel.get_name()))
         parameters = []
         for name in params:
-            # get symbols
-            qname = self.resolve_qname(QName(scope, name))
+            if insert is True:
+                qname = self.resolve_import_qname(QName(scope, name))
+            else:
+                qname = self.resolve_qname(QName(scope, name))
             parameters.append(qname)
-        self.table.insert_mmodel(QName(BaseScope(), mmodel), SymbolType.ModularModel, parameters)
-        self.table.insert_mmodel(QName(ModularModelScope(str(mmodel.get_name())), mmodel), SymbolType.ModularModel, parameters)
+        #vscode_logger.info("the mmodel in handle_mmodel:")
+        if insert is True:
+            #vscode_logger.info("in import:")
+            #stmtlist = list()
+            #for stmt in mmodel.get_stmt_list().children:
+            #    stmtlist.append(stmt.get_stmt())
+            #vscode_logger.info(stmtlist)
+            self.import_table.insert_mmodel(QName(BaseScope(), mmodel), SymbolType.ModularModel, parameters)
+            self.import_table.insert_mmodel(QName(ModularModelScope(str(mmodel.get_name())), mmodel),
+                                    SymbolType.ModularModel, parameters)
+        else:
+            #vscode_logger.info("in normal:")
+            #stmtlist = list()
+            #for stmt in mmodel.get_stmt_list().children:
+            #    stmtlist.append(stmt.get_stmt())
+            #vscode_logger.info(stmtlist)
+            self.table.insert_mmodel(QName(BaseScope(), mmodel), SymbolType.ModularModel, parameters)
+            self.table.insert_mmodel(QName(ModularModelScope(str(mmodel.get_name())), mmodel), SymbolType.ModularModel, parameters)
 
     def process_error_token(self, node):
         node = cast(ErrorToken, node)
@@ -601,6 +748,8 @@ class AntTreeAnalyzer:
                 comp = maybein.get_comp()
                 compt = self.table.get(QName(scope, comp.get_name()))
                 if compt[0].value_node is None:
+                    compt = self.import_table.get(QName(scope, comp.get_name()))
+                if compt[0].value_node is None:
                     # 3. add warning
                     self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
     
@@ -608,11 +757,15 @@ class AntTreeAnalyzer:
         comp = node.get_stmt().get_incomp().get_comp()
         compt = self.table.get(QName(scope, comp.get_name()))
         if compt[0].value_node is None:
+            compt = self.import_table.get(QName(scope, comp.get_name()))
+        if compt[0].value_node is None:
             # 3. add warning
             self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
         # also check if the parameter is defined or not
         param_name = node.get_stmt().get_name()
         matched_param = self.table.get(QName(scope, param_name.get_name()))
+        if matched_param[0].value_node is None:
+            matched_param = self.import_table.get(QName(scope, param_name.get_name()))
         if matched_param[0].value_node is None:
             self.error.append(RefUndefined(param_name.get_name().range, param_name.get_name_text()))
     
@@ -629,12 +782,16 @@ class AntTreeAnalyzer:
             species_name = species.get_name()
             matched_species = self.table.get(QName(scope, species_name))
             if matched_species[0].value_node is None:
+                matched_species = self.import_table.get(QName(scope, species_name))
+            if matched_species[0].value_node is None:
                 self.warning.append(SpeciesUndefined(species.range, species_name.text))
         self.process_maybein(node, scope)
     
     def process_mmodel_call(self, node, scope):
         mmodel_name = node.get_stmt().get_mmodel_name()
         mmodel = self.table.get(QName(BaseScope(), mmodel_name))
+        if len(mmodel) == 0:
+            mmodel = self.import_table.get(QName(BaseScope(), mmodel_name))
         if len(mmodel) == 0:
             self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
         else:
@@ -647,6 +804,8 @@ class AntTreeAnalyzer:
                     expec_type = expec.type if expec is not None else None
                     call = node.get_stmt().get_params().get_items()[index] if node.get_stmt().get_params() is not None else []
                     call_name = self.table.get(QName(scope, call))
+                    if len(call_name) == 0:
+                        call_name = self.import_table.get(QName(scope, call))
                     call_type = call_name[0].type if len(call_name) != 0 else None
                     if not expec_type is None and not call_type is None and not call_type.derives_from(expec_type):
                         self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
@@ -655,6 +814,8 @@ class AntTreeAnalyzer:
     def process_function_call(self, node, scope):
         function_name = node.get_stmt().get_function_name()
         function = self.table.get(QName(BaseScope(), function_name))
+        if len(function) == 0:
+            self.import_table.get(QName(BaseScope(), function_name))
         if len(function) == 0:
             self.error.append(UninitFunction(function_name.range, function_name.text))
         else:
@@ -667,6 +828,8 @@ class AntTreeAnalyzer:
                     expec_type = expec.type if expec is not None else None
                     call = node.get_stmt().get_params().get_items()[index]
                     call_name = self.table.get(QName(scope, call))
+                    if len(call_name) == 0:
+                        call_name = self.import_table.get(QName(scope, call))
                     call_type = call_name[0].type if len(call_name) != 0 else None
                     if not expec_type is None and not call_type is None and not call_type.derives_from(expec_type):
                         self.error.append(ParamIncorrectType(call.range, expec_type, call_type))
@@ -678,6 +841,8 @@ class AntTreeAnalyzer:
             comp = maybein.get_comp()
             compt = self.table.get(QName(scope, comp.get_name()))
             if compt[0].value_node is None:
+                compt = self.import_table.get(QName(scope, comp.get_name()))
+            if compt[0].value_node is None:
                 # 3. add warning
                 self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
     
@@ -685,6 +850,8 @@ class AntTreeAnalyzer:
         name = node.get_stmt().get_var_name()
         qname = QName(scope, name)
         var = self.table.get(qname)
+        if len(var) == 0:
+            var = self.import_table.get(qname)
         if len(var) == 0:
             self.warning.append(VarNotFound(name.range, name.text))
         

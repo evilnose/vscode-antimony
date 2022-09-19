@@ -314,6 +314,15 @@ class FileAlreadyImported(Issue):
         self.message = ("'{file}' has already been imported, please remove any extra "
                         "import statements for '{file}'").format(file=file)
 
+class ModelAlreadyExists(Issue):
+    def __init__(self, range, model: str, file: str):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("A model with the name {model} already exists. Please "
+                        "consider changing the model name in '{file}'").format(
+                            model=model,
+                            file=file
+                        )
+
 class AntimonySyntaxError(Exception):
     # TODO this is far from complete. To include: filename, possible token choices,
     # and possibly even parser state?

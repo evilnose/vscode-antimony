@@ -508,6 +508,8 @@ class AntTreeAnalyzer:
         file_str = imp.get_file()
         if file_str is None:
             self.error.append(NoImportFile(name.range))
+        elif self.import_table.get(qname):
+            self.error.append(FileAlreadyImported(name.range, name.get_str()))
         elif file_str.get_issues():
             issues = list()
             for issue in file_str.get_issues():
@@ -516,7 +518,6 @@ class AntTreeAnalyzer:
         elif type(name) != StringLiteral:
             self.error.append(InvalidFileType(name.range))
         else:
-            self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
             for node in file_str.tree.children:
                 if isinstance(node, ModularModel):
                     scope = ModularModelScope(str(node.get_name()))
@@ -550,6 +551,7 @@ class AntTreeAnalyzer:
                         if isinstance(child, Parameters):
                             self.handle_parameters(scope, child, True)
                     self.handle_mmodel(node, True)
+            self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
             #vscode_logger.info("the import table:")
             #vscode_logger.info(self.import_table.get_all_names())
 

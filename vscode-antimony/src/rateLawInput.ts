@@ -71,27 +71,18 @@ export async function rateLawMultiStepInput(context: ExtensionContext, line: num
         onQueryUpdated(state.database['id'], state.database['label'], input)
     }
 
-    // async function inputQuery(input: MultiStepInput, state: Partial<State>) {
-    //     const pick = await input.showQuickPick({
-    //         title,
-    //         step: 2,
-    //         totalSteps: 2,
-    //         // Later implement dynamic constant and displaying dynamic number of constants 
-    //         // and have the user input multiple constants separated by a comma so we can parse
-    //         placeholder: 'Input constant',
-    //         items: [],
-    //         activeItem: null,
-    //         shouldResume: shouldResume,
-    //         onInputChanged: (value) => {onQueryUpdated(state.database['id'], value, state.database['label'], input)}
-    //     });
-    //     state.entity = pick;
-    // }
-
     async function onQueryUpdated(expresion: string, rateLawName: string, input: MultiStepInput) {
         const snippetStr = new vscode.SnippetString(" " + expresion + ";");
         const doc = vscode.window.activeTextEditor.document;
         const pos = doc.lineAt(line).range.end;
-        vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
+        let count = 0;
+        let ix = initialEntity.length - 1;
+        console.log(ix)
+        while (ix >= 0 && (/\s/).test(initialEntity[ix--])) {
+            count += 1;
+        }
+        const endRange = new vscode.Range(pos.line, pos.character - count, pos.line, pos.character - count);
+        vscode.window.activeTextEditor.insertSnippet(snippetStr, endRange);
     }
 
     function shouldResume() {

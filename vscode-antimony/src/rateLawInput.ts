@@ -5,8 +5,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, commands, QuickPick, ProgressLocation } from 'vscode';
-import { sleep } from './utils/utils';
+import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, QuickPick } from 'vscode';
 
 /**
  * A multi-step input using window.createQuickPick() and window.createInputBox().
@@ -23,15 +22,15 @@ export async function rateLawMultiStepInput(context: ExtensionContext, line: num
 
         if (rateLawDict.error === "Rate law already exists") {
             vscode.window
-	            .showErrorMessage(
+	        .showErrorMessage(
 		        `Rate law already exists.`,
-	            )
+	        )
             return;
         } else if (rateLawDict.error === "Did not select a reaction") {
             vscode.window
             .showErrorMessage(
 		        `Did not select a reaction.`,
-	            )
+	        )
             return;
         } else {        
             for (let i = 0; i < rateLawDict.length; i++) {
@@ -55,6 +54,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, line: num
     }
 
     const title = 'Insert Rate Law';
+    let constantsInfo;
 
     async function pickDatabase(input: MultiStepInput, state: Partial<State>) {
         const pick = await input.showQuickPick({
@@ -68,10 +68,10 @@ export async function rateLawMultiStepInput(context: ExtensionContext, line: num
             onInputChanged: null,
         });
         state.database = pick;
-        onQueryUpdated(state.database['id'], state.database['label'], input)
+        onQueryUpdated(state.database['id'], state.database['label'], state.database['index'], input)
     }
 
-    async function onQueryUpdated(expresion: string, rateLawName: string, input: MultiStepInput) {
+    async function onQueryUpdated(expresion: string, rateLawName: string, rateLawIndex: number, input: MultiStepInput) {
         const snippetStr = new vscode.SnippetString(" " + expresion + ";");
         const doc = vscode.window.activeTextEditor.document;
         const pos = doc.lineAt(line).range.end;
@@ -83,6 +83,17 @@ export async function rateLawMultiStepInput(context: ExtensionContext, line: num
         }
         const endRange = new vscode.Range(pos.line, pos.character - count, pos.line, pos.character - count);
         vscode.window.activeTextEditor.insertSnippet(snippetStr, endRange);
+
+        console.log(rateLawDict[rateLawIndex].constants)
+        let constantDescription = "";
+        console.log(rateLawDict[rateLawIndex].constants[0].name.toString());
+        // for (let i = 0; rateLawDict[rateLawIndex].constants.length; i++) {
+        //     constantDescription += rateLawDict[rateLawIndex].constants[i].name.toString() + rateLawDict[rateLawIndex].constants[i].description.toString();
+        // }
+        vscode.window.showInformationMessage(
+            rateLawName,
+            constantDescription
+        )
     }
 
     function shouldResume() {

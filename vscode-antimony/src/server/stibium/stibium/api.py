@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 import logging
+from pydoc import resolve
 from typing import List, Optional, cast
 from lark.lexer import Token
 from lark.tree import Tree
@@ -149,8 +150,12 @@ class AntFile:
         assert qname.name is not None
         resolved = self.analyzer.resolve_qname(qname)
         if len(resolved) == 0:
+            resolved = self.analyzer.resolve_import_qname(qname)
+        if len(resolved) == 0:
             qname.scope = BaseScope()
             resolved = self.analyzer.resolve_qname(qname)
+            if len(resolved) == 0:
+                resolved = self.analyzer.resolve_import_qname(qname)
         return resolved, qname.name.range
 
     def goto(self, position: SrcPosition):

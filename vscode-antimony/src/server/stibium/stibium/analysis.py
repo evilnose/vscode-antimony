@@ -189,10 +189,15 @@ class AntTreeAnalyzer:
         self.pending_annotations = []
         self.pending_is_assignments = []
         self.check_parse_tree(self.root, BaseScope())
-        vscode_logger.info("the table:")
-        vscode_logger.info(str(self.table.get_all_names()))
-        vscode_logger.info("the import table:")
-        vscode_logger.info(str(self.import_table.get_all_names()))
+        #vscode_logger.info("the table:")
+        #vscode_logger.info(str(self.table.get_all_names()))
+        #vscode_logger.info("the import table:")
+        #import_qnames = self.import_table.get_all_qnames()
+        #if not import_qnames:
+        #    vscode_logger.info("No qnames in import_table")
+        #else:
+        #    for name in import_qnames:
+        #        vscode_logger.info(name.name)
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
@@ -511,6 +516,7 @@ class AntTreeAnalyzer:
         elif type(name) != StringLiteral:
             self.error.append(InvalidFileType(name.range))
         else:
+            self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
             for node in file_str.tree.children:
                 if isinstance(node, ModularModel):
                     scope = ModularModelScope(str(node.get_name()))
@@ -544,9 +550,8 @@ class AntTreeAnalyzer:
                         if isinstance(child, Parameters):
                             self.handle_parameters(scope, child, True)
                     self.handle_mmodel(node, True)
-            self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
             #vscode_logger.info("the import table:")
-            #vscode_logger.info(str(self.import_table.get_all_names()))
+            #vscode_logger.info(self.import_table.get_all_names())
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))

@@ -37,7 +37,7 @@ class RateLawReader:
                 if substrate_product_num == self.reactant_product_num and reversibility in rate_law['_property']:
                     constants = list()
                     for constant_item in rate_law['listOfParameters']['parameter']:
-                        constants.append(constant_item['_name'])
+                        constants.append({'name': constant_item['_name'], 'description': constant_item['_description']})
                     expression = substitute_rate_law_participants(rate_law['_infixExpression'], self.reaction)
                     expression = create_snippet(expression, constants)
                     self.relevant_rate_laws.append({
@@ -77,6 +77,6 @@ def create_snippet(rate_law_str: str, constants: list):
     '''
     indicator = 1
     for constant in constants:
-        rate_law_str = rate_law_str.replace(constant, '${' + str(indicator) + ':' + constant + '}')
+        rate_law_str = rate_law_str.replace(constant['name'], '${' + str(indicator) + ':' + constant['name'] + '}')
         indicator += 1
     return rate_law_str

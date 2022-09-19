@@ -221,7 +221,11 @@ def get_rate_law_dict(ls: LanguageServer, args):
         'orig_expr': the original expression to display to users
         'expression': the substituted expression(includes the real reactants and products),
         'latex': the rate law in latex form
-        'constants': constants,
+        'constants': list of constant names and descriptions:
+            {
+                'name': constant name
+                'description': constant description
+            }
     }
     '''
     text = args[0] # the line of text that user right clicks at

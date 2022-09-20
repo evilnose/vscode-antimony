@@ -87,7 +87,7 @@ export async function rateLawMultiStepInput(context: ExtensionContext, line: num
         console.log(rateLawDict[rateLawIndex].constants)
         let constantDescription = "";
         console.log(rateLawDict[rateLawIndex].constants[0].name.toString());
-        for (let i = 0; rateLawDict[rateLawIndex].constants.length; i++) {
+        for (let i = 0; i < rateLawDict[rateLawIndex].constants.length; i++) {
             constantDescription = constantDescription.concat(" " + rateLawDict[rateLawIndex].constants[i].name.toString()).concat(" " + rateLawDict[rateLawIndex].constants[i].description.toString());
         }
         vscode.window.showInformationMessage(

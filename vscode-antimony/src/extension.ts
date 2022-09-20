@@ -7,7 +7,7 @@ import {
 	ServerOptions,
 } from 'vscode-languageclient/node';
 import { annotationMultiStepInput } from './annotationInput';
-import { rateLawMultiStepInput } from './rateLawInput';
+import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
 
@@ -252,15 +252,13 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 	// Obtain line number position of cursor right click
 	const selectionCol = vscode.window.activeTextEditor.selection.active
 	const lineNum = doc.lineAt(selectionCol).lineNumber;
-	console.log(lineNum)
 
 	// Obtain text of the line number position
 	const selectedLine = doc.lineAt(selectionCol);
 	const selectedText = selectedLine.text;
-	console.log(selectedText)
 
 	await new Promise<void>((resolve, reject) => {
-		rateLawMultiStepInput(context, lineNum, selectedText); 
+		rateLawSingleStepInput(context, lineNum, selectedText); 
 		resolve()
     });
 }

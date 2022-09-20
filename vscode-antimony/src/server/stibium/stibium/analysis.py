@@ -5,7 +5,7 @@ from queue import Empty
 from tkinter.messagebox import YES
 from pandas.tests import base
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
-from .types import FileAlreadyImported, GrammarHasIssues, InvalidFileType, ModelAlreadyExists, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import CircularImportFound, FileAlreadyImported, GrammarHasIssues, InvalidFileType, ModelAlreadyExists, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -189,15 +189,6 @@ class AntTreeAnalyzer:
         self.pending_annotations = []
         self.pending_is_assignments = []
         self.check_parse_tree(self.root, BaseScope())
-        #vscode_logger.info("the table:")
-        #vscode_logger.info(str(self.table.get_all_names()))
-        #vscode_logger.info("the import table:")
-        #import_qnames = self.import_table.get_all_qnames()
-        #if not import_qnames:
-        #    vscode_logger.info("No qnames in import_table")
-        #else:
-        #    for name in import_qnames:
-        #        vscode_logger.info(name.name)
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
@@ -501,7 +492,6 @@ class AntTreeAnalyzer:
         for scope, imp in self.pending_imports:
             self.handle_import(scope, imp)
 
-    # Handle import
     def handle_import(self, scope: AbstractScope, imp: Import):
         name = imp.get_file_name()
         qname = QName(scope, name)
@@ -521,7 +511,19 @@ class AntTreeAnalyzer:
             for node in file_str.tree.children:
                 if isinstance(node, ModularModel):
                     scope = ModularModelScope(str(node.get_name()))
+                    #vscode_logger.info("checking for model:")
+                    #vscode_logger.info(name)
+                    #vscode_logger.info(QName(scope, node.get_name()))
+                    #if self.table.get(QName(BaseScope(), node.get_name())):
+                    #    vscode_logger.info(self.table.get(QName(BaseScope(), node.get_name())))
+                    if self.table.get(QName(BaseScope(), node.get_name())):
+                        self.error.append(ModelAlreadyExists(name.range, node.get_name_str(), name))
+                        break
                     for child in node.children:
+                        if isinstance(child, Import):
+                            if self.table.get(QName(scope, child.get_file_name())):
+                                self.error.append(CircularImportFound(child.range, child.get_file_name()))
+                            continue
                         if isinstance(child, ErrorToken):
                             continue
                         if isinstance(child, ErrorNode):
@@ -552,8 +554,6 @@ class AntTreeAnalyzer:
                             self.handle_parameters(scope, child, True)
                     self.handle_mmodel(node, True)
             self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
-            #vscode_logger.info("the import table:")
-            #vscode_logger.info(self.import_table.get_all_names())
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))
@@ -710,22 +710,11 @@ class AntTreeAnalyzer:
             else:
                 qname = self.resolve_qname(QName(scope, name))
             parameters.append(qname)
-        #vscode_logger.info("the mmodel in handle_mmodel:")
         if insert is True:
-            #vscode_logger.info("in import:")
-            #stmtlist = list()
-            #for stmt in mmodel.get_stmt_list().children:
-            #    stmtlist.append(stmt.get_stmt())
-            #vscode_logger.info(stmtlist)
             self.import_table.insert_mmodel(QName(BaseScope(), mmodel), SymbolType.ModularModel, parameters)
             self.import_table.insert_mmodel(QName(ModularModelScope(str(mmodel.get_name())), mmodel),
                                     SymbolType.ModularModel, parameters)
         else:
-            #vscode_logger.info("in normal:")
-            #stmtlist = list()
-            #for stmt in mmodel.get_stmt_list().children:
-            #    stmtlist.append(stmt.get_stmt())
-            #vscode_logger.info(stmtlist)
             self.table.insert_mmodel(QName(BaseScope(), mmodel), SymbolType.ModularModel, parameters)
             self.table.insert_mmodel(QName(ModularModelScope(str(mmodel.get_name())), mmodel), SymbolType.ModularModel, parameters)
 

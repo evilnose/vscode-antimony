@@ -23,6 +23,11 @@ end
 
 # In this model, 'side_reaction' is imported twice:
 model full_pathway
+  compartment comp
+  species S1 in comp, S2 in comp, S3 in comp
+
+  S3 := S1 + S2
+
     -> S1; k1
   S1 -> S2; k2*S1
   S2 ->   ; k3*S2
@@ -32,16 +37,21 @@ model full_pathway
   W: test3()
   TM: tester_model()
   T2: test2(S2, k2)
+
   #AE.M = 3
   #W.G = 2
   #Y.Q = 2
 
-  S1 = 0
-  S2 = 0
+  const comp
+  comp = 1
+  S1 = 1
+  S2 = 0.5
   k1 = 0.3
   k2 = 2.3
   k3 = 3.5
   k4 = 0.0004
   k5 = 1
 
+  S1 is "this is a test"
+  S2 is "this is another test"
 end

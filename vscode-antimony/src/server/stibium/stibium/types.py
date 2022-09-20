@@ -317,11 +317,17 @@ class FileAlreadyImported(Issue):
 class ModelAlreadyExists(Issue):
     def __init__(self, range, model: str, file: str):
         super().__init__(range, IssueSeverity.Error)
-        self.message = ("A model with the name {model} already exists. Please "
-                        "consider changing the model name in '{file}'").format(
-                            model=model,
-                            file=file
-                        )
+        self.message = ("Model {} is already defined").format(model)
+        #("A model with the name {model} already exists. Please "
+        #                "consider changing the model name in '{file}'").format(
+        #                    model=model,
+        #                    file=file
+        #                )
+
+class CircularImportFound(Issue):
+    def __init__(self, range, file: str):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("Circular import found in {file}").format(file=file)
 
 class AntimonySyntaxError(Exception):
     # TODO this is far from complete. To include: filename, possible token choices,

@@ -1,4 +1,5 @@
 // Created by libAntimony v2.8.0
+import "test2.ant"
 model *BIOMD0000000005()
 
   // Compartments and Species:

@@ -317,7 +317,7 @@ class FileAlreadyImported(Issue):
 class ModelAlreadyExists(Issue):
     def __init__(self, range, model: str, file: str):
         super().__init__(range, IssueSeverity.Error)
-        self.message = ("Model {} is already defined").format(model)
+        self.message = ("Model '{}' is already defined").format(model)
         #("A model with the name {model} already exists. Please "
         #                "consider changing the model name in '{file}'").format(
         #                    model=model,

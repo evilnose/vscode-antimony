@@ -18,22 +18,15 @@ export async function rateLawSingleStepInput(context: ExtensionContext, line: nu
     vscode.commands.executeCommand('antimony.getRateLawDict', initialEntity).then(async (result) => {
         rateLawDict = result;
         
-        if (rateLawDict.error === "Rate law already exists") {
+        if (rateLawDict.error) {
             vscode.window
 	        .showErrorMessage(
-		        `Rate law already exists.`,
+		        rateLawDict.error,
 	        )
             return;
-        } else if (rateLawDict.error === "Did not select a reaction") {
-            vscode.window
-            .showErrorMessage(
-		        `Did not select a reaction.`,
-	        )
-            return;
-        } else {        
-            for (let i = 0; i < rateLawDict.length; i++) {
-                databases.push({id: rateLawDict[i].expression, label: rateLawDict[i].name, index: i}); 
-            }
+        }        
+        for (let i = 0; i < rateLawDict.length; i++) {
+            databases.push({id: rateLawDict[i].expression, label: rateLawDict[i].name, index: i}); 
         }
 
     interface State {

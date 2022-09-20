@@ -232,11 +232,11 @@ def get_rate_law_dict(ls: LanguageServer, args):
     reader = RateLawReader(text)
     if reader.reactant_product_num == '_error':
         return {
-            'error': 'Did not select a reaction'
+            'error': 'Did not select a reaction.'
         }
     if reader.no_rate_law_check() == '_error':
         return {
-            'error': 'Rate law already exists'
+            'error': 'Rate law already exists.'
         }
     return reader.relevant_rate_laws
 

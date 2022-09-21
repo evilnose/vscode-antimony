@@ -2,7 +2,6 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 import logging
-from pydoc import resolve
 from typing import List, Optional, cast
 from lark.lexer import Token
 from lark.tree import Tree

@@ -1,11 +1,8 @@
 
 import logging
-from operator import truediv
-from queue import Empty
 from tkinter.messagebox import YES
-from pandas.tests import base
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
-from .types import CircularImportFound, FileAlreadyImported, GrammarHasIssues, InvalidFileType, ModelAlreadyExists, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import FileAlreadyImported, GrammarHasIssues, InvalidFileType, ModelAlreadyExists, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -189,6 +186,9 @@ class AntTreeAnalyzer:
         self.pending_annotations = []
         self.pending_is_assignments = []
         self.check_parse_tree(self.root, BaseScope())
+        #vscode_logger.info("the tables:")
+        #vscode_logger.info(self.import_table.get_all_names())
+        #vscode_logger.info(self.table.get_all_names())
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
@@ -206,6 +206,22 @@ class AntTreeAnalyzer:
     def get_issues(self) -> List[Issue]:
         return (self.warning + self.error).copy()
     
+    def replace_assign(self, given_qname: QName, assignment: Assignment, from_import: bool):
+        if from_import:
+            table_val = self.import_table.get(given_qname)
+            if table_val[0].value_node is not None:
+                self.import_table.replace_value(given_qname)
+                comp = assignment.get_maybein().get_comp().get_name_text()
+                self.import_table.insert(given_qname, SymbolType.Parameter,
+                            value_node=assignment.get_value(), comp=comp)
+        else:
+            table_val = self.table.get(given_qname)
+            if table_val[0].value_node is not None:
+                self.table.replace_value(given_qname)
+                comp = assignment.get_maybein().get_comp().get_name_text()
+                self.table.insert(given_qname, SymbolType.Parameter,
+                            value_node=assignment.get_value(), comp=comp)
+
     def check_parse_tree(self, root, scope):
         # 1. check rate laws:
         #   1.1 referencing undefined parameters
@@ -415,10 +431,22 @@ class AntTreeAnalyzer:
         if assignment.get_maybein() != None and assignment.get_maybein().is_in_comp():
             comp = assignment.get_maybein().get_comp().get_name_text()
         if insert is True:
-            self.import_table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter)
+            #if self.import_table.get(QName(scope, assignment.get_name())):
+            #    self.replace_assign(QName(scope, assignment.get_name()), assignment, True)
+            #vscode_logger.info("we're in import assign")
+            self.import_table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
+                            value_node=assignment.get_value(), comp=comp)
         else:
-            self.table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
+            #if self.table.get(QName(scope, assignment.get_name())):
+            #    if self.import_table.get(QName(scope, assignment.get_name())):
+            #        self.replace_assign(QName(scope, assignment.get_name()), assignment, False)
+            #    vscode_logger.info("we're in non import assign 1")
+            #    vscode_logger.info(assignment.get_value())
+            #else:
+                self.table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
                             value_node=assignment, comp=comp)
+            #    vscode_logger.info("we're in non import assign 2")
+            #    vscode_logger.info(assignment.get_value())
         self.handle_arith_expr(scope, assignment.get_value(), insert)
 
     def resolve_variab(self, tree) -> Variability:
@@ -520,10 +548,6 @@ class AntTreeAnalyzer:
                         self.error.append(ModelAlreadyExists(name.range, node.get_name_str(), name))
                         break
                     for child in node.children:
-                        if isinstance(child, Import):
-                            if self.table.get(QName(scope, child.get_file_name())):
-                                self.error.append(CircularImportFound(child.range, child.get_file_name()))
-                            continue
                         if isinstance(child, ErrorToken):
                             continue
                         if isinstance(child, ErrorNode):

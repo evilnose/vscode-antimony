@@ -288,12 +288,10 @@ class OverrodeValue(Issue):
             new_column=new_range.start.column,
         )
 
-
 class NoImportFile(Issue):
     def __init__(self, range):
         super().__init__(range, IssueSeverity.Error)
         self.message = "No such import file found"
-
 
 class InvalidFileType(Issue):
     def __init__(self, range):
@@ -317,17 +315,7 @@ class FileAlreadyImported(Issue):
 class ModelAlreadyExists(Issue):
     def __init__(self, range, model: str, file: str):
         super().__init__(range, IssueSeverity.Error)
-        self.message = ("Model '{}' is already defined").format(model)
-        #("A model with the name {model} already exists. Please "
-        #                "consider changing the model name in '{file}'").format(
-        #                    model=model,
-        #                    file=file
-        #                )
-
-class CircularImportFound(Issue):
-    def __init__(self, range, file: str):
-        super().__init__(range, IssueSeverity.Error)
-        self.message = ("Circular import found in {file}").format(file=file)
+        self.message = ("Model '{}' is already defined, or there is a circular import").format(model)
 
 class AntimonySyntaxError(Exception):
     # TODO this is far from complete. To include: filename, possible token choices,

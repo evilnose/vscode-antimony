@@ -186,6 +186,14 @@ class AntTreeAnalyzer:
         self.pending_annotations = []
         self.pending_is_assignments = []
         self.check_parse_tree(self.root, BaseScope())
+        vscode_logger.info("the import table:")
+        import_qnames = self.import_table.get_all_qnames()
+        if not import_qnames:
+            vscode_logger.info("No qnames in import_table")
+        else:
+            for name in import_qnames:
+                if isinstance(name.name, Name):
+                    vscode_logger.info(self.import_table.get(name)[0].value_node)
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)

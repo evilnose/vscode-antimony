@@ -186,9 +186,6 @@ class AntTreeAnalyzer:
         self.pending_annotations = []
         self.pending_is_assignments = []
         self.check_parse_tree(self.root, BaseScope())
-        #vscode_logger.info("the tables:")
-        #vscode_logger.info(self.import_table.get_all_names())
-        #vscode_logger.info(self.table.get_all_names())
 
     def resolve_qname(self, qname: QName):
         return self.table.get(qname)
@@ -539,11 +536,6 @@ class AntTreeAnalyzer:
             for node in file_str.tree.children:
                 if isinstance(node, ModularModel):
                     scope = ModularModelScope(str(node.get_name()))
-                    #vscode_logger.info("checking for model:")
-                    #vscode_logger.info(name)
-                    #vscode_logger.info(QName(scope, node.get_name()))
-                    #if self.table.get(QName(BaseScope(), node.get_name())):
-                    #    vscode_logger.info(self.table.get(QName(BaseScope(), node.get_name())))
                     if self.table.get(QName(BaseScope(), node.get_name())):
                         self.error.append(ModelAlreadyExists(name.range, node.get_name_str(), name))
                         break

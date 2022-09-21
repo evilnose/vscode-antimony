@@ -74,17 +74,6 @@ export async function rateLawSingleStepInput(context: ExtensionContext, line: nu
         }
         const endRange = new vscode.Range(pos.line, pos.character - count, pos.line, pos.character - count);
         vscode.window.activeTextEditor.insertSnippet(snippetStr, endRange);
-
-        // let constantDescription = "";
-        // for (let i = 0; i < rateLawDict[rateLawIndex].constants.length; i++) {
-        //     constantDescription = constantDescription
-        //                             .concat(rateLawDict[rateLawIndex].constants[i].name.toString() + ": ")
-        //                             .concat(rateLawDict[rateLawIndex].constants[i].description.toString());
-        // }
-        vscode.window.showInformationMessage(
-            rateLawName 
-            // + constantDescription
-        )
     }
 
     function shouldResume() {

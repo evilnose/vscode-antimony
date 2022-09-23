@@ -7,4 +7,4 @@ model tester_model()
   k4 = 0.6
 end
 
-kfc = 394
+kfc = 31

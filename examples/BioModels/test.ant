@@ -56,3 +56,5 @@ model full_pathway
 end
 
 kfc = 2894
+kfc2 = 3
+kfc3 := kfc + kfc2

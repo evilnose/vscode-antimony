@@ -337,10 +337,9 @@ class SymbolTable:
         else:
             return []
     
-    def replace_value(self, qname, assignment, comp):
+    def remove(self, qname: QName):
         leaf_table = self._leaf_table(qname.scope)
         leaf_table.pop(qname.name.text)
-        self.insert(qname, SymbolType.Parameter, value_node=assignment.get_value(), comp=comp)
     
     def insert_warning(self, issue: Issue):
         self.warning.append(issue)

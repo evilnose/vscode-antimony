@@ -204,15 +204,12 @@ class AntTreeAnalyzer:
         return (self.warning + self.error).copy()
     
     def replace_assign(self, given_qname: QName, assignment: Assignment, from_import: bool):
-        comp = None
         if from_import:
-            if assignment.get_maybein() != None and assignment.get_maybein().is_in_comp():
-                comp = assignment.get_maybein().get_comp().get_name_text()
-            self.import_table.replace_value(given_qname, assignment, comp)
+            self.import_table.remove(given_qname)
+            self.handle_assignment(BaseScope(), assignment, True)
         else:
-            if assignment.get_maybein() != None and assignment.get_maybein().is_in_comp():
-                comp = assignment.get_maybein().get_comp().get_name_text()
-            self.table.replace_value(given_qname, assignment, comp)
+            self.table.remove(given_qname)
+            self.handle_assignment(BaseScope(), assignment, False)
 
     def check_parse_tree(self, root, scope):
         # 1. check rate laws:
@@ -533,13 +530,8 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, Import):
                         continue
                     if isinstance(stmt, Assignment):
-                        vscode_logger.info("pre change:")
-                        vscode_logger.info(self.table.get(QName(scope, stmt.get_name()))[0].value_node)
                         if self.table.get(QName(scope, stmt.get_name())):
                             self.replace_assign(QName(scope, stmt.get_name()), stmt, False)
-                            vscode_logger.info("post change:")
-                            vscode_logger.info(stmt.get_value())
-                            vscode_logger.info(self.table.get(QName(scope, stmt.get_name()))[0].value_node)
                         else:
                             self.handle_assignment(scope, stmt, True)
                         continue

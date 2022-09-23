@@ -353,7 +353,7 @@ class Reaction(TrunkNode):
 
     def is_reversible(self):
         assert self.children[2].text in ('->', '=>')
-        return self.children[2].text == '=>'
+        return self.children[2].text == '->'
     
     def get_comp(self):
         if self.children[6] is not None:

@@ -36,7 +36,6 @@ model full_pathway
   B: side_reaction(S2, k5)
   W: test3()
   TM: tester_model()
-  T2: test2(S2, k2)
 
   #AE.M = 3
   #W.G = 2
@@ -55,3 +54,5 @@ model full_pathway
   S1 is "this is a test"
   S2 is "this is another test"
 end
+
+kfc = 2894

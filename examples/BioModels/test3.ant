@@ -6,3 +6,5 @@ model tester_model()
   k3 = 0.2
   k4 = 0.6
 end
+
+kfc = 394

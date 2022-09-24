@@ -86,9 +86,6 @@ class AntTreeAnalyzer:
                             if isinstance(st, ErrorNode):
                                 continue
                             stmt = st.get_stmt()
-                            if isinstance(stmt, Import):
-                                self.pre_handle_import(scope, stmt)
-                                continue
                             if stmt is None:
                                 continue
                             {
@@ -118,9 +115,6 @@ class AntTreeAnalyzer:
                             if isinstance(st, ErrorNode):
                                 continue
                             stmt = st.get_stmt()
-                            if isinstance(stmt, Import):
-                                self.pre_handle_import(scope, stmt)
-                                continue
                             if stmt is None:
                                 continue
                             {
@@ -527,8 +521,6 @@ class AntTreeAnalyzer:
                     if isinstance(node, ErrorNode):
                         continue
                     stmt = node.get_stmt()
-                    if isinstance(stmt, Import):
-                        continue
                     if isinstance(stmt, Assignment):
                         if self.table.get(QName(scope, stmt.get_name())):
                             self.replace_assign(QName(scope, stmt.get_name()), stmt, False)
@@ -582,7 +574,7 @@ class AntTreeAnalyzer:
                     scope = ModularModelScope(str(node.get_name()))
                     if self.table.get(QName(BaseScope(), node.get_name())):
                         self.error.append(ModelAlreadyExists(name.range, node.get_name_str(), name))
-                        break
+                        return
                     for child in node.children:
                         if isinstance(child, ErrorToken):
                             continue

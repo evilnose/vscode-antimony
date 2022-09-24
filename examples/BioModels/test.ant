@@ -36,6 +36,7 @@ model full_pathway
   B: side_reaction(S2, k5)
   W: test3()
   TM: tester_model()
+  T2: test2(S3, k2)
 
   #AE.M = 3
   #W.G = 2

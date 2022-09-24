@@ -500,6 +500,7 @@ class AntTreeAnalyzer:
             self.error.append(NoImportFile(name.range))
         elif self.import_table.get(qname):
             self.error.append(FileAlreadyImported(name.range, name.get_str()))
+            self.import_table.remove(qname)
         elif file_str.get_issues():
             issues = list()
             for issue in file_str.get_issues():

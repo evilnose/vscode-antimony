@@ -1,4 +1,5 @@
 
+from collections import defaultdict
 import logging
 from tkinter.messagebox import YES
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
@@ -63,6 +64,7 @@ class AntTreeAnalyzer:
         self.table = SymbolTable()
         self.import_table = SymbolTable()
         self.root = root
+        self.inserted = defaultdict(bool)
         self.pending_is_assignments = []
         self.pending_annotations = []
         self.pending_imports = []
@@ -197,13 +199,13 @@ class AntTreeAnalyzer:
     def get_issues(self) -> List[Issue]:
         return (self.warning + self.error).copy()
     
-    def replace_assign(self, given_qname: QName, assignment: Assignment, from_import: bool):
-        if from_import:
-            self.import_table.remove(given_qname)
-            self.handle_assignment(BaseScope(), assignment, True)
-        else:
-            self.table.remove(given_qname)
-            self.handle_assignment(BaseScope(), assignment, False)
+    def replace_assign(self, given_qname: QName, assignment: Assignment):
+        #if from_import:
+        #    self.import_table.remove(given_qname)
+        #    self.handle_assignment(BaseScope(), assignment, True)
+        #else:
+        self.table.remove(given_qname)
+        self.handle_assignment(BaseScope(), assignment, False)
 
     def check_parse_tree(self, root, scope):
         # 1. check rate laws:
@@ -522,11 +524,17 @@ class AntTreeAnalyzer:
                     if isinstance(node, ErrorNode):
                         continue
                     stmt = node.get_stmt()
+                    # From Tellurium testing, base file gets priority over everything,
+                    # Change overwriting accordingly
                     if isinstance(stmt, Assignment):
-                        if self.table.get(QName(scope, stmt.get_name())):
-                            self.replace_assign(QName(scope, stmt.get_name()), stmt, False)
-                        else:
-                            self.handle_assignment(scope, stmt, True)
+                        cur_qname = QName(scope, stmt.get_name())
+                        cur_assign = self.table.get(cur_qname)[0]
+                        if cur_assign.value_node is None:
+                            self.handle_assignment(scope, stmt, False)
+                            self.inserted[cur_assign.name] = True
+                        elif cur_assign.value_node is not None and self.inserted[cur_assign.name]:
+                            self.replace_assign(cur_qname, stmt)
+                        self.handle_assignment(scope, stmt, True)
                         continue
                     if stmt is None:
                         continue

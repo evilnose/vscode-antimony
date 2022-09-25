@@ -317,6 +317,11 @@ class ModelAlreadyExists(Issue):
         super().__init__(range, IssueSeverity.Error)
         self.message = ("Model '{}' is already defined, or there is a circular import").format(model)
 
+class CircularImportFound(Issue):
+    def __init__(self, range):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = "Circular import found"
+
 class AntimonySyntaxError(Exception):
     # TODO this is far from complete. To include: filename, possible token choices,
     # and possibly even parser state?

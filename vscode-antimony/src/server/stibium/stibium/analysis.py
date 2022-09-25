@@ -527,14 +527,7 @@ class AntTreeAnalyzer:
                     # From Tellurium testing, base file gets priority over everything,
                     # Change overwriting accordingly
                     if isinstance(stmt, Assignment):
-                        cur_qname = QName(scope, stmt.get_name())
-                        cur_assign = self.table.get(cur_qname)[0]
-                        if cur_assign.value_node is None:
-                            self.handle_assignment(scope, stmt, False)
-                            self.inserted[cur_assign.name] = True
-                        elif cur_assign.value_node is not None and self.inserted[cur_assign.name]:
-                            self.replace_assign(cur_qname, stmt)
-                        self.handle_assignment(scope, stmt, True)
+                        self.handle_assignment_overwrite(scope, stmt)
                         continue
                     if stmt is None:
                         continue
@@ -548,8 +541,8 @@ class AntTreeAnalyzer:
                         'FunctionCall' : self.handle_function_call,
                         'VariableIn' : self.handle_variable_in,
                         'IsAssignment' : self.pre_handle_is_assignment,
-                    }[stmt.__class__.__name__](BaseScope(), stmt, True)
-                    self.handle_child_incomp(BaseScope(), stmt, True)
+                    }[stmt.__class__.__name__](scope, stmt, True)
+                    self.handle_child_incomp(scope, stmt, True)
                 if isinstance(node, Model):
                     scope = ModelScope(str(node.get_name()))
                     for child in node.children:
@@ -627,6 +620,16 @@ class AntTreeAnalyzer:
                             self.handle_parameters(scope, child, True)
                     self.handle_function(child, scope, True)
             self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
+    
+    def handle_assignment_overwrite(self, scope, stmt):
+        cur_qname = QName(scope, stmt.get_name())
+        cur_assign = self.table.get(cur_qname)[0]
+        if cur_assign.value_node is None:
+            self.handle_assignment(scope, stmt, False)
+            self.inserted[cur_assign.name] = True
+        elif cur_assign.value_node is not None and self.inserted[cur_assign.name]:
+            self.replace_assign(cur_qname, stmt)
+        self.handle_assignment(scope, stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))

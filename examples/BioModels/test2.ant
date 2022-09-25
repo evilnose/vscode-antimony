@@ -17,4 +17,4 @@ model test2(Q, k4)
   k7 = 0.4
 end
 
-kfc = 142
+kfc5 = 142

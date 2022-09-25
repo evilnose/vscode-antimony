@@ -623,11 +623,10 @@ class AntTreeAnalyzer:
     
     def handle_assignment_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_name())
-        cur_assign = self.table.get(cur_qname)[0]
-        if cur_assign.value_node is None:
+        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node is None:
             self.handle_assignment(scope, stmt, False)
-            self.inserted[cur_assign.name] = True
-        elif cur_assign.value_node is not None and self.inserted[cur_assign.name]:
+            self.inserted[self.table.get(cur_qname)[0].name] = True
+        elif self.table.get(cur_qname)[0].value_node is not None and self.inserted[self.table.get(cur_qname)[0].name]:
             self.replace_assign(cur_qname, stmt)
         self.handle_assignment(scope, stmt, True)
 

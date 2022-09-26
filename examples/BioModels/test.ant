@@ -1,7 +1,7 @@
 # This creates a model 'side_reaction', exposing the variables 'S' and 'k1':
 import "test2.ant"
-import "test3.ant"
 import "5.ant"
+import "test3.ant"
 
 model side_reaction(S, k1)
   ES = 2
@@ -58,4 +58,6 @@ end
 
 #kfc = 2894
 kfc2 = 3
-kfc3 := kfc + kfc2 - kfc5
+kfc3 := kfc + kfc2 - kfc5 + kfctotal
+kfctotal = kfc3
+kfctotal is "the third"

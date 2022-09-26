@@ -1,6 +1,10 @@
 // Created by libAntimony v2.8.0
 import "test2.ant"
 kfc = 14235
+S1 = 24
+kfctotal = 423
+kfctotal is "original"
+
 model *BIOMD0000000005()
 
   // Compartments and Species:

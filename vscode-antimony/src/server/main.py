@@ -32,6 +32,7 @@ from pygls.types import (CompletionItem, CompletionItemKind, CompletionList, Com
                          TextDocumentContentChangeEvent, TextDocumentPositionParams, Position)
 import threading
 import time
+from AMAS import recommender
 
 # TODO remove this for production
 logging.basicConfig(filename='vscode-antimony-dep.log', filemode='w', level=logging.DEBUG)
@@ -208,6 +209,35 @@ def query_species(ls: LanguageServer, args):
         return {
             'error': 'Connection Error!'
         }
+
+@server.thread()
+@server.feature('antimony.recommender')
+def recommend(ls: LanguageServer, args):
+    '''
+    get a list of recommended annotations, user has to select a symbol.
+    params:
+    {
+        args[0]: string of line number,
+        args[1]: string of character number where the symbol starts,
+        args[2]: doc uri
+    }
+    '''
+    line = args[0]
+    character = args[1]
+    uri = args[2]
+    doc = server.workspace.get_document(uri)
+    antfile_cache = get_antfile(doc)
+    recom = recommender.Recommender()
+    position  = SrcPosition(int(line) + 1, int(character) + 1)
+    symbol = antfile_cache.symbols_at(position)[0][0]
+    display_name = symbol.display_name
+    if display_name:
+        annotations = recom.getSpeciesAnnotation(pred_str=display_name[0])
+    else:
+        annotations = recom.getSpeciesAnnotation(pred_id=symbol.name)
+    return {
+        'annotations': annotations
+    }
 
 #### Hover for displaying information ####
 @server.feature(HOVER)

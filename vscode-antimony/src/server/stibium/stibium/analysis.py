@@ -210,6 +210,8 @@ class AntTreeAnalyzer:
             self.handle_assignment(BaseScope(), stmt, False)
         if isinstance(stmt, IsAssignment):
             self.handle_is_assignment(BaseScope(), stmt, False)
+        if isinstance(stmt, UnitDeclaration):
+            self.handle_unit_declaration(BaseScope(), stmt, False)
 
     def check_parse_tree(self, root, scope):
         # 1. check rate laws:
@@ -536,6 +538,9 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, IsAssignment):
                         self.handle_is_assignment_overwrite(scope, stmt)
                         continue
+                    if isinstance(stmt, UnitDeclaration):
+                        self.handle_unit_decl_overwrite(scope, stmt)
+                        continue
                     if stmt is None:
                         continue
                     {
@@ -543,7 +548,6 @@ class AntTreeAnalyzer:
                         'Declaration': self.handle_declaration,
                         'Annotation': self.pre_handle_annotation,
                         'UnitDeclaration': self.handle_unit_declaration,
-                        'UnitAssignment' : self.handle_unit_assignment,
                         'ModularModelCall' : self.handle_mmodel_call,
                         'FunctionCall' : self.handle_function_call,
                         'VariableIn' : self.handle_variable_in,
@@ -642,8 +646,18 @@ class AntTreeAnalyzer:
             self.handle_is_assignment(scope, stmt, False)
             self.inserted_is[self.table.get(cur_qname)[0].name] = True
         elif self.table.get(cur_qname)[0].display_name is not None and self.inserted_is[self.table.get(cur_qname)[0].name]:
-                self.replace_assign(cur_qname, stmt)
+            self.replace_assign(cur_qname, stmt)
         self.handle_is_assignment(scope, stmt, True)
+
+    def handle_unit_decl_overwrite(self, scope, stmt):
+        cur_qname = QName(scope, stmt.get_var_name().get_name())
+        if not self.table.get(cur_qname) or self.table.get(cur_qname) is None:
+            self.handle_unit_declaration(scope, stmt, False)
+            self.inserted[stmt.get_var_name().get_name()] = True
+        elif self.table.get(cur_qname) is not None and self.inserted[stmt.get_var_name().get_name()]:
+            self.replace_assign(cur_qname, stmt)
+            vscode_logger.info(self.table.get(cur_qname))
+        self.handle_unit_declaration(scope, stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))

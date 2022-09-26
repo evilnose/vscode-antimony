@@ -6,6 +6,6 @@ model tester_model()
   k3 = 0.2
   k4 = 0.6
 end
-kfctotal = 34
 kfc = 31
-kfctotal is "a second"
+kfctotal = 32
+unit count = atoms

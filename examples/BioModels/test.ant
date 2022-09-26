@@ -60,4 +60,6 @@ end
 kfc2 = 3
 kfc3 := kfc + kfc2 - kfc5 + kfctotal
 kfctotal = kfc3
-kfctotal is "the third"
+#unit count = molecules
+kfc3 has count
+#kfctotal is "a second"

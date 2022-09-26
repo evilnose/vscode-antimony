@@ -1,9 +1,11 @@
 // Created by libAntimony v2.8.0
 import "test2.ant"
-kfc = 14235
-S1 = 24
+kfc = 1
 kfctotal = 423
+#J1: S1 -> S2; kfc*S1
+#MC: test()
 kfctotal is "original"
+unit count = mole
 
 model *BIOMD0000000005()
 

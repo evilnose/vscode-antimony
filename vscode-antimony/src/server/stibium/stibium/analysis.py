@@ -553,10 +553,12 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, Declaration):
                         self.handle_decl_overwrite(scope, stmt)
                         continue
+                    if isinstance(stmt, Reaction):
+                        self.handle_reaction_overwrite(scope, stmt)
+                        continue
                     if stmt is None:
                         continue
                     {
-                        'Reaction': self.handle_reaction,
                         'Annotation': self.pre_handle_annotation,
                         'UnitAssignment': self.handle_unit_assignment,
                         'FunctionCall' : self.handle_function_call,
@@ -638,7 +640,7 @@ class AntTreeAnalyzer:
                             self.handle_arith_expr(scope, child, True)
                         if isinstance(child, Parameters):
                             self.handle_parameters(scope, child, True)
-                    self.handle_function(child, scope, True)
+                    self.handle_function(node, BaseScope(), True)
             self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
     
     def handle_assignment_overwrite(self, scope, stmt):
@@ -689,6 +691,15 @@ class AntTreeAnalyzer:
             elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted_decl[self.table.get(cur_qname)[0].name]:
                 self.replace_assign(cur_qname, stmt)
             self.handle_declaration(scope, stmt, True)
+    
+    def handle_reaction_overwrite(self, scope, stmt):
+        cur_qname = QName(scope, stmt.get_name())
+        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].decl_node is None:
+            self.handle_reaction(scope, stmt, False)
+            self.inserted[self.table.get(cur_qname)[0].name] = True
+        elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted[self.table.get(cur_qname)[0].name]:
+            self.replace_assign(cur_qname)
+        self.handle_reaction(scope, stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))

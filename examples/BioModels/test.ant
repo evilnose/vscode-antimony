@@ -57,16 +57,17 @@ model full_pathway
   S1 is "this is a test"
   S2 is "this is another test"
 end
-
 #kfc = 2894
 kfc2 = 3
 kfc3 := kfc + kfc2 - kfc5 + kfctotal
 kfctotal = S1 - S2
+#J4: S2 -> S1; kfc3
 compartment final
 final = 2
 S2 = 3
 S1 in final
-#MC: test3()
+MC: test3()
 unit count = molecules
+#S41 := quadratic(kfc, kfc2, kfc3, kfctotal)
 kfc3 has count
 #kfctotal is "a second"

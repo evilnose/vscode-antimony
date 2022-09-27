@@ -19,3 +19,5 @@ end
 
 kfc5 = 142
 kfc5 is "the fifth"
+S5 = 3
+J4: S5 -> ; kfc5

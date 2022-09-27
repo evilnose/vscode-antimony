@@ -203,10 +203,6 @@ class AntTreeAnalyzer:
         return (self.warning + self.error).copy()
     
     def replace_assign(self, given_qname: QName, stmt):
-        #if from_import:
-        #    self.import_table.remove(given_qname)
-        #    self.handle_assignment(BaseScope(), assignment, True)
-        #else:
         self.table.remove(given_qname)
         if isinstance(stmt, Assignment):
             self.handle_assignment(BaseScope(), stmt, False)
@@ -218,6 +214,8 @@ class AntTreeAnalyzer:
             self.handle_declaration(BaseScope(), stmt, False)
         if isinstance(stmt, VariableIn):
             self.handle_variable_in(BaseScope(), stmt, False)
+        if isinstance(stmt, Reaction):
+            self.handle_reaction(BaseScope(), stmt, False)
 
     def check_parse_tree(self, root, scope):
         # 1. check rate laws:
@@ -698,7 +696,7 @@ class AntTreeAnalyzer:
             self.handle_reaction(scope, stmt, False)
             self.inserted[self.table.get(cur_qname)[0].name] = True
         elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted[self.table.get(cur_qname)[0].name]:
-            self.replace_assign(cur_qname)
+            self.replace_assign(cur_qname, stmt)
         self.handle_reaction(scope, stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):

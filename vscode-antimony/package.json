@@ -23,6 +23,7 @@
 	"activationEvents": [
 		"onLanguage:antimony",
 		"onCommand:antimony.createAnnotationDialog",
+		"onCommand:antimony.recommendAnnotationDialog",
 		"onCommand:antimony.convertAntimonyToSBML",
 		"onCommand:antimony.convertSBMLToAntimony",
 		"onCommand:antimony.startSBMLWebview",
@@ -81,6 +82,10 @@
 				"title": "Create Annotation"
 			},
 			{
+				"command": "antimony.recommendAnnotationDialog",
+				"title": "Annotation Recommender"
+			},
+			{
 				"command": "antimony.convertAntimonyToSBML",
 				"title": "Convert to SBML"
 			},
@@ -117,6 +122,12 @@
 				{
 					"command": "antimony.createAnnotationDialog",
 					"title": "Create Annotation",
+					"group": "1_modification",
+					"when": "editorLangId == antimony"
+				},
+				{
+					"command": "antimony.recommendAnnotationDialog",
+					"title": "Annotation Recommender",
 					"group": "1_modification",
 					"when": "editorLangId == antimony"
 				},

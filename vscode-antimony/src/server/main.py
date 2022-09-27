@@ -212,6 +212,7 @@ def query_species(ls: LanguageServer, args):
 
 @server.thread()
 @server.feature('antimony.recommender')
+@server.command('antimony.recommender')
 def recommend(ls: LanguageServer, args):
     '''
     get a list of recommended annotations, user has to select a symbol.

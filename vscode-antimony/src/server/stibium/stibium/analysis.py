@@ -66,6 +66,8 @@ class AntTreeAnalyzer:
         self.root = root
         self.inserted = defaultdict(bool)
         self.inserted_is = defaultdict(bool)
+        self.inserted_decl = defaultdict(bool)
+        self.inserted_var_in = defaultdict(bool)
         self.pending_is_assignments = []
         self.pending_annotations = []
         self.pending_imports = []
@@ -212,6 +214,10 @@ class AntTreeAnalyzer:
             self.handle_is_assignment(BaseScope(), stmt, False)
         if isinstance(stmt, UnitDeclaration):
             self.handle_unit_declaration(BaseScope(), stmt, False)
+        if isinstance(stmt, Declaration):
+            self.handle_declaration(BaseScope(), stmt, False)
+        if isinstance(stmt, VariableIn):
+            self.handle_variable_in(BaseScope(), stmt, False)
 
     def check_parse_tree(self, root, scope):
         # 1. check rate laws:
@@ -544,15 +550,17 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, ModularModelCall):
                         self.handle_mmodel_call_overwrite(stmt, name)
                         continue
+                    if isinstance(stmt, Declaration):
+                        self.handle_decl_overwrite(scope, stmt)
+                        continue
                     if stmt is None:
                         continue
                     {
                         'Reaction': self.handle_reaction,
-                        'Declaration': self.handle_declaration,
                         'Annotation': self.pre_handle_annotation,
-                        'UnitDeclaration': self.handle_unit_declaration,
+                        'UnitAssignment': self.handle_unit_assignment,
                         'FunctionCall' : self.handle_function_call,
-                        'VariableIn' : self.handle_variable_in,
+                        'VariableIn': self.handle_variable_in,
                     }[stmt.__class__.__name__](scope, stmt, True)
                     self.handle_child_incomp(scope, stmt, True)
                 if isinstance(node, Model):
@@ -671,6 +679,16 @@ class AntTreeAnalyzer:
         elif not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node is None:
             self.handle_mmodel_call(BaseScope(), stmt, False)
         self.handle_mmodel_call(BaseScope(), stmt, True)
+    
+    def handle_decl_overwrite(self, scope, stmt):
+        for name in stmt.get_items():
+            cur_qname = QName(scope, name.get_maybein().get_var_name().get_name())
+            if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].decl_node is None:
+                self.handle_declaration(scope, stmt, False)
+                self.inserted_decl[self.table.get(cur_qname)[0].name] = True
+            elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted_decl[self.table.get(cur_qname)[0].name]:
+                self.replace_assign(cur_qname, stmt)
+            self.handle_declaration(scope, stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))

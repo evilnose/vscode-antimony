@@ -2,13 +2,17 @@
 import "test2.ant"
 kfc = 1
 kfctotal = 423
+kfc5 = 1234
+kfc5 is "the last"
 J4: S1 -> S2; kfc*S1
 S1 = 2
 S2 = 4
-MC: test()
 kfctotal is "original"
 unit count = mole
-
+#MC: test()
+compartment tester
+tester = 1
+const species S1 in tester, S2 in tester
 model *BIOMD0000000005()
 
   // Compartments and Species:

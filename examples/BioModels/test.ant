@@ -61,8 +61,12 @@ end
 #kfc = 2894
 kfc2 = 3
 kfc3 := kfc + kfc2 - kfc5 + kfctotal
-kfctotal = kfc3 + S1
+kfctotal = S1 - S2
+compartment final
+final = 2
+S2 = 3
+S1 in final
 #MC: test3()
-#unit count = molecules
+unit count = molecules
 kfc3 has count
 #kfctotal is "a second"

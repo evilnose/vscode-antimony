@@ -3,7 +3,7 @@ from collections import defaultdict
 import logging
 from tkinter.messagebox import YES
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
-from .types import CircularImportFound, FileAlreadyImported, GrammarHasIssues, InvalidFileType, ModelAlreadyExists, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import CircularImportFound, DuplicateImportedMModelCall, FileAlreadyImported, GrammarHasIssues, InvalidFileType, ModelAlreadyExists, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -541,6 +541,9 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, UnitDeclaration):
                         self.handle_unit_decl_overwrite(scope, stmt)
                         continue
+                    if isinstance(stmt, ModularModelCall):
+                        self.handle_mmodel_call_overwrite(stmt, name)
+                        continue
                     if stmt is None:
                         continue
                     {
@@ -548,7 +551,6 @@ class AntTreeAnalyzer:
                         'Declaration': self.handle_declaration,
                         'Annotation': self.pre_handle_annotation,
                         'UnitDeclaration': self.handle_unit_declaration,
-                        'ModularModelCall' : self.handle_mmodel_call,
                         'FunctionCall' : self.handle_function_call,
                         'VariableIn' : self.handle_variable_in,
                     }[stmt.__class__.__name__](scope, stmt, True)
@@ -585,7 +587,7 @@ class AntTreeAnalyzer:
                 if isinstance(node, ModularModel):
                     scope = ModularModelScope(str(node.get_name()))
                     if self.table.get(QName(BaseScope(), node.get_name())):
-                        self.error.append(ModelAlreadyExists(name.range, node.get_name_str(), name))
+                        self.error.append(ModelAlreadyExists(name.range, node.get_name_str()))
                         return
                     for child in node.children:
                         if isinstance(child, ErrorToken):
@@ -656,8 +658,19 @@ class AntTreeAnalyzer:
             self.inserted[stmt.get_var_name().get_name()] = True
         elif self.table.get(cur_qname) is not None and self.inserted[stmt.get_var_name().get_name()]:
             self.replace_assign(cur_qname, stmt)
-            vscode_logger.info(self.table.get(cur_qname))
         self.handle_unit_declaration(scope, stmt, True)
+
+    def handle_mmodel_call_overwrite(self, stmt, name):
+        if stmt.get_name() is None:
+            mmodel_name = stmt.get_mmodel_name()
+        else:
+            mmodel_name = stmt.get_name()
+        cur_qname = QName(BaseScope(), mmodel_name)
+        if self.table.get(cur_qname):
+            self.error.append(DuplicateImportedMModelCall(name.range, mmodel_name.text))
+        elif not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node is None:
+            self.handle_mmodel_call(BaseScope(), stmt, False)
+        self.handle_mmodel_call(BaseScope(), stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))

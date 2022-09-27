@@ -313,9 +313,15 @@ class FileAlreadyImported(Issue):
                         "import statements for '{file}'").format(file=file)
 
 class ModelAlreadyExists(Issue):
-    def __init__(self, range, model: str, file: str):
+    def __init__(self, range, model: str):
         super().__init__(range, IssueSeverity.Error)
         self.message = ("Model '{}' is already defined, or there is a circular import").format(model)
+
+class DuplicateImportedMModelCall(Issue):
+    def __init__(self, range, mmodelcall: str):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("The modular model call '{}' has been duplicated, please make sure "
+                        "there is only one modular model call of this name").format(mmodelcall)
 
 class CircularImportFound(Issue):
     def __init__(self, range):

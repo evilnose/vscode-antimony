@@ -2,8 +2,10 @@
 import "test2.ant"
 kfc = 1
 kfctotal = 423
-#J1: S1 -> S2; kfc*S1
-#MC: test()
+J4: S1 -> S2; kfc*S1
+S1 = 2
+S2 = 4
+MC: test()
 kfctotal is "original"
 unit count = mole
 

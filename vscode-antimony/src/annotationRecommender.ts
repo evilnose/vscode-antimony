@@ -16,6 +16,10 @@ import { sleep } from './utils/utils';
 export async function singleStepInputRec(context: ExtensionContext, line: number, lineStr: string, charStr: string, uri: string, initialEntity: string = null) {
     let databases = [];
     let recommendations;
+
+    // going to try manually inserting something for the recommender and see what it returns. also, we can use a 
+    // conditional to check if the index is an array and don't display it otherwise since the percentage is 0
+
 	vscode.commands.executeCommand('antimony.recommender', lineStr, charStr, uri).then(async (result) => {
         console.log(result)
 

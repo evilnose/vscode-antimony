@@ -33,6 +33,7 @@ from pygls.types import (CompletionItem, CompletionItemKind, CompletionList, Com
 import threading
 import time
 from AMAS import recommender
+from bioservices import ChEBI
 
 # TODO remove this for production
 logging.basicConfig(filename='vscode-antimony-dep.log', filemode='w', level=logging.DEBUG)
@@ -234,10 +235,20 @@ def recommend(ls: LanguageServer, args):
     if display_name is not None:
         annotations = recom.getSpeciesAnnotation(pred_str=display_name.replace("\"", ""))
     else:
-        logging.info("failed here: " + symbol.name)
         annotations = recom.getSpeciesAnnotation(pred_id=symbol.name)
+    chebi = ChEBI()
+    ret = list()
+    limit = 0
+    for annotation in annotations.candidates:
+        ret.append({
+            'label': chebi.getLiteEntity(annotation[0])[0].chebiAsciiName,
+            'id': annotation[0]
+        })
+        limit += 1
+        if limit >= 10:
+            break
     return {
-        'annotations': annotations
+        'annotations': ret
     }
 
 #### Hover for displaying information ####

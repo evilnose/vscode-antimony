@@ -256,13 +256,7 @@ async function recommendAnnotationDialog(context: vscode.ExtensionContext, args:
 	}
 
 	await new Promise<void>((resolve, reject) => {
-		console.log(line)
-		console.log(lineStr)
-		console.log(charStr)
-		console.log(uri)
-		console.log(initialQuery)
-
-		const selectedItem = singleStepInputRec(context, line, lineStr, charStr, uri, initialQuery); 
+		const selectedItem = singleStepInputRec(context, line, lineStr, charStr, uri, initialQuery, initialEntity); 
 		resolve()
     });
 }

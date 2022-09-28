@@ -5,15 +5,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, commands, QuickPick, ProgressLocation } from 'vscode';
-import { sleep } from './utils/utils';
+import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, QuickPick } from 'vscode';
 
 /**
  * A multi-step input using window.createQuickPick() and window.createInputBox().
  * 
  * This first part uses the helper class `MultiStepInput` that wraps the API for the multi-step case.
  */
-export async function singleStepInputRec(context: ExtensionContext, line: number, lineStr: string, charStr: string, uri: string, initialEntity: string = null) {
+export async function singleStepInputRec(context: ExtensionContext, line: number, lineStr: string, charStr: string, uri: string, initialQuery: string = null, initialEntity: string = null) {
     let databases = [];
     let recommendations;
     let annotations
@@ -63,11 +62,21 @@ export async function singleStepInputRec(context: ExtensionContext, line: number
             onInputChanged: null,
         });
         state.database = pick;
-        onQueryUpdated(state.database['id'], input)
+        onQueryUpdated(state.database['id'])
     }
 
-    async function onQueryUpdated(annotation: string, input: MultiStepInput) {
-        const snippetStr = new vscode.SnippetString(annotation);
+    async function onQueryUpdated(annotation: string) {
+        const prefix = annotation.split(':')[0].toLowerCase();
+        const id = annotation.split(':')[1]
+        var snippetText;
+        if (prefix === 'rhea') {
+            snippetText = `\n\${1:${initialQuery}} identity "https://www.rhea-db.org/rhea/${annotation}"`;
+        } else if (prefix === 'ontology') {
+            // snippetText = `\n\${1:${initialQuery}} identity "${entity['iri']}"`;
+        } else {
+            snippetText = `\n\${1:${initialQuery}} identity "http://identifiers.org/${prefix}/${annotation}"`;
+        }
+        const snippetStr = new vscode.SnippetString(snippetText);
         const doc = vscode.window.activeTextEditor.document;
         const pos = doc.lineAt(line).range.end;
         vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
@@ -87,10 +96,6 @@ export async function singleStepInputRec(context: ExtensionContext, line: number
     }
     // window.showInformationMessage(`Creating Application Service '${state.name}'`);
     });
-}
-
-async function getResult(result) {
-	return result.annotations;
 }
 
 // -------------------------------------------------------

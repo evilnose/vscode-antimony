@@ -16,6 +16,7 @@ import { sleep } from './utils/utils';
 export async function singleStepInputRec(context: ExtensionContext, line: number, lineStr: string, charStr: string, uri: string, initialEntity: string = null) {
     let databases = [];
     let recommendations;
+    let annotations
 
     // going to try manually inserting something for the recommender and see what it returns. also, we can use a 
     // conditional to check if the index is an array and don't display it otherwise since the percentage is 0
@@ -23,11 +24,12 @@ export async function singleStepInputRec(context: ExtensionContext, line: number
 	vscode.commands.executeCommand('antimony.recommender', lineStr, charStr, uri).then(async (result) => {
         console.log(result)
 
-        recommendations = getResult(result);
-        console.log(recommendations[0])
+        recommendations = result;
+
+        annotations = recommendations.annotations;
        
-        for (let i = 0; i < recommendations.length; i++) {
-            databases.push({id: recommendations[i]}); 
+        for (let i = 0; i < annotations.length; i++) {
+            databases.push({id: annotations[i].id, label: annotations[i].label}); 
         }
 
         console.log(databases)

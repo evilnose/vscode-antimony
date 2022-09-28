@@ -1,8 +1,7 @@
 
 from collections import defaultdict
 import logging
-from tkinter.messagebox import YES
-from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
+from stibium.ant_types import UnitAssignment, FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
 from .types import CircularImportFound, DuplicateImportedMModelCall, FileAlreadyImported, GrammarHasIssues, InvalidFileType, ModelAlreadyExists, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -68,6 +67,7 @@ class AntTreeAnalyzer:
         self.inserted_is = defaultdict(bool)
         self.inserted_decl = defaultdict(bool)
         self.inserted_var_in = defaultdict(bool)
+        self.inserted_unit_assign = defaultdict(bool)
         self.pending_is_assignments = []
         self.pending_annotations = []
         self.pending_imports = []
@@ -210,6 +210,8 @@ class AntTreeAnalyzer:
             self.handle_is_assignment(BaseScope(), stmt, False)
         if isinstance(stmt, UnitDeclaration):
             self.handle_unit_declaration(BaseScope(), stmt, False)
+        if isinstance(stmt, UnitAssignment):
+            self.handle_unit_assignment(BaseScope(), stmt, False)
         if isinstance(stmt, Declaration):
             self.handle_declaration(BaseScope(), stmt, False)
         if isinstance(stmt, VariableIn):
@@ -554,11 +556,13 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, Reaction):
                         self.handle_reaction_overwrite(scope, stmt)
                         continue
+                    if isinstance(stmt, UnitAssignment):
+                        self.handle_unit_assign_overwrite(scope, stmt)
+                        continue
                     if stmt is None:
                         continue
                     {
                         'Annotation': self.pre_handle_annotation,
-                        'UnitAssignment': self.handle_unit_assignment,
                         'FunctionCall' : self.handle_function_call,
                         'VariableIn': self.handle_variable_in,
                     }[stmt.__class__.__name__](scope, stmt, True)
@@ -698,6 +702,15 @@ class AntTreeAnalyzer:
         elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted[self.table.get(cur_qname)[0].name]:
             self.replace_assign(cur_qname, stmt)
         self.handle_reaction(scope, stmt, True)
+    
+    def handle_unit_assign_overwrite(self, scope, stmt):
+        cur_qname = QName(scope, stmt.get_var_name().get_name())
+        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node.unit is None:
+            self.handle_unit_assignment(scope, stmt, False)
+            self.inserted_unit_assign[self.table.get(cur_qname)[0].name] = True
+        elif self.table.get(cur_qname)[0].value_node.unit is not None and self.inserted_unit_assign[self.table.get(cur_qname)[0].name]:
+            self.replace_assign(cur_qname, stmt)
+        self.handle_unit_assignment(scope, stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))

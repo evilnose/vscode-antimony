@@ -10,6 +10,8 @@ S2 = 4
 S41 = 123
 kfctotal is "original"
 unit count = mole
+unit vol = litre
+kfctotal has vol
 #MC: test()
 compartment tester
 tester = 1

@@ -211,7 +211,6 @@ def query_species(ls: LanguageServer, args):
         }
 
 @server.thread()
-@server.feature('antimony.recommender')
 @server.command('antimony.recommender')
 def recommend(ls: LanguageServer, args):
     '''
@@ -232,9 +231,10 @@ def recommend(ls: LanguageServer, args):
     position  = SrcPosition(int(line) + 1, int(character) + 1)
     symbol = antfile_cache.symbols_at(position)[0][0]
     display_name = symbol.display_name
-    if display_name:
-        annotations = recom.getSpeciesAnnotation(pred_str=display_name[0])
+    if display_name is not None:
+        annotations = recom.getSpeciesAnnotation(pred_str=display_name.replace("\"", ""))
     else:
+        logging.info("failed here: " + symbol.name)
         annotations = recom.getSpeciesAnnotation(pred_id=symbol.name)
     return {
         'annotations': annotations

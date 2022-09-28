@@ -21,8 +21,6 @@ export async function singleStepInputRec(context: ExtensionContext, line: number
     // conditional to check if the index is an array and don't display it otherwise since the percentage is 0
 
 	vscode.commands.executeCommand('antimony.recommender', lineStr, charStr, uri).then(async (result) => {
-        console.log(result)
-
         recommendations = result;
 
         annotations = recommendations.annotations;
@@ -31,70 +29,67 @@ export async function singleStepInputRec(context: ExtensionContext, line: number
             databases.push({id: annotations[i].id, label: annotations[i].label}); 
         }
 
-        console.log(databases)
+        interface State {
+            title: string;
+            step: number;
+            totalSteps: number;
+            database: QuickPickItem;
+            entity: QuickPickItem;
+            initialEntity: string;
+        }
 
-    interface State {
-        title: string;
-        step: number;
-        totalSteps: number;
-        database: QuickPickItem;
-        entity: QuickPickItem;
-        initialEntity: string;
-    }
+        async function collectInputs() {
+            const state = {initialEntity} as Partial<State>;
+            await MultiStepInput.run(input => pickDatabase(input, state));
+            return state as State;
+        }
 
-    async function collectInputs() {
-        const state = {initialEntity} as Partial<State>;
-        await MultiStepInput.run(input => pickDatabase(input, state));
-        return state as State;
-    }
+        const title = 'Select Annotation';
 
-    const title = 'Select Annotation';
+        async function pickDatabase(input: MultiStepInput, state: Partial<State>) {
+            const pick = await input.showQuickPick({
+                title,
+                step: 1,
+                totalSteps: 1,
+                placeholder: 'Select Annotation',
+                items: databases,
+                activeItem: state.database,
+                shouldResume: shouldResume,
+                onInputChanged: null,
+            });
+            state.database = pick;
+            onQueryUpdated(state.database['id'])
+        }
 
-    async function pickDatabase(input: MultiStepInput, state: Partial<State>) {
-        const pick = await input.showQuickPick({
-            title,
-            step: 1,
-            totalSteps: 1,
-            placeholder: 'Select Annotation',
-            items: databases,
-            activeItem: state.database,
-            shouldResume: shouldResume,
-            onInputChanged: null,
-        });
-        state.database = pick;
-        onQueryUpdated(state.database['id'])
-    }
+        async function onQueryUpdated(annotation: string) {
+            const prefix = annotation.split(':')[0].toLowerCase();
+            const id = annotation.split(':')[1]
+            var snippetText;
+            // if (prefix === 'rhea') {
+            //     snippetText = `\n\${1:${initialQuery}} identity "https://www.rhea-db.org/rhea/${annotation}"`;
+            // } else if (prefix === 'ontology') {
+            //     // snippetText = `\n\${1:${initialQuery}} identity "${entity['iri']}"`;
+            // } else {
+            snippetText = `\n\${1:${initialQuery}} identity "http://identifiers.org/${prefix}/${annotation}"`;
+            // }
+            const snippetStr = new vscode.SnippetString(snippetText);
+            const doc = vscode.window.activeTextEditor.document;
+            const pos = doc.lineAt(line).range.end;
+            vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
+        }
 
-    async function onQueryUpdated(annotation: string) {
-        const prefix = annotation.split(':')[0].toLowerCase();
-        const id = annotation.split(':')[1]
-        var snippetText;
-        // if (prefix === 'rhea') {
-        //     snippetText = `\n\${1:${initialQuery}} identity "https://www.rhea-db.org/rhea/${annotation}"`;
-        // } else if (prefix === 'ontology') {
-        //     // snippetText = `\n\${1:${initialQuery}} identity "${entity['iri']}"`;
-        // } else {
-        snippetText = `\n\${1:${initialQuery}} identity "http://identifiers.org/${prefix}/${annotation}"`;
-        // }
-        const snippetStr = new vscode.SnippetString(snippetText);
-        const doc = vscode.window.activeTextEditor.document;
-        const pos = doc.lineAt(line).range.end;
-        vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
-    }
+        function shouldResume() {
+            // Could show a notification with the option to resume.
+            return new Promise<boolean>((resolve, reject) => {
+                // noop
+            });
+        }
 
-    function shouldResume() {
-        // Could show a notification with the option to resume.
-        return new Promise<boolean>((resolve, reject) => {
-            // noop
-        });
-    }
-
-    const state = await collectInputs();
-    return {
-        'database': state.database.label,
-        'entity': state.entity
-    }
-    // window.showInformationMessage(`Creating Application Service '${state.name}'`);
+        const state = await collectInputs();
+        return {
+            'database': state.database.label,
+            'entity': state.entity
+        }
     });
 }
 

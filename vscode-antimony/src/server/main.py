@@ -235,7 +235,7 @@ def recommend(ls: LanguageServer, args):
     if display_name is not None:
         annotations = recom.getSpeciesAnnotation(pred_str=display_name.replace("\"", ""))
     else:
-        annotations = recom.getSpeciesAnnotation(pred_id=symbol.name)
+        annotations = recom.getSpeciesAnnotation(pred_str=symbol.name)
     chebi = ChEBI()
     ret = list()
     limit = 0

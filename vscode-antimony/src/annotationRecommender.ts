@@ -74,7 +74,7 @@ export async function singleStepInputRec(context: ExtensionContext, line: number
         // } else if (prefix === 'ontology') {
         //     // snippetText = `\n\${1:${initialQuery}} identity "${entity['iri']}"`;
         // } else {
-            snippetText = `\n\${1:${initialQuery}} identity "http://identifiers.org/${prefix}/${annotation}"`;
+        snippetText = `\n\${1:${initialQuery}} identity "http://identifiers.org/${prefix}/${annotation}"`;
         // }
         const snippetStr = new vscode.SnippetString(snippetText);
         const doc = vscode.window.activeTextEditor.document;

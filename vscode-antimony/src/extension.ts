@@ -191,7 +191,7 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 	const uri = doc.uri.toString();
 	const selectedText = doc.getText(selection);
 	// get the position for insert
-	var line = selection.start.line
+	let line = selection.start.line
 	while (line <= doc.lineCount - 1) {
 		const text = doc.lineAt(line).text
 		if (text.localeCompare("end", undefined, { sensitivity: 'accent' }) == 0) {
@@ -234,7 +234,7 @@ async function recommendAnnotationDialog(context: vscode.ExtensionContext, args:
 	const uri = doc.uri.toString();
 	const selectedText = doc.getText(selection);
 	// get the position for insert
-	var line = selection.start.line
+	let line = selection.start.line
 	while (line <= doc.lineCount - 1) {
 		const text = doc.lineAt(line).text
 		if (text.localeCompare("end", undefined, { sensitivity: 'accent' }) == 0) {

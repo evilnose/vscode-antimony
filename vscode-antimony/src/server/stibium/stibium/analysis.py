@@ -429,7 +429,7 @@ class AntTreeAnalyzer:
             comp = assignment.get_maybein().get_comp().get_name_text()
         if insert is True:
             self.import_table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
-                            value_node=assignment.get_value(), comp=comp)
+                            value_node=assignment, comp=comp)
         else:
             self.table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
                             value_node=assignment, comp=comp)

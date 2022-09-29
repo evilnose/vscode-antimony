@@ -61,7 +61,7 @@ end
 kfc2 = 3
 kfc3 := kfc + kfc2 - kfc5 + kfctotal
 kfctotal = S1 - S2
-#J4: S2 -> S1; kfc3
+J4: S2 -> S1; kfc3
 compartment final
 final = 2
 S2 = 3

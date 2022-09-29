@@ -88,4 +88,5 @@ model *BIOMD0000000005()
   Reaction7 is "default degradation of cyclin";
   Reaction8 is "cdc2 kinase triggered degration of cyclin";
   Reaction9 is "activation of cdc2 kinase";
+  C2 identity "http://identifiers.org/chebi/CHEBI:763"
 end

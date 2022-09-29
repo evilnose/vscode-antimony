@@ -559,10 +559,12 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, UnitAssignment):
                         self.handle_unit_assign_overwrite(scope, stmt)
                         continue
+                    if isinstance(stmt, Annotation):
+                        self.handle_annot_add(scope, stmt)
+                        continue
                     if stmt is None:
                         continue
                     {
-                        'Annotation': self.pre_handle_annotation,
                         'FunctionCall' : self.handle_function_call,
                         'VariableIn': self.handle_variable_in,
                     }[stmt.__class__.__name__](scope, stmt, True)
@@ -711,6 +713,16 @@ class AntTreeAnalyzer:
         elif self.table.get(cur_qname)[0].value_node.unit is not None and self.inserted_unit_assign[self.table.get(cur_qname)[0].name]:
             self.replace_assign(cur_qname, stmt)
         self.handle_unit_assignment(scope, stmt, True)
+    
+    def handle_annot_add(self, scope, stmt):
+        cur_qname = QName(scope, stmt.get_var_name().get_name())
+        if self.table.get(cur_qname)[0].annotations:
+            for annot in self.table.get(cur_qname)[0].annotations:
+                if annot.get_uri() == stmt.get_uri():
+                    self.handle_annotation(scope, stmt, True)
+                    return
+        self.handle_annotation(scope, stmt, False)
+        self.handle_annotation(scope, stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))

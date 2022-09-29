@@ -20,4 +20,6 @@ end
 kfc5 = 142
 kfc5 is "the fifth"
 S5 = 3
-J4: S5 -> ; kfc5
+S1 = 3
+S1 identity "http://purl.obolibrary.org/obo/PR_000027997"
+J4: S5 -> S1; kfc5

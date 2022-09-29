@@ -64,6 +64,7 @@ kfctotal = S1 - S2
 J4: S2 -> S1; kfc3
 compartment final
 final = 2
+S1 = 4
 S2 = 3
 S1 in final
 MC: test3()
@@ -72,3 +73,4 @@ unit count = molecules
 kfc3 has count
 kfctotal has count
 #kfctotal is "a second"
+S1 identity "http://purl.obolibrary.org/obo/PR_A0A8D9PCQ4"

@@ -32,7 +32,7 @@ from pygls.types import (CompletionItem, CompletionItemKind, CompletionList, Com
                          TextDocumentContentChangeEvent, TextDocumentPositionParams, Position)
 import threading
 import time
-from AMAS import recommender
+from AMAS import recommender, species_annotation
 from bioservices import ChEBI
 
 # TODO remove this for production
@@ -236,12 +236,13 @@ def recommend(ls: LanguageServer, args):
         annotations = recom.getSpeciesAnnotation(pred_str=display_name.replace("\"", ""))
     else:
         annotations = recom.getSpeciesAnnotation(pred_str=symbol.name)
-    chebi = ChEBI()
+    chebi = species_annotation.chebi_low_synonyms
     ret = list()
     limit = 0
     for annotation in annotations.candidates:
+        sorted_chebi = sorted(chebi[annotation[0]], key=len)
         ret.append({
-            'label': chebi.getLiteEntity(annotation[0])[0].chebiAsciiName,
+            'label': sorted_chebi[0],
             'id': annotation[0]
         })
         limit += 1

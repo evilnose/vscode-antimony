@@ -562,11 +562,13 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, Annotation):
                         self.handle_annot_add(scope, stmt)
                         continue
+                    if isinstance(stmt, VariableIn):
+                        self.handle_var_in_overwrite(scope, stmt)
+                        continue
                     if stmt is None:
                         continue
                     {
                         'FunctionCall' : self.handle_function_call,
-                        'VariableIn': self.handle_variable_in,
                     }[stmt.__class__.__name__](scope, stmt, True)
                     self.handle_child_incomp(scope, stmt, True)
                 if isinstance(node, Model):
@@ -723,6 +725,15 @@ class AntTreeAnalyzer:
                     return
         self.handle_annotation(scope, stmt, False)
         self.handle_annotation(scope, stmt, True)
+    
+    def handle_var_in_overwrite(self, scope, stmt):
+        cur_qname = QName(scope, stmt.get_name().get_name())
+        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].decl_node is None:
+            self.handle_variable_in(scope, stmt, False)
+            self.inserted_var_in[self.table.get(cur_qname)[0].name] = True
+        elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted_var_in[self.table.get(cur_qname)[0].name]:
+            self.replace_assign(cur_qname, stmt)
+        self.handle_variable_in(scope, stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))
@@ -914,7 +925,7 @@ class AntTreeAnalyzer:
                 compt = self.table.get(QName(scope, comp.get_name()))
                 if compt[0].value_node is None:
                     compt = self.import_table.get(QName(scope, comp.get_name()))
-                if compt[0].value_node is None:
+                if not compt or compt[0].value_node is None:
                     # 3. add warning
                     self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
     
@@ -931,7 +942,7 @@ class AntTreeAnalyzer:
         matched_param = self.table.get(QName(scope, param_name.get_name()))
         if matched_param[0].value_node is None:
             matched_param = self.import_table.get(QName(scope, param_name.get_name()))
-        if matched_param[0].value_node is None:
+        if not matched_param or matched_param[0].value_node is None:
             self.error.append(RefUndefined(param_name.get_name().range, param_name.get_name_text()))
     
     def process_reaction(self, node, scope):
@@ -948,7 +959,7 @@ class AntTreeAnalyzer:
             matched_species = self.table.get(QName(scope, species_name))
             if matched_species[0].value_node is None:
                 matched_species = self.import_table.get(QName(scope, species_name))
-            if matched_species[0].value_node is None:
+            if not matched_species or matched_species[0].value_node is None:
                 self.warning.append(SpeciesUndefined(species.range, species_name.text))
         self.process_maybein(node, scope)
     
@@ -1007,7 +1018,7 @@ class AntTreeAnalyzer:
             compt = self.table.get(QName(scope, comp.get_name()))
             if compt[0].value_node is None:
                 compt = self.import_table.get(QName(scope, comp.get_name()))
-            if compt[0].value_node is None:
+            if not compt or compt[0].value_node is None:
                 # 3. add warning
                 self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
     

@@ -293,11 +293,6 @@ class NoImportFile(Issue):
         super().__init__(range, IssueSeverity.Error)
         self.message = "No such import file found"
 
-class InvalidFileType(Issue):
-    def __init__(self, range):
-        super().__init__(range, IssueSeverity.Error)
-        self.message = "Invalid file type, please enter a StringLiteral"
-
 class GrammarHasIssues(Issue):
     def __init__(self, range, issues: list()):
         super().__init__(range, IssueSeverity.Error)

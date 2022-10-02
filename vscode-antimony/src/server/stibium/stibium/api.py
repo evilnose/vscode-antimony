@@ -133,7 +133,7 @@ class AntFile:
         self.text = text
         self.parser = AntimonyParser()
         self.tree = self.parser.parse(text, recoverable=True)
-        self.analyzer = AntTreeAnalyzer(self.tree)
+        self.analyzer = AntTreeAnalyzer(self.tree, self.path)
 
     def symbols_at(self, position: SrcPosition):
         '''Return (symbols, range) where symbols is the list of symbols that the token at

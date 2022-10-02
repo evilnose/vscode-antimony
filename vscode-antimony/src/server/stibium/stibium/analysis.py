@@ -1,6 +1,7 @@
 
 from collections import defaultdict
 import logging
+import os
 from stibium.ant_types import UnitAssignment, FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
 from .types import CircularImportFound, DuplicateImportedMModelCall, FileAlreadyImported, GrammarHasIssues, InvalidFileType, ModelAlreadyExists, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
@@ -59,7 +60,7 @@ def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
 
 
 class AntTreeAnalyzer:
-    def __init__(self, root: FileNode):
+    def __init__(self, root: FileNode, path: str):
         self.table = SymbolTable()
         self.import_table = SymbolTable()
         self.root = root
@@ -71,6 +72,7 @@ class AntTreeAnalyzer:
         self.pending_is_assignments = []
         self.pending_annotations = []
         self.pending_imports = []
+        self.cur_file_name = os.path.basename(path)
         base_scope = BaseScope()
         for child in root.children:
             if isinstance(child, ErrorToken):
@@ -508,6 +510,9 @@ class AntTreeAnalyzer:
 
     def handle_import(self, scope: AbstractScope, imp: Import):
         name = imp.get_file_name()
+        if self.cur_file_name == name.get_str():
+            self.error.append(CircularImportFound(name.range))
+            return
         qname = QName(scope, name)
         file_str = imp.get_file()
         if file_str is None:
@@ -520,10 +525,6 @@ class AntTreeAnalyzer:
             for issue in file_str.get_issues():
                 issues.append(issue.message.strip())
             self.error.append(GrammarHasIssues(name.range, issues))
-        elif type(name) != StringLiteral:
-            self.error.append(InvalidFileType(name.range))
-        elif self.table.get(QName(scope, name)):
-            self.error.append(CircularImportFound(name.range))
         else:
             for node in file_str.tree.children:
                 if isinstance(node, ErrorToken):
@@ -536,8 +537,6 @@ class AntTreeAnalyzer:
                     if isinstance(node, ErrorNode):
                         continue
                     stmt = node.get_stmt()
-                    # From Tellurium testing, base file gets priority over everything,
-                    # Change overwriting accordingly
                     if isinstance(stmt, Assignment):
                         self.handle_assignment_overwrite(scope, stmt)
                         continue
@@ -646,7 +645,7 @@ class AntTreeAnalyzer:
                             self.handle_arith_expr(scope, child, True)
                         if isinstance(child, Parameters):
                             self.handle_parameters(scope, child, True)
-                    self.handle_function(node, BaseScope(), True)
+                    self.handle_function(node, scope, True)
             self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
     
     def handle_assignment_overwrite(self, scope, stmt):

@@ -669,10 +669,10 @@ class AntTreeAnalyzer:
 
     def handle_unit_decl_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_var_name().get_name())
-        if not self.table.get(cur_qname) or self.table.get(cur_qname) is None:
+        if not self.table.get(cur_qname):
             self.handle_unit_declaration(scope, stmt, False)
             self.inserted[stmt.get_var_name().get_name()] = True
-        elif self.table.get(cur_qname) is not None and self.inserted[stmt.get_var_name().get_name()]:
+        elif self.table.get(cur_qname) and self.inserted[stmt.get_var_name().get_name()]:
             self.replace_assign(cur_qname, stmt)
         self.handle_unit_declaration(scope, stmt, True)
 
@@ -934,7 +934,7 @@ class AntTreeAnalyzer:
         compt = self.table.get(QName(scope, comp.get_name()))
         if compt[0].value_node is None:
             compt = self.import_table.get(QName(scope, comp.get_name()))
-        if compt[0].value_node is None:
+        if not compt or compt[0].value_node is None:
             # 3. add warning
             self.warning.append(UninitCompt(comp.get_name().range, comp.get_name_text()))
         # also check if the parameter is defined or not

@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created by libAntimony version v2.13.2 with libSBML version 5.19.5. -->
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1">
+  <model metaid="BIOMD0000000005" id="BIOMD0000000005">
+    <listOfCompartments>
+      <compartment id="cell" spatialDimensions="3" size="1" constant="true"/>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="EmptySet" compartment="cell" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="true" constant="false"/>
+      <species id="C2" name="cdc2k" compartment="cell" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="CP" name="cdc2k-P" compartment="cell" initialAmount="0.75" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="M" name="p-cyclin_cdc2" compartment="cell" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="pM" name="p-cyclin_cdc2-p" compartment="cell" initialAmount="0.25" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="Y" name="cyclin" compartment="cell" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="YP" name="p-cyclin" compartment="cell" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false"/>
+      <species id="YT" name="total_cyclin" compartment="cell" hasOnlySubstanceUnits="false" boundaryCondition="true" constant="false"/>
+      <species id="CT" name="total_cdc2" compartment="cell" hasOnlySubstanceUnits="false" boundaryCondition="true" constant="false"/>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="Reaction1_k6" value="1" constant="true"/>
+      <parameter id="Reaction2_k8notP" value="1000000" constant="true"/>
+      <parameter id="Reaction3_k9" value="1000" constant="true"/>
+      <parameter id="Reaction4_k3" value="200" constant="true"/>
+      <parameter id="Reaction5_k5notP" value="0" constant="true"/>
+      <parameter id="Reaction6_k1aa" value="0.015" constant="true"/>
+      <parameter id="Reaction7_k2" value="0" constant="true"/>
+      <parameter id="Reaction8_k7" value="0.6" constant="true"/>
+      <parameter id="Reaction9_k4prime" value="0.018" constant="true"/>
+      <parameter id="Reaction9_k4" value="180" constant="true"/>
+    </listOfParameters>
+    <listOfRules>
+      <assignmentRule variable="YT">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <plus/>
+            <ci> Y </ci>
+            <ci> YP </ci>
+            <ci> M </ci>
+            <ci> pM </ci>
+          </apply>
+        </math>
+      </assignmentRule>
+      <assignmentRule variable="CT">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <plus/>
+            <ci> C2 </ci>
+            <ci> CP </ci>
+            <ci> M </ci>
+            <ci> pM </ci>
+          </apply>
+        </math>
+      </assignmentRule>
+    </listOfRules>
+    <listOfReactions>
+      <reaction id="Reaction1" name="cyclin_cdc2k dissociation" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="M" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="C2" stoichiometry="1" constant="true"/>
+          <speciesReference species="YP" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> cell </ci>
+              <ci> Reaction1_k6 </ci>
+              <ci> M </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="Reaction2" name="cdc2k phosphorylation" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="C2" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="CP" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> cell </ci>
+              <ci> C2 </ci>
+              <ci> Reaction2_k8notP </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="Reaction3" name="cdc2k dephosphorylation" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="CP" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="C2" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> cell </ci>
+              <ci> CP </ci>
+              <ci> Reaction3_k9 </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="Reaction4" name="cyclin cdc2k-p association" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="CP" stoichiometry="1" constant="true"/>
+          <speciesReference species="Y" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="pM" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> cell </ci>
+              <ci> CP </ci>
+              <ci> Reaction4_k3 </ci>
+              <ci> Y </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="Reaction5" name="deactivation of cdc2 kinase" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="M" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="pM" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> cell </ci>
+              <ci> Reaction5_k5notP </ci>
+              <ci> M </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="Reaction6" name="cyclin biosynthesis" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="EmptySet" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="Y" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> cell </ci>
+              <ci> Reaction6_k1aa </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="Reaction7" name="default degradation of cyclin" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="Y" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="EmptySet" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> cell </ci>
+              <ci> Reaction7_k2 </ci>
+              <ci> Y </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="Reaction8" name="cdc2 kinase triggered degration of cyclin" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="YP" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="EmptySet" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> cell </ci>
+              <ci> Reaction8_k7 </ci>
+              <ci> YP </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="Reaction9" name="activation of cdc2 kinase" reversible="false" fast="false">
+        <listOfReactants>
+          <speciesReference species="pM" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="M" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="CT"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <ci> cell </ci>
+              <ci> pM </ci>
+              <apply>
+                <plus/>
+                <ci> Reaction9_k4prime </ci>
+                <apply>
+                  <times/>
+                  <ci> Reaction9_k4 </ci>
+                  <apply>
+                    <power/>
+                    <apply>
+                      <divide/>
+                      <ci> M </ci>
+                      <ci> CT </ci>
+                    </apply>
+                    <cn type="integer"> 2 </cn>
+                  </apply>
+                </apply>
+              </apply>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+    </listOfReactions>
+  </model>
+</sbml>

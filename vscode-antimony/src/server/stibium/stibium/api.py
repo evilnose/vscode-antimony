@@ -153,8 +153,9 @@ class AntFile:
         if len(resolved) == 0:
             qname.scope = BaseScope()
             resolved = self.analyzer.resolve_qname(qname)
-            if len(resolved) == 0:
-                resolved = self.analyzer.resolve_import_qname(qname)
+        if len(resolved) == 0:
+            qname.scope = BaseScope()
+            resolved = self.analyzer.resolve_import_qname(qname)
         return resolved, qname.name.range
 
     def goto(self, position: SrcPosition):

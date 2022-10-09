@@ -1,9 +1,8 @@
-
 from collections import defaultdict
 import logging
 import os
 from stibium.ant_types import UnitAssignment, FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
-from .types import CircularImportFound, DuplicateImportedMModelCall, FileAlreadyImported, GrammarHasIssues, InvalidFileType, ModelAlreadyExists, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from .types import CircularImportFound, DuplicateImportedMModelCall, FileAlreadyImported, GrammarHasIssues, ModelAlreadyExists, NoImportFile, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -186,6 +185,7 @@ class AntTreeAnalyzer:
         self.handle_import_list()
         self.pending_annotations = []
         self.pending_is_assignments = []
+        self.pending_imports = []
         self.check_parse_tree(self.root, BaseScope())
 
     def resolve_qname(self, qname: QName):
@@ -206,14 +206,8 @@ class AntTreeAnalyzer:
     
     def replace_assign(self, given_qname: QName, stmt):
         self.table.remove(given_qname)
-        if isinstance(stmt, Assignment):
-            self.handle_assignment(BaseScope(), stmt, False)
-        if isinstance(stmt, IsAssignment):
-            self.handle_is_assignment(BaseScope(), stmt, False)
         if isinstance(stmt, UnitDeclaration):
             self.handle_unit_declaration(BaseScope(), stmt, False)
-        if isinstance(stmt, UnitAssignment):
-            self.handle_unit_assignment(BaseScope(), stmt, False)
         if isinstance(stmt, Declaration):
             self.handle_declaration(BaseScope(), stmt, False)
         if isinstance(stmt, VariableIn):
@@ -654,7 +648,10 @@ class AntTreeAnalyzer:
             self.handle_assignment(scope, stmt, False)
             self.inserted[self.table.get(cur_qname)[0].name] = True
         elif self.table.get(cur_qname)[0].value_node is not None and self.inserted[self.table.get(cur_qname)[0].name]:
-            self.replace_assign(cur_qname, stmt)
+            unit = self.table.get(cur_qname)[0].value_node.unit
+            self.table.get(cur_qname)[0].value_node = stmt
+            self.table.get(cur_qname)[0].value_node.unit = unit
+            self.handle_arith_expr(scope, stmt.get_value(), False)
         self.handle_assignment(scope, stmt, True)
     
     def handle_is_assignment_overwrite(self, scope, stmt):
@@ -663,7 +660,7 @@ class AntTreeAnalyzer:
             self.handle_is_assignment(scope, stmt, False)
             self.inserted_is[self.table.get(cur_qname)[0].name] = True
         elif self.table.get(cur_qname)[0].display_name is not None and self.inserted_is[self.table.get(cur_qname)[0].name]:
-            self.replace_assign(cur_qname, stmt)
+            self.table.get(cur_qname)[0].display_name = stmt.get_display_name().text
         self.handle_is_assignment(scope, stmt, True)
 
     def handle_unit_decl_overwrite(self, scope, stmt):
@@ -695,7 +692,7 @@ class AntTreeAnalyzer:
                 self.inserted_decl[self.table.get(cur_qname)[0].name] = True
             elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted_decl[self.table.get(cur_qname)[0].name]:
                 self.replace_assign(cur_qname, stmt)
-            self.handle_declaration(scope, stmt, True)
+        self.handle_declaration(scope, stmt, True)
     
     def handle_reaction_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_name())
@@ -707,12 +704,15 @@ class AntTreeAnalyzer:
         self.handle_reaction(scope, stmt, True)
     
     def handle_unit_assign_overwrite(self, scope, stmt):
+        # Cannot replace value every single time, will only have to replace unit instead
+        # do not remove the entire value from the table and reinsert it, that will change
+        # the base value itself and will cause the issues currently occurring
         cur_qname = QName(scope, stmt.get_var_name().get_name())
         if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node.unit is None:
             self.handle_unit_assignment(scope, stmt, False)
             self.inserted_unit_assign[self.table.get(cur_qname)[0].name] = True
         elif self.table.get(cur_qname)[0].value_node.unit is not None and self.inserted_unit_assign[self.table.get(cur_qname)[0].name]:
-            self.replace_assign(cur_qname, stmt)
+            self.table.get(cur_qname)[0].value_node.unit = stmt.get_sum()
         self.handle_unit_assignment(scope, stmt, True)
     
     def handle_annot_add(self, scope, stmt):
@@ -731,7 +731,7 @@ class AntTreeAnalyzer:
             self.handle_variable_in(scope, stmt, False)
             self.inserted_var_in[self.table.get(cur_qname)[0].name] = True
         elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted_var_in[self.table.get(cur_qname)[0].name]:
-            self.replace_assign(cur_qname, stmt)
+            self.table.get(cur_qname)[0].decl_node = stmt
         self.handle_variable_in(scope, stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):

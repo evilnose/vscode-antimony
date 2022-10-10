@@ -468,6 +468,14 @@ class AntTreeAnalyzer:
             # argument "valud_node" since they are different things
             value_node = item if value else None
             if insert is True:
+                if not self.table.get(QName(scope, name)) or self.table.get(QName(scope, name))[0].decl_node is None:
+                    self.table.insert(QName(scope, name), stype, declaration, value_node, 
+                                is_const=is_const, comp=comp, is_sub=is_sub)
+                    self.inserted_decl[self.table.get(QName(scope, name))[0].name] = True
+                elif self.table.get(QName(scope, name))[0].decl_node is not None and self.inserted_decl[self.table.get(QName(scope, name))[0].name]:
+                    self.table.remove(QName(scope, name))
+                    self.table.insert(QName(scope, name), stype, declaration, value_node, 
+                                is_const=is_const, comp=comp, is_sub=is_sub)
                 self.import_table.insert(QName(scope, name), stype, declaration, value_node,
                                 is_const=is_const, comp=comp, is_sub=is_sub)
             else:
@@ -531,6 +539,8 @@ class AntTreeAnalyzer:
                     if isinstance(node, ErrorNode):
                         continue
                     stmt = node.get_stmt()
+                    if stmt is not None:
+                        self.handle_child_incomp(scope, stmt, True)
                     if isinstance(stmt, Assignment):
                         self.handle_assignment_overwrite(scope, stmt)
                         continue
@@ -543,9 +553,9 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, ModularModelCall):
                         self.handle_mmodel_call_overwrite(stmt, name)
                         continue
-                    if isinstance(stmt, Declaration):
-                        self.handle_decl_overwrite(scope, stmt)
-                        continue
+                    #if isinstance(stmt, Declaration):
+                    #    self.handle_decl_overwrite(scope, stmt)
+                    #    continue
                     if isinstance(stmt, Reaction):
                         self.handle_reaction_overwrite(scope, stmt)
                         continue
@@ -561,9 +571,9 @@ class AntTreeAnalyzer:
                     if stmt is None:
                         continue
                     {
+                        'Declaration': self.handle_declaration,
                         'FunctionCall' : self.handle_function_call,
                     }[stmt.__class__.__name__](scope, stmt, True)
-                    self.handle_child_incomp(scope, stmt, True)
                 if isinstance(node, Model):
                     scope = ModelScope(str(node.get_name()))
                     for child in node.children:
@@ -684,15 +694,15 @@ class AntTreeAnalyzer:
             self.handle_mmodel_call(BaseScope(), stmt, False)
         self.handle_mmodel_call(BaseScope(), stmt, True)
     
-    def handle_decl_overwrite(self, scope, stmt):
-        for name in stmt.get_items():
-            cur_qname = QName(scope, name.get_maybein().get_var_name().get_name())
-            if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].decl_node is None:
-                self.handle_declaration(scope, stmt, False)
-                self.inserted_decl[self.table.get(cur_qname)[0].name] = True
-            elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted_decl[self.table.get(cur_qname)[0].name]:
-                self.replace_assign(cur_qname, stmt)
-        self.handle_declaration(scope, stmt, True)
+    #def handle_decl_overwrite(self, scope, stmt):
+    #    for name in stmt.get_items():
+    #        cur_qname = QName(scope, name.get_maybein().get_var_name().get_name())
+    #        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].decl_node is None:
+    #            self.handle_declaration(scope, stmt, False)
+    #            self.inserted_decl[self.table.get(cur_qname)[0].name] = True
+    #        elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted_decl[self.table.get(cur_qname)[0].name]:
+    #            self.replace_assign(cur_qname, stmt)
+    #    self.handle_declaration(scope, stmt, True)
     
     def handle_reaction_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_name())

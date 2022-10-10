@@ -14,6 +14,7 @@ unit vol = litre
 kfctotal has vol
 #MC: test()
 compartment tester
+const tester
 tester = 1
 const species S1 in tester, S2 in tester
 

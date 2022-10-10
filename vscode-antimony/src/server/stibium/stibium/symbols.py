@@ -1,6 +1,5 @@
 '''Classes for working with and storing symbols.
 '''
-import logging
 import requests
 from bioservices import ChEBI, UniProt, Rhea
 from bioservices_server.webservices import NetworkError
@@ -225,10 +224,11 @@ class Symbol:
                     continue
                 uri_split = uri.split('/')
                 website = uri_split[2]
+                chebi_id = uri_split[4]
                 if website == 'identifiers.org':
                     if uri_split[3] == 'chebi':
                         chebi = ChEBI()
-                        res = chebi.getCompleteEntity(uri_split[4])
+                        res = chebi.getCompleteEntity(chebiId=chebi_id)
                         name = res.chebiAsciiName
                         definition = res.definition
                         queried = '\n{}\n\n{}\n'.format(name, definition)

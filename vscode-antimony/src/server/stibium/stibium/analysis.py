@@ -13,6 +13,16 @@ from itertools import chain
 from lark.lexer import Token
 from lark.tree import Tree
 
+SLASH = "/"
+HTTP = "http"
+RHEA_URL = "www.rhea-db.org"
+IDENTIFIERS_ORG = "identifiers.org"
+CHEBI_LOWER = "chebi"
+EQUATION_LOWER = "equation"
+EQUATION_CAP = "Equation"
+UNDERSCORE = "_"
+ONTOLOGIES_URL = "http://www.ebi.ac.uk/ols/api/ontologies/"
+ONTOLOGIES_URL_SECOND_PART = "/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F"
 
 def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
     '''Returns (context, token) the given position. `token` may be None if not found.
@@ -444,14 +454,14 @@ class AntTreeAnalyzer:
         symbol = self.table.get(qname)
         if symbol:
             uri = annotation.get_uri()
-            if uri[0:4] != 'http':
+            if uri[0:4] != HTTP:
                 return
             if uri in symbol[0].queried_annotations.keys():
                 return
-            uri_split = uri.split('/')
+            uri_split = uri.split(SLASH)
             website = uri_split[2]
-            if website == 'identifiers.org':
-                if uri_split[3] == 'chebi':
+            if website == IDENTIFIERS_ORG:
+                if uri_split[3] == CHEBI_LOWER:
                     chebi = ChEBI()
                     res = chebi.getCompleteEntity(uri_split[4])
                     name = res.chebiAsciiName
@@ -461,18 +471,19 @@ class AntTreeAnalyzer:
                 else:
                     return
                     # uniport = UniProt()
-            elif website == 'www.rhea-db.org':
+            elif website == RHEA_URL:
                 rhea = Rhea()
-                df_res = rhea.query(uri_split[4], columns="equation", limit=10)
-                equation = df_res['Equation']
+                df_res = rhea.query(uri_split[4], columns=EQUATION_LOWER, limit=10)
+                equation = df_res[EQUATION_CAP]
                 queried = '\n{}\n'.format(equation[0])
                 df_res += queried
                 symbol[0].queried_annotations[uri] = queried
             else:
-                ontology_name = uri_split[-1].split('_')[0].lower()
+                ontology_info = uri_split[-1].split('_')
+                ontology_name = ontology_info[0].lower()
                 iri = uri_split[-1]
                 try:
-                    response = requests.get('http://www.ebi.ac.uk/ols/api/ontologies/' + ontology_name + '/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F' + iri).json()
+                    response = requests.get(ONTOLOGIES_URL + ontology_name + ONTOLOGIES_URL_SECOND_PART + iri).json()
                     if ontology_name == 'pr' or ontology_name == 'ma' or ontology_name == 'obi' or ontology_name == 'fma':
                         definition = response['description']
                     else:
@@ -482,7 +493,6 @@ class AntTreeAnalyzer:
                     queried =  '\n{}\n'.format(name)
                     if definition:
                         queried += '\n{}\n'.format(definition[0])
-                    ret += queried
                     symbol[0].queried_annotations[uri] = queried
                 except NetworkError:
                     return

@@ -452,13 +452,14 @@ class AntTreeAnalyzer:
         name = rate_rule.get_name()
         qname = QName(scope, name)
         expression = rate_rule.get_value()
+        all_names = self.table.get_all_names()
         if len(self.table.get(qname)) != 0:
             var = self.table.get(qname)[0]
             if var.type == SymbolType.Species and var.in_reaction and not var.is_const:
                 self.error.append(RateRuleNotInReaction(rate_rule.range, name.text))
             rate_rule_string = ""
             for leaf in expression.scan_leaves():
-                if isinstance(leaf, Name) and leaf.text not in self.table.get_all_names():
+                if isinstance(leaf, Name) and leaf.text not in all_names:
                     self.warning.append(VarNotFound(leaf.range, leaf.text))
                 if leaf.text == "+" or leaf.text == "-" or leaf.text == "*" or leaf.text == "/":
                     rate_rule_string += " " + (leaf.text) + " "

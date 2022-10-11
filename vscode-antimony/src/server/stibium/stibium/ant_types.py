@@ -264,7 +264,7 @@ class Species(TrunkNode):
         return self.children[0].get_value()
 
     def is_const(self):
-        return self.children[1].text
+        return bool(self.children[1])
 
     def get_name(self):
         return self.children[2]
@@ -372,7 +372,6 @@ class Assignment(TrunkNode):
     def get_type(self):
         return self.unit
 
-# TODO Implement Class for Rate Rules?
 @dataclass
 class RateRules(TrunkNode):
     children: Tuple[Name, Operator, Operator, ArithmeticExpr] = field(repr=False)

@@ -70,7 +70,7 @@ S2 = 3
 S1 in final
 #MC: test3()
 unit count = molecules
-#S41 := quadratic(kfc, kfc2, kfc3, kfctotal)
+S41 := quadratic(kfc, kfc2, kfc3, kfctotal)
 kfc3 has count
 kfctotal has count
 #kfctotal is "a second"

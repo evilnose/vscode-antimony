@@ -150,7 +150,7 @@ class AntTreeAnalyzer:
                         self.handle_arith_expr(scope, cchild, False)
                     if isinstance(cchild, Parameters):
                         self.handle_parameters(scope, cchild, False)
-                self.handle_function(child, scope, False)
+                self.handle_function(child, False)
             if isinstance(child, SimpleStmt):
                 if isinstance(child, ErrorToken):
                     continue
@@ -210,10 +210,10 @@ class AntTreeAnalyzer:
             self.handle_unit_declaration(BaseScope(), stmt, False)
         if isinstance(stmt, Declaration):
             self.handle_declaration(BaseScope(), stmt, False)
-        if isinstance(stmt, VariableIn):
-            self.handle_variable_in(BaseScope(), stmt, False)
         if isinstance(stmt, Reaction):
             self.handle_reaction(BaseScope(), stmt, False)
+        if isinstance(stmt, FunctionCall):
+            self.handle_function_call(BaseScope(), stmt, False)
 
     def check_parse_tree(self, root, scope):
         # 1. check rate laws:
@@ -467,15 +467,19 @@ class AntTreeAnalyzer:
             # as the value node. Otherwise put None. See that we can't directly put "value" as
             # argument "valud_node" since they are different things
             value_node = item if value else None
+            vscode_logger.info(name)
+            vscode_logger.info(is_const)
             if insert is True:
                 if not self.table.get(QName(scope, name)) or self.table.get(QName(scope, name))[0].decl_node is None:
                     self.table.insert(QName(scope, name), stype, declaration, value_node, 
                                 is_const=is_const, comp=comp, is_sub=is_sub)
                     self.inserted_decl[self.table.get(QName(scope, name))[0].name] = True
                 elif self.table.get(QName(scope, name))[0].decl_node is not None and self.inserted_decl[self.table.get(QName(scope, name))[0].name]:
+                    annot = self.table.get(QName(scope, name))[0].annotations
                     self.table.remove(QName(scope, name))
                     self.table.insert(QName(scope, name), stype, declaration, value_node, 
                                 is_const=is_const, comp=comp, is_sub=is_sub)
+                    self.table.get(QName(scope, name))[0].annotations = annot
                 self.import_table.insert(QName(scope, name), stype, declaration, value_node,
                                 is_const=is_const, comp=comp, is_sub=is_sub)
             else:
@@ -569,11 +573,13 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, VariableIn):
                         self.handle_var_in_overwrite(scope, stmt)
                         continue
+                    if isinstance(stmt, FunctionCall):
+                        self.handle_func_call_overwrite(scope, stmt)
+                        continue
                     if stmt is None:
                         continue
                     {
                         'Declaration': self.handle_declaration,
-                        'FunctionCall' : self.handle_function_call,
                     }[stmt.__class__.__name__](scope, stmt, True)
                 if isinstance(node, Model):
                     scope = ModelScope(str(node.get_name()))
@@ -650,7 +656,7 @@ class AntTreeAnalyzer:
                             self.handle_arith_expr(scope, child, True)
                         if isinstance(child, Parameters):
                             self.handle_parameters(scope, child, True)
-                    self.handle_function(node, scope, True)
+                    self.handle_function(node, True)
             self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
     
     def handle_assignment_overwrite(self, scope, stmt):
@@ -715,9 +721,6 @@ class AntTreeAnalyzer:
         self.handle_reaction(scope, stmt, True)
     
     def handle_unit_assign_overwrite(self, scope, stmt):
-        # Cannot replace value every single time, will only have to replace unit instead
-        # do not remove the entire value from the table and reinsert it, that will change
-        # the base value itself and will cause the issues currently occurring
         cur_qname = QName(scope, stmt.get_var_name().get_name())
         if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node.unit is None:
             self.handle_unit_assignment(scope, stmt, False)
@@ -744,6 +747,15 @@ class AntTreeAnalyzer:
         elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted_var_in[self.table.get(cur_qname)[0].name]:
             self.table.get(cur_qname)[0].decl_node = stmt
         self.handle_variable_in(scope, stmt, True)
+    
+    def handle_func_call_overwrite(self, scope, stmt):
+        cur_qname = QName(scope, stmt.get_name())
+        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node is None:
+            self.handle_function_call(scope, stmt, False)
+            self.inserted[self.table.get(cur_qname)[0].name] = True
+        elif self.table.get(cur_qname)[0].value_node is not None and self.inserted[self.table.get(cur_qname)[0].name]:
+            self.replace_assign(cur_qname, stmt)
+        self.handle_function_call(scope, stmt, True)
 
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))
@@ -865,7 +877,7 @@ class AntTreeAnalyzer:
             else:
                 self.table.insert(qname, SymbolType.Parameter)
     
-    def handle_function(self, function, scope, insert: bool):
+    def handle_function(self, function, insert: bool):
         if function.get_params() is not None:
             params = function.get_params().get_items()
         else:
@@ -1001,7 +1013,7 @@ class AntTreeAnalyzer:
         function_name = node.get_stmt().get_function_name()
         function = self.table.get(QName(BaseScope(), function_name))
         if len(function) == 0:
-            self.import_table.get(QName(BaseScope(), function_name))
+            function = self.import_table.get(QName(BaseScope(), function_name))
         if len(function) == 0:
             self.error.append(UninitFunction(function_name.range, function_name.text))
         else:

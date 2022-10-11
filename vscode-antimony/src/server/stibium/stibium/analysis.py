@@ -379,7 +379,7 @@ class AntTreeAnalyzer:
         self.pending_events.append((scope, event))
         name = event.get_name()
         comp = None
-        if event.get_maybein() != None and event.get_maybein().is_in_comp():
+        if event.get_maybein() is not None and event.get_maybein().is_in_comp():
             comp = event.get_maybein().get_comp().get_name_text()
             
         if name is not None:
@@ -698,7 +698,7 @@ class AntTreeAnalyzer:
     def process_event(self, node, scope):
         event: Event = node.get_stmt()
         if event.get_event_delay():
-            if type(event.get_event_delay().get_sum()) == VarName:
+            if isinstance(type(event.get_event_delay().get_sum()), VarName):
                 self._check_event_var_name(event.get_event_delay().get_sum().get_name(), scope)
         for condition in event.get_conditions():
             if condition.get_left_var():
@@ -715,7 +715,7 @@ class AntTreeAnalyzer:
             self._check_event_var_name(var_name, scope)
             if issubclass(type(assignment.get_value()), TrunkNode):
                 for leaf in assignment.get_value().descendants():
-                    if type(leaf) == Name:
+                    if isinstance(leaf, Name):
                         name = self.table.get(QName(scope, leaf))
                         if name[0].value_node is None:
                             self.error.append(RefUndefined(leaf.range, name[0].name))

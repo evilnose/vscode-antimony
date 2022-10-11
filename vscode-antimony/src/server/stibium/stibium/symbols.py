@@ -210,8 +210,9 @@ class Symbol:
             ret += '\n({}) {}\n'.format(self.type, self.name)
         if self.events:
             for event in self.events:
-                if event.get_name_text():
-                    ret += 'event {}\n'.format(event.get_name_text())
+                event_name = event.get_name_text()
+                if event_name is not None:
+                    ret += 'event {}\n'.format(event_name)
                 else:
                     ret += 'unnamed event {}\n'.format(event.unnamed_label)
                 # delay = ''

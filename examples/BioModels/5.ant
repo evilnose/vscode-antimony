@@ -12,15 +12,15 @@ kfctotal is "original"
 unit count = mole
 unit vol = litre
 kfctotal has vol
-#MC: test()
+MC: test()
 compartment tester
 const tester
 tester = 1
 const species S1 in tester, S2 in tester
 
-#function quadratic(x, a, b, c)
-#  a*x^2 + b*x + c
-#end
+function quadratic(x, a, b, c)
+  a*x^2 + b*x + c
+end
 
 model *BIOMD0000000005()
 

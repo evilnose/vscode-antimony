@@ -196,4 +196,7 @@ class AntFile:
 
     def get_annotations(self, qname: QName):
         # TODO HACK this isn't very elegant -- no encapsulation
-        return self.analyzer.table.get(qname)[0].annotations
+        vscode_logger.info("we're concatenating annotations")
+        cur_annot = self.analyzer.table.get(qname)[0].annotations
+        import_annot = self.analyzer.import_table.get(qname)[0].annotations
+        return cur_annot + import_annot

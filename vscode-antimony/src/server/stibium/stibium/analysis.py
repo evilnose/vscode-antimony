@@ -534,6 +534,7 @@ class AntTreeAnalyzer:
                 if isinstance(node, ErrorNode):
                     continue
                 if isinstance(node, SimpleStmt):
+                    scope = BaseScope()
                     if isinstance(node, ErrorToken):
                         continue
                     if isinstance(node, ErrorNode):
@@ -650,7 +651,6 @@ class AntTreeAnalyzer:
                         if isinstance(child, Parameters):
                             self.handle_parameters(scope, child, True)
                     self.handle_function(node, scope, True)
-            vscode_logger.info(self.import_table.get_all_qnames())
             self.import_table.insert(qname, SymbolType.Import, imp=file_str.text)
     
     def handle_assignment_overwrite(self, scope, stmt):

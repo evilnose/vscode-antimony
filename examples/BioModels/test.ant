@@ -57,6 +57,9 @@ model full_pathway
   S1 is "this is a test"
   S2 is "this is another test"
 end
+#function quadratic(x, a, b, c)
+#  a*x^2 + b*x + c
+#end
 #kfc = 2894
 kfc2 = 3
 kfc3 := kfc + kfc2 - kfc5 + kfctotal

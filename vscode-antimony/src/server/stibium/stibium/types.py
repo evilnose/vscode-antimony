@@ -323,6 +323,11 @@ class CircularImportFound(Issue):
         super().__init__(range, IssueSeverity.Error)
         self.message = "Circular import found"
 
+class FunctionAlreadyExists(Issue):
+    def __init__(self, range, function: str):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("Function '{}' is already defined").format(function)
+
 class AntimonySyntaxError(Exception):
     # TODO this is far from complete. To include: filename, possible token choices,
     # and possibly even parser state?

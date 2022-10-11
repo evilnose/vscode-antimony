@@ -460,10 +460,11 @@ class AntTreeAnalyzer:
                 return
             uri_split = uri.split(SLASH)
             website = uri_split[2]
+            chebi_id = uri_split[4]
             if website == IDENTIFIERS_ORG:
                 if uri_split[3] == CHEBI_LOWER:
                     chebi = ChEBI()
-                    res = chebi.getCompleteEntity(uri_split[4])
+                    res = chebi.getCompleteEntity(chebi_id)
                     name = res.chebiAsciiName
                     definition = res.definition
                     queried = '\n{}\n\n{}\n'.format(name, definition)
@@ -479,8 +480,9 @@ class AntTreeAnalyzer:
                 df_res += queried
                 symbol[0].queried_annotations[uri] = queried
             else:
-                ontology_info = uri_split[-1].split('_')
-                ontology_name = ontology_info[0].lower()
+                ontology_info = uri_split[-1]
+                ontology_info_split = ontology_info.split('_')
+                ontology_name = ontology_info_split[0].lower()
                 iri = uri_split[-1]
                 try:
                     response = requests.get(ONTOLOGIES_URL + ontology_name + ONTOLOGIES_URL_SECOND_PART + iri).json()

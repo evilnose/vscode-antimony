@@ -26,12 +26,13 @@ The extension provides many convenient features for developing biological models
 
 ⚠️ Note: the default syntax highlighting for Antimony is provided by a separate extension [Antimony Syntax](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony-syntax), and is also available in the [Antimony Extension Pack](https://marketplace.visualstudio.com/items?itemName=stevem.antimony-extension-pack) 
 
-### 2. Automatic annotation creation with ChEBI and UniProt
+### 2. Automatic annotation creation with database recommendation
+The extension can recognize different type of variables, and recommend databases base on the [OMEX metadata specification](https://doi.org/10.1515/jib-2021-0020).
 
 <p align=center>
-<img src="docs/images/annotations.gif" width=75%>
+<img src="docs/images/annotation0.2.gif" width=75%>
 <br/>
-<em>(Creating an annotation through the ChEBI database)</em>
+<em>(Creating an annotation of species BLL through the ChEBI database)</em>
 </p>
 
 ⚠️ Note: support for more databases & performance optimization will come soon!
@@ -71,10 +72,41 @@ On the other hand, certain issues are not errors in tellurium, but we thought it
 
 The extension supports a wide range of errors and warnings, and we plan to support more in the upcoming releases. Read more in [issues](https://github.com/sys-bio/vscode-antimony/issues).
 
+### 6. Converter between Antimony and SBML
+
+<p align=center>
+<img src="docs/images/convert_SBML.gif" width=75%>
+<br/>
+<em>(Exporting Antimony file in SBML format)</em>
+</p>
+
+### 7. Antimony/SBML preview
+
+<p align=center>
+<img src="docs/images/preview.gif" width=75%>
+<br/>
+<em>(Previewing Antimony file as SBML)</em>
+</p>
+
+### 8. Automatic creation of rate laws
+
+<p align=center>
+<img src="docs/images/.gif" width=75%>
+<br/>
+<em>()</em>
+</p>
+
+### 9. Annotation recommender for species
+
+<p align=center>
+<img src="docs/images/.gif" width=75%>
+<br/>
+<em>()</em>
+</p>
+
 ## Known Issues
 I have an open issue for [manually curating models](https://github.com/sys-bio/vscode-antimony/issues/26) from BioModels to test the extension. Please feel free to contribute and submit issues.
-* "Events" are currently not supported and false error messages will be triggered.
-* "Rate rules" are currently not supported and false error messages will be triggered.
+* subvariables in modular models are currently not supported and false error messages will be triggered.
 
 ## Preview Features for 0.2
 * [Be able to detect subvariables in modular models](https://github.com/sys-bio/vscode-antimony/issues/48).
@@ -106,3 +138,12 @@ I have an open issue for [manually curating models](https://github.com/sys-bio/v
 
 ### 0.1.4
 * Updated docs, included a list for updates in 0.2.
+
+### 0.2.0
+* Added grammar support and warning/error detection for rate rules, sbo and cvterms, events, flux balance constraints, interaction, and import.
+* Converter between Antimony and SBML
+* Antimony/SBML preview.
+* More databases supported in create annotation, and database recommendations.
+* Automatic creation of rate laws.
+* Annotation recommender for species.
+

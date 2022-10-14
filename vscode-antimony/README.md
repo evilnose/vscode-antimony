@@ -108,18 +108,6 @@ The extension supports a wide range of errors and warnings, and we plan to suppo
 I have an open issue for [manually curating models](https://github.com/sys-bio/vscode-antimony/issues/26) from BioModels to test the extension. Please feel free to contribute and submit issues.
 * subvariables in modular models are currently not supported and false error messages will be triggered.
 
-## Preview Features for 0.2
-* [Be able to detect subvariables in modular models](https://github.com/sys-bio/vscode-antimony/issues/48).
-* [Support semantic synthesis of models](https://github.com/sys-bio/vscode-antimony/issues/23).
-* [Automatic creation of rate laws](https://github.com/sys-bio/vscode-antimony/issues/22).
-* [Performance improvement for creating annotations](https://github.com/sys-bio/vscode-antimony/issues/27).
-* [Fix annotation insert position](https://github.com/sys-bio/vscode-antimony/issues/48).
-* [Better caching](https://github.com/sys-bio/vscode-antimony/issues/9).
-* [Grammar support for events](https://github.com/sys-bio/vscode-antimony/issues/4).
-* [Warning and error detection for events](https://github.com/sys-bio/vscode-antimony/issues/20).
-* [Grammar support for rate rules](https://github.com/sys-bio/vscode-antimony/issues/45).
-* [Warning and error detection for modular models](https://github.com/sys-bio/vscode-antimony/issues/16).
-
 ## Release Notes
 
 ### 0.1.0

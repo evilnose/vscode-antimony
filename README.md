@@ -75,7 +75,7 @@ The extension supports a wide range of errors and warnings, and we plan to suppo
 ### 6. Converter between Antimony and SBML
 
 <p align=center>
-<img src="docs/images/convert_SBML.gif" width=75%>
+<img src="docs/images/converter_SBML.gif" width=75%>
 <br/>
 <em>(Exporting Antimony file in SBML format)</em>
 </p>

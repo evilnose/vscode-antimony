@@ -99,9 +99,9 @@ The extension supports a wide range of errors and warnings, and we plan to suppo
 ### 9. Annotation recommender for species
 
 <p align=center>
-<img src="docs/images/.gif" width=75%>
+<img src="docs/images/recommender.gif" width=75%>
 <br/>
-<em>()</em>
+<em>(Creating annotation for species BLL with Annotation Recommender)</em>
 </p>
 
 ## Known Issues

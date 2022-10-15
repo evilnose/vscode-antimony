@@ -181,7 +181,8 @@
 		"test-compile": "webpack --mode development && npx tsc -b",
 		"postinstall": "cd src/syntax/antimony-syntax && npm install",
 		"pretest": "webpack",
-		"test": "node ./out/test/runTest.js"
+		"test": "node ./out/test/runTest.js",
+		"tests": "mocha --require ts-node/register test/**/*.ts"
 	},
 	"devDependencies": {
 		"@types/chai": "^4.3.3",

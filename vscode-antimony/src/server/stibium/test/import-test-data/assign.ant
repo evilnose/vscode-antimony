@@ -1,0 +1,9 @@
+import "import.ant"
+
+c = a + b
+a = 10
+
+unit mass = grams
+b has mass
+a is "in base file"
+b is "not imported"

@@ -172,7 +172,7 @@ def test_mmodel_call():
 
     # Test for duplicate mmodel call
     error_msg = "The modular model call 'MC' has been duplicated, please make sure there is only one modular model call of this name"
-    assert error_msg == issues[0].message
+    assert error_msg == issues[0].message, "Incorrect error encountered"
 
     stmt = ant_file.tree.children[0].get_stmt()
     assert isinstance(stmt, Import)
@@ -241,7 +241,7 @@ def test_mmodel():
 
     # Test for duplicate mmodel
     error_msg = "Model 'foo' is already defined, or there is a circular import"
-    assert error_msg == issues[0].message
+    assert error_msg == issues[0].message, "Incorrect error encountered"
 
 
 def test_func():
@@ -257,4 +257,4 @@ def test_func():
 
     # Test for duplicate function
     error_msg = "Function 'varsum' is already defined"
-    assert error_msg == issues[0].message
+    assert error_msg == issues[0].message, "Incorrect error encountered"

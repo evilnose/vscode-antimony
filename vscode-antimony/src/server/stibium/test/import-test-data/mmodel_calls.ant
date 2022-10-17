@@ -1,0 +1,7 @@
+import "import_mmodel_calls.ant"
+
+model bar()
+    b = 4
+end
+
+MC: bar()

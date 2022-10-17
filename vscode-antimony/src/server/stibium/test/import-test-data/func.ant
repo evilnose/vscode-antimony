@@ -1,0 +1,5 @@
+import "import_func.ant"
+
+function varsum(a, b)
+  a + b
+end

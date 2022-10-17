@@ -1,0 +1,8 @@
+import "import_func_calls.ant"
+
+function constant(a)
+  a + 1
+end
+
+z = 1
+FC := constant(z)

@@ -1,9 +1,14 @@
 a = 3
 b = 4
 b has vol
+kfc = 2
+
+J4: -> b; kfc
+J0: a -> b; kfc
 
 unit vol = liter
 unit mass = ton
 a has vol
 b has vol
 a is "imported"
+b identity "http://identifiers.org/chebi/CHEBI:49962"

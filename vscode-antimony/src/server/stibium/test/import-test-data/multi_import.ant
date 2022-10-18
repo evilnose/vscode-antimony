@@ -1,0 +1,4 @@
+import "import.ant"
+import "import2.ant"
+
+c = 6

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import sys
 
@@ -54,7 +55,7 @@ def test_assign(assign_vals):
     assert isinstance(stmt, Import)
 
     # Test first assignment within base file
-    assignment= ant_file.analyzer.table.get(QName(BaseScope(), Name(range=SrcRange(SrcPosition(3, 5), SrcPosition(3, 6)), text='a')))[0].value_node
+    assignment = ant_file.analyzer.table.get(QName(BaseScope(), Name(range=SrcRange(SrcPosition(3, 5), SrcPosition(3, 6)), text='a')))[0].value_node
     cur_val = assignment.get_value().text
     assert assign_vals[0] == cur_val, "Incorrect assignment"
 
@@ -221,14 +222,14 @@ def test_annot():
 
     # Test number of annotations for variable in current and imported files
     annot_list = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(4, 1), SrcPosition(4, 2)), text='b')))[0].annotations
-    assert len(annot_list) == 2
+    assert len(annot_list) == 2, "Incorrect annotations"
 
     # Test number of annotations for variable in current file
     annot_list = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(3, 1), SrcPosition(3, 2)), text='a')))[0].annotations
-    assert len(annot_list) == 1
+    assert len(annot_list) == 1, "Incorrect annotations"
 
 
-def test_mmodel():
+def test_dupe_mmodel():
     file = os.path.join(directory, "mmodel.ant")
     doc = Document(os.path.abspath(file))
     ant_file = AntFile(doc.path, doc.source)
@@ -244,7 +245,7 @@ def test_mmodel():
     assert error_msg == issues[0].message, "Incorrect error encountered"
 
 
-def test_func():
+def test_dupe_func():
     file = os.path.join(directory, "func.ant")
     doc = Document(os.path.abspath(file))
     ant_file = AntFile(doc.path, doc.source)
@@ -258,3 +259,45 @@ def test_func():
     # Test for duplicate function
     error_msg = "Function 'varsum' is already defined"
     assert error_msg == issues[0].message, "Incorrect error encountered"
+
+
+def test_imp_hierarchy():
+    file = os.path.join(directory, "multi_import.ant")
+    doc = Document(os.path.abspath(file))
+    ant_file = AntFile(doc.path, doc.source)
+    issues = ant_file.get_issues()
+    error_count = 0
+    for issue in issues:
+        if str(issue.severity.__str__()) == "IssueSeverity.Error":
+            error_count += 1
+    assert error_count == 0, "Import unsuccessful"
+
+    stmt = ant_file.tree.children[0].get_stmt()
+    assert isinstance(stmt, Import)
+    stmt = ant_file.tree.children[1].get_stmt()
+    print(ant_file.analyzer.table.get_all_qnames())
+    assert isinstance(stmt, Import)
+
+    # Testing import hierarchy by checking for values of variables from either the base file or the latest import that has the variable
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(4, 1), SrcPosition(4, 2)), text='c')))[0]
+    value = var.value_node.get_value().text
+    assert value == "6", "Incorrect value"
+
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(5, 1), SrcPosition(5, 2)), text='d')))[0]
+    value = var.value_node.get_value().text
+    assert value == "10", "Incorrect value"
+
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(10, 1), SrcPosition(10, 2)), text='a')))[0]
+    value = var.value_node.get_value().text
+    assert value == "5", "Incorrect value"
+    display_name = var.display_name
+    assert display_name == "\"from the second file\"", "Incorrect display name"
+
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(27, 1), SrcPosition(27, 2)), text='b')))[0]
+    annot_list = var.annotations
+    assert len(annot_list) == 1, "Incorrect annotations"
+
+    # Testing imported mmodel call
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(22, 1), SrcPosition(22, 3)), text='T3')))[0]
+    mmodel = var.value_node.get_mmodel_name_str()
+    assert mmodel == "test3", "Incorrect mmodel call"

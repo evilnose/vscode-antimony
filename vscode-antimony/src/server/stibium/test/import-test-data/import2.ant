@@ -1,0 +1,16 @@
+a = 5
+c = 3
+d = 10
+
+a is "from the second file"
+
+model test3()
+  G = 1
+  A = 2
+  GA = 4
+  J1: G + A -> GA; k3*G - k4*A
+  k3 = 0.2
+  k4 = 0.6
+end
+
+T3: test3()

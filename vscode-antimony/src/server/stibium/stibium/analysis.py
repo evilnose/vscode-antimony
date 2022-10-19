@@ -479,9 +479,9 @@ class AntTreeAnalyzer:
     
     def handle_interaction(self, scope, interaction : Interaction):
         name = interaction.get_species().get_name()
-        reaction = interaction.get_reaction()
-        self.table.insert(QName(scope, reaction), SymbolType.Reaction)
-        opr = interaction.get_opr().text[0].text
+        reaction = interaction.get_reaction_namemaybein()
+        self.table.insert(QName(scope, reaction.get_var_name().get_name()), SymbolType.Reaction)
+        opr = interaction.get_opr().text
         interaction_str = ''
         if opr == '-o':
             interaction_str += 'activation'
@@ -489,10 +489,12 @@ class AntTreeAnalyzer:
             interaction_str += 'inhibition'
         elif opr == '-(':
             interaction_str += 'unknown interaction'
-        interaction_str += ' in reaction: ' + reaction.text
+        # interaction_str += ' in reaction: ' + reaction.text
         self.table.insert(QName(scope, name), SymbolType.Unknown)
-        self.table.insert(QName(scope, interaction.get_name().get_name()), SymbolType.Interaction)
-        self.table.get(QName(scope, interaction.get_name().get_name()))[0].interaction = interaction_str
+        interaction_name = interaction.get_name()
+        if interaction_name:
+            self.table.insert(QName(scope, interaction_name.get_name()), SymbolType.Interaction)
+            self.table.get(QName(scope, interaction_name.get_name()))[0].interaction = interaction_str
     
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()

@@ -366,7 +366,7 @@ class InteractionName(TrunkNode):
 
 @dataclass 
 class Interaction(TrunkNode):
-    children: Tuple[InteractionName, Species, Operator, Name] = field(repr=False)
+    children: Tuple[InteractionName, Species, Operator, NameMaybeIn] = field(repr=False)
     
     def get_name(self):
         return self.children[0]
@@ -377,7 +377,7 @@ class Interaction(TrunkNode):
     def get_species(self):
         return self.children[1]
     
-    def get_reaction(self):
+    def get_reaction_namemaybein(self) -> NameMaybeIn:
         return self.children[3]
 
 @dataclass

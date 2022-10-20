@@ -1,5 +1,0 @@
-model flux()
-    compartment comp1 = 0;
-    React0: B -> BL; comp1*(kf_0*B - kr_0*BL);
-    React0 >= 0
-end

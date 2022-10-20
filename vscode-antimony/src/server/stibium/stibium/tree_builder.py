@@ -50,7 +50,6 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'reaction_name': ReactionName,
     'reaction': Reaction,
     'event': Event,
-    # 'event_name': EventName,
     'event_delay': EventDelay,
     'event_condition': EventCondition,
     'event_condition_list': EventConditionList,
@@ -87,10 +86,9 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',
              'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ", "DBLQUOTE",
-             'MORETHAN', '__ANON_1', 'LESSTHAN', '__ANON_0', '__ANON_2', '__ANON_3',
-             'RPAR', 'LPAR', 'FALSE', 'TRUE', }
+             'COMPARE', 'PARENTHESIS', 'BOOLEAN', 'LOGICAL' }
 KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL', 'FUNCTION', "UNIT", "HAS", "IS", "SUBSTANCEONLY",
-            'PRIORITY', 'FROMTRIGGER', 'T0', 'PERSISTENT', }
+            'PRIORITY', 'FROMTRIGGER', 'T0', 'PERSISTENT'}
 
 for name in OPERATORS:
     TREE_MAP[name] = Operator

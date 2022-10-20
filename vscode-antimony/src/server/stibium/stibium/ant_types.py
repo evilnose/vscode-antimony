@@ -432,7 +432,7 @@ class EventDelay(TrunkNode):
 
 @dataclass
 class EventCondition(TrunkNode):
-    children: Tuple[Union[Sum, VarName], CompareSign, Union[Sum, VarName]] = field(repr=False)
+    children: Tuple[Union[Sum, VarName], Optional[CompareSign], Optional[Union[Sum, VarName]]] = field(repr=False)
     
     def get_left_var(self):
         if type(self.children[0]) == VarName:
@@ -443,27 +443,19 @@ class EventCondition(TrunkNode):
         return self.children[0]
     
     def get_sign(self) -> CompareSign:
-        return self.children[1]
+        if len(self.children) >= 3:
+            return self.children[1]
+        return None
     
     def get_right_var(self):
-        if type(self.children[2]) == VarName:
+        if len(self.children) >= 3 and type(self.children[2]) == VarName:
             return self.children[2]
         return None
     
     def get_right(self):
-        return self.children[2]
-    
-    def to_string(self):
-        if type(self.get_left()) == VarName:
-            left_text = self.get_left().get_name_text()
-        else:
-            left_text = self.get_left().to_string()
-        sign = str(self.get_sign().get_sign())
-        if type(self.get_left()) == VarName:
-            right_text = self.get_right().get_name_text()
-        else:
-            right_text = self.get_right().to_string()
-        return left_text + ' ' + sign + ' ' + right_text
+        if len(self.children) >= 3:
+            return self.children[1]
+        return None
 
 @dataclass
 class EventConditionList(TrunkNode):
@@ -472,21 +464,6 @@ class EventConditionList(TrunkNode):
 
     def get_all_parens(self) -> List[Parenthesis]:
         return cast(List[Parenthesis], self.children[::2])
-    
-    def to_string(self) -> str:
-        ret = ''
-        for sym in self.children:
-            if isinstance(sym, EventCondition):
-                ret += sym.to_string()
-            elif sym is None:
-                continue
-            elif isinstance(sym, ParenthesisList):
-                ret += sym.to_string()
-            elif isinstance(sym, Logical):
-                ret += ' ' + sym.get_logic_symbol() + ' '
-            else:
-                ret += sym.to_string()
-        return ret
     
 @dataclass
 class EventTrigger(TrunkNode):

@@ -16,28 +16,28 @@ event : [reaction_name] "at" [event_delay] [event_condition_list] [event_trigger
 
 event_delay : sum "after"
 
-event_condition_list : [parenthesis_list] event_condition [parenthesis_list] (logical [parenthesis_list] event_condition [parenthesis_list])*
-event_condition : sum compare_sign sum
+event_condition_list : [parenthesis_list] event_condition [parenthesis_list] (LOGICAL [parenthesis_list] event_condition [parenthesis_list])*
+event_condition : sum [COMPARE sum]
 
 event_trigger_list : ("," event_trigger)*
 
 // atom has to be changed to (NUMBER | var_name)
-event_trigger :  "t0" "=" boolean
+event_trigger :"t0" "=" BOOLEAN
     | "priority" "=" sum
-    | "fromTrigger" "=" boolean
-    | "persistent" "=" boolean
+    | "fromTrigger" "=" BOOLEAN
+    | "persistent" "=" BOOLEAN
 
 event_assignment_list : event_assignment ("," event_assignment)*
 event_assignment : var_name "=" sum
 
-boolean : "true" | "false"
+BOOLEAN : "true" | "false"
 
-compare_sign : ">" | "<" | ">=" | "<="
+COMPARE : ">" | "<" | ">=" | "<=" | "=="
 
-parenthesis : "(" | ")"
-parenthesis_list : parenthesis (parenthesis)*
+PARENTHESIS : "(" | ")"
+parenthesis_list : PARENTHESIS (PARENTHESIS)*
 
-logical : "&&" | "||"
+LOGICAL : "&&" | "||"
 
 assignment : namemaybein ("=" | AEQ) sum 
 

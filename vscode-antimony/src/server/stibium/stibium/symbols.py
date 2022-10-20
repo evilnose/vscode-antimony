@@ -215,24 +215,6 @@ class Symbol:
                     ret += 'event {}\n'.format(event_name)
                 else:
                     ret += 'unnamed event {}\n'.format(event.unnamed_label)
-                # delay = ''
-                # if event.get_event_delay is not None:
-                #     delay = event.get_event_delay()
-                # condition = event.get_condition_list().to_string()
-                # assignment_str = ''
-                # for assignment in event.get_assignments():
-                #     vscode_logger.info(assignment.get_name_text())
-                #     if assignment.get_name_text() == self.name:
-                #         assignment = assignment.get_value()
-                #         if isinstance(assignment, LeafNode):
-                #             assignment_str = assignment.text
-                #         elif isinstance(assignment, VarName):
-                #             assignment_str = assignment.get_name_text()
-                #         else:
-                #             assignment_str = assignment.to_string()
-                # ret += '{} {} {},\nset to {}\n'.format('at', delay, condition, assignment_str)
-                # for key, value in event.get_trigger_list().get_triggers().items():
-                #     ret += '{} = {}\n'.format(key, value)
 
         if self.comp:
             ret += 'In compartment: {}\n'.format(self.comp)

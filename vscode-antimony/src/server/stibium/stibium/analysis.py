@@ -467,8 +467,8 @@ class AntTreeAnalyzer:
             # as the value node. Otherwise put None. See that we can't directly put "value" as
             # argument "valud_node" since they are different things
             value_node = item if value else None
-            vscode_logger.info(name)
-            vscode_logger.info(is_const)
+            #vscode_logger.info(name)
+            #vscode_logger.info(is_const)
             if insert is True:
                 if not self.table.get(QName(scope, name)) or self.table.get(QName(scope, name))[0].decl_node is None:
                     self.table.insert(QName(scope, name), stype, declaration, value_node, 
@@ -669,9 +669,7 @@ class AntTreeAnalyzer:
             self.handle_assignment(scope, stmt, False)
             self.inserted[self.table.get(cur_qname)[0].name] = True
         elif self.table.get(cur_qname)[0].value_node is not None and self.inserted[self.table.get(cur_qname)[0].name]:
-            unit = self.table.get(cur_qname)[0].value_node.unit
             self.table.get(cur_qname)[0].value_node = stmt
-            self.table.get(cur_qname)[0].value_node.unit = unit
             self.handle_arith_expr(scope, stmt.get_value(), False)
         self.handle_assignment(scope, stmt, True)
     

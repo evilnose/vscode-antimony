@@ -467,7 +467,11 @@ class AntTreeAnalyzer:
     def handle_sboterm(self, scope: AbstractScope, sboterm: Sboterm):
         name = sboterm.get_var_name().get_name()
         qname = QName(scope, name)
-        self.table.insert(qname, SymbolType.Parameter)
+        symbol_list = self.table.get(qname)
+        if len(symbol_list) == 0:
+            self.table.insert(qname, SymbolType.Parameter)
+        elif (not isinstance(symbol_list[0], MModelSymbol)) or symbol_list[0].type in (SymbolType.Function, SymbolType.Model, SymbolType.ModularModel):
+            self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_sboterm(qname, sboterm)
     
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
@@ -699,14 +703,14 @@ class AntTreeAnalyzer:
         name = node.get_stmt().get_var_name().get_name()
         qname = QName(scope, name)
         var = self.table.get(qname)
-        if var[0].value_node is None:
+        if var[0].value_node is None and var[0].type == SymbolType.Species:
             self.error.append(RefUndefined(name.range, name.text))
             
     def process_sbo(self, node, scope):
         name = node.get_stmt().get_var_name().get_name()
         qname = QName(scope, name)
         var = self.table.get(qname)
-        if var[0].value_node is None:
+        if var[0].value_node is None and var[0].type == SymbolType.Species:
             self.error.append(RefUndefined(name.range, name.text))
         
 

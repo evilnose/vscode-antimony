@@ -14,7 +14,7 @@ ARROW : "->"
 
 event : [reaction_name] "at" [event_delay] bool_exp [event_trigger_list] ":" event_assignment_list
 
-event_delay : sum "after"
+event_delay : bool_exp "after"
 
 
 event_trigger_list : ("," event_trigger)*
@@ -30,7 +30,7 @@ event_assignment : var_name "=" sum
 
 BOOLEAN : "true" | "false"
 
-COMPARE : ">" | "<" | ">=" | "<=" | "=="
+COMPARE : ">=" | "<=" | ">" | "<" | "=="
 
 
 LOGICAL : "&&" | "||"

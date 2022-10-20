@@ -424,9 +424,9 @@ class ParenthesisList(TrunkNode):
             
 @dataclass
 class EventDelay(TrunkNode):
-    children: Tuple[Union[Sum, VarName], Keyword] = field(repr=False)
+    children: Tuple[Union[BooleanExpr, VarName], Keyword] = field(repr=False)
     
-    def get_sum(self):
+    def get_expr(self):
         return self.children[0]
     
     def get_sum_text(self):

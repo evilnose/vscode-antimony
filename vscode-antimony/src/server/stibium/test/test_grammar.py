@@ -382,6 +382,8 @@ def test_replace(file_name, expected_parse_tree_str):
     
     
 @pytest.mark.parametrize('file_name,expected_parse_tree_str', [
+    ('boolean_event_delays',''),
+    ('boolean_triggers',''),
     ('event',parsed_data['event']),
     # ('event_rt',parsed_data['event_rt']),
     # ('eventDelay',parsed_data['eventDelay']),
@@ -406,7 +408,7 @@ def test_event(file_name, expected_parse_tree_str):
         if str(issue.severity.__str__()) == 'IssueSeverity.Error':
             error_count += 1
     assert error_count == 0
-    if error_count == 0:
-        actual_str = parser.get_parse_tree_str(ant_file.text)
+    # if error_count == 0:
+    #     actual_str = parser.get_parse_tree_str(ant_file.text)
         # assert expected_parse_tree_str == actual_str,\
         #     f'''Logging actual {repr(actual_str)} \n'''

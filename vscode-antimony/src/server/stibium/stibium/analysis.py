@@ -418,9 +418,8 @@ class AntTreeAnalyzer:
             event.unnamed_label = self.unnamed_events_num
         event_delay = event.get_event_delay()
         if event_delay:
-            event_delay_var = event_delay.get_sum()
-            if type(event_delay_var) == VarName:
-                self.table.insert(QName(scope, event_delay_var.get_name()), SymbolType.Unknown, comp=comp)
+            expr = event_delay.get_expr()
+            self.handle_bool_expr(scope ,expr)
         condition = event.get_condition()
         self.handle_bool_expr(scope, condition)
 
@@ -724,8 +723,7 @@ class AntTreeAnalyzer:
     def process_event(self, node, scope):
         event: Event = node.get_stmt()
         if event.get_event_delay():
-            if isinstance(type(event.get_event_delay().get_sum()), VarName):
-                self._check_event_var_name(event.get_event_delay().get_sum().get_name(), scope)
+            self.handle_bool_expr(scope, event.get_event_delay().get_expr())
         curr_triggers = dict()
         for trigger in event.get_triggers():
             if trigger.get_keyword().text in curr_triggers.keys():

@@ -31,7 +31,7 @@ event_assignment : var_name "=" sum
 
 BOOLEAN : "true" | "false"
 
-COMPARE : ">" | "<" | ">=" | "<=" | "==" | "="
+COMPARE : ">" | "<" | ">=" | "<=" | "=="
 
 
 LOGICAL : "&&" | "||"

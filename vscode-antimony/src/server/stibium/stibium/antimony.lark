@@ -16,13 +16,12 @@ event : [reaction_name] "at" [event_delay] [event_condition_list] [event_trigger
 
 event_delay : sum "after"
 
-event_condition_list : [parenthesis_list] event_condition [parenthesis_list] (LOGICAL [parenthesis_list] event_condition [parenthesis_list])*
-event_condition : sum [COMPARE sum]
+event_condition_list : expressions (LOGICAL expressions)*
 
 event_trigger_list : ("," event_trigger)*
 
 // atom has to be changed to (NUMBER | var_name)
-event_trigger :"t0" "=" BOOLEAN
+event_trigger : "t0" "=" BOOLEAN
     | "priority" "=" sum
     | "fromTrigger" "=" BOOLEAN
     | "persistent" "=" BOOLEAN
@@ -32,10 +31,8 @@ event_assignment : var_name "=" sum
 
 BOOLEAN : "true" | "false"
 
-COMPARE : ">" | "<" | ">=" | "<=" | "=="
+COMPARE : ">" | "<" | ">=" | "<=" | "==" | "="
 
-PARENTHESIS : "(" | ")"
-parenthesis_list : PARENTHESIS (PARENTHESIS)*
 
 LOGICAL : "&&" | "||"
 
@@ -74,6 +71,9 @@ VAR_MODIFIER: /\b(var|const)\b/
 SUB_MODIFIER: /\b(substanceOnly)\b/
 TYPE_MODIFIER: /\b(species|compartment|formula)\b/
 
+?expressions : sum
+    | sum COMPARE sum
+
 ?sum : product
     | sum "+" product
     | sum "-" product
@@ -93,6 +93,7 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
     | "+" atom
     | "(" sum ")"
     | func_call 
+    | "(" expressions ")"
 
 func_call : var_name "(" [parameters] ")"
 

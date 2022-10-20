@@ -1,4 +1,5 @@
 import abc
+from ast import Expression
 from dataclasses import dataclass, field
 import logging
 from typing import List, Optional, Tuple, Union, cast
@@ -124,6 +125,10 @@ class ArithmeticExpr(TreeNode):
     '''Base class for arithmetic expressions.'''
     pass
 
+@dataclass
+class Expressions(TrunkNode):
+    '''Base class for equalities and inequalities.'''
+    pass
 
 @dataclass
 class Sum(ArithmeticExpr, TrunkNode):
@@ -431,20 +436,20 @@ class EventDelay(TrunkNode):
         return ret
 
 @dataclass
-class EventCondition(TrunkNode):
-    children: Tuple[Union[Sum, VarName], Optional[CompareSign], Optional[Union[Sum, VarName]]] = field(repr=False)
+class Expressions(TrunkNode):
+    children: Tuple[Optional[Operator], Union[Sum, VarName], Optional[CompareSign], Optional[Union[Sum, VarName]], Optional[Operator]] = field(repr=False)
     
     def get_left_var(self):
-        if type(self.children[0]) == VarName:
-            return self.children[0]
+        if type(self.children[1]) == VarName:
+            return self.children[1]
         return None
     
     def get_left(self):
-        return self.children[0]
+        return self.children[1]
     
     def get_sign(self) -> CompareSign:
         if len(self.children) >= 3:
-            return self.children[1]
+            return self.children[2]
         return None
     
     def get_right_var(self):
@@ -454,16 +459,13 @@ class EventCondition(TrunkNode):
     
     def get_right(self):
         if len(self.children) >= 3:
-            return self.children[1]
+            return self.children[2]
         return None
 
 @dataclass
 class EventConditionList(TrunkNode):
-    def get_all_conditions(self) -> List[EventCondition]:
-        return cast(List[EventCondition], self.children[1::4])
-
-    def get_all_parens(self) -> List[Parenthesis]:
-        return cast(List[Parenthesis], self.children[::2])
+    def get_all_conditions(self) -> List[Expressions]:
+        return cast(List[Expressions], self.children[::2])
     
 @dataclass
 class EventTrigger(TrunkNode):
@@ -481,8 +483,6 @@ class EventTrigger(TrunkNode):
             return self.get_trigger().to_string()
         elif isinstance(self.get_trigger(), LeafNode):
             return self.get_trigger().text
-        # elif isinstance(self.get_trigger(), ArithmeticExpr):
-        #     return self.get_trigger().to_string()
     
     def to_string(self):
         return self.children[0].text + ' = ' + self.get_trigger_str()
@@ -558,7 +558,7 @@ class Event(TrunkNode):
     def get_trigger_list(self) -> Optional[EventTriggerList]:
         return self.children[4]
 
-    def get_conditions(self) -> List[EventCondition]:
+    def get_conditions(self) -> List[Expressions]:
         slist = self.get_condition_list()
         if slist:
             return slist.get_all_conditions()

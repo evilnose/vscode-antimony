@@ -170,7 +170,7 @@ class AntTreeAnalyzer:
                     'IsAssignment' : self.pre_handle_is_assignment,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
-                self.handle_is_const(scope, stmt)
+                self.handle_is_const(base_scope, stmt)
         
         # get list of errors from the symbol table
         self.error = self.table.error
@@ -410,10 +410,7 @@ class AntTreeAnalyzer:
             if type(event_delay_var) == VarName:
                 self.table.insert(QName(scope, event_delay_var.get_name()), SymbolType.Unknown, comp=comp)
         for condition in event.get_conditions():
-            if condition.get_left_var():
-                self.table.insert(QName(scope, condition.get_left().get_name()), SymbolType.Unknown, comp=comp)
-            if condition.get_right_var():
-                self.table.insert(QName(scope, condition.get_right().get_name()), SymbolType.Unknown, comp=comp)
+            self.handle_arith_expr(scope, condition)
 
         for assignment in event.get_assignments():
             qname = QName(scope, assignment.get_name())
@@ -717,11 +714,6 @@ class AntTreeAnalyzer:
         if event.get_event_delay():
             if isinstance(type(event.get_event_delay().get_sum()), VarName):
                 self._check_event_var_name(event.get_event_delay().get_sum().get_name(), scope)
-        for condition in event.get_conditions():
-            if condition.get_left_var():
-                self._check_event_var_name(condition.get_left_var().get_name(), scope)
-            if condition.get_right_var():
-                self._check_event_var_name(condition.get_right_var().get_name(), scope)
         curr_triggers = dict()
         for trigger in event.get_triggers():
             if trigger.get_keyword().text in curr_triggers.keys():

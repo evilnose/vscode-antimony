@@ -165,7 +165,7 @@ class AntTreeAnalyzer:
                     'IsAssignment' : self.pre_handle_is_assignment,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
-                self.handle_is_const(scope, stmt)
+                self.handle_is_const(base_scope, stmt)
         
         # get list of errors from the symbol table
         self.error = self.table.error

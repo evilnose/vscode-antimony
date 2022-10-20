@@ -68,6 +68,8 @@ class AntTreeAnalyzer:
         self.inserted_decl = defaultdict(bool)
         self.inserted_var_in = defaultdict(bool)
         self.inserted_unit_assign = defaultdict(bool)
+        self.unit_vals = defaultdict()
+        self.unit_names = []
         self.pending_is_assignments = []
         self.pending_annotations = []
         self.pending_imports = []
@@ -160,6 +162,10 @@ class AntTreeAnalyzer:
                 if isinstance(stmt, Import):
                     self.pre_handle_import(base_scope, stmt)
                     continue
+                if isinstance(stmt, UnitAssignment):
+                    qname = QName(base_scope, stmt.get_var_name().get_name())
+                    self.unit_vals[qname] = stmt.get_sum()
+                    self.unit_names.append(qname)
                 if stmt is None:
                     continue
                 {
@@ -513,6 +519,10 @@ class AntTreeAnalyzer:
     def handle_import_list(self):
         for scope, imp in self.pending_imports:
             self.handle_import(scope, imp)
+        for name in self.unit_names:
+            value = self.table.get(name)[0]
+            value.value_node.unit = self.unit_vals[name]
+            vscode_logger.info(self.unit_vals[name].get_name())
 
     def handle_import(self, scope: AbstractScope, imp: Import):
         name = imp.get_file_name()
@@ -724,11 +734,15 @@ class AntTreeAnalyzer:
     
     def handle_unit_assign_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_var_name().get_name())
+        vscode_logger.info(stmt.get_sum().get_name())
         if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node.unit is None:
             self.handle_unit_assignment(scope, stmt, False)
             self.inserted_unit_assign[self.table.get(cur_qname)[0].name] = True
         elif self.table.get(cur_qname)[0].value_node.unit is not None and self.inserted_unit_assign[self.table.get(cur_qname)[0].name]:
             self.table.get(cur_qname)[0].value_node.unit = stmt.get_sum()
+        #else:
+        #    self.unit_vals[cur_qname] = self.table.get(cur_qname)[0].value_node.unit
+        #    self.unit_names.append(cur_qname)
         self.handle_unit_assignment(scope, stmt, True)
     
     def handle_annot_add(self, scope, stmt):

@@ -205,7 +205,7 @@ class RateRuleNotInReaction(Issue):
      def __init__(self, range, val):
         super().__init__(range, IssueSeverity.Warning)
         self.val = val
-        self.message = ("Variable '{}' is also a non-fixed species defined in a reaction").format(val)
+        self.message = f"Variable {val} is also a non-fixed species defined in a reaction"
 
 class VarNotFound(Issue):
     def __init__(self, range, val): 
@@ -217,7 +217,7 @@ class RateRuleOverRidden(Issue):
     def __init__(self, range, val, symbol): 
         super().__init__(range, IssueSeverity.Warning)
         self.val = val
-        self.message = ("Previous Rate Rule '{}' of {} is overridden").format(symbol.rate_rule ,val)
+        self.message = f"Previous Rate Rule {symbol.rate_rule} of {val} is overridden"
 
 
 class ObscuredDeclaration(Issue):

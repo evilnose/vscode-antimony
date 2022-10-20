@@ -178,7 +178,7 @@ class AntTreeAnalyzer:
         self.warning = self.table.warning
         self.handle_annotation_list()
         self.handle_is_assignment_list()
-        # handle all rate rules afeter appended to list and finished parsing
+        # handle all rate rules after appended to list and finished parsing
         self.handle_rate_rules()
         self.pending_annotations = []
         self.pending_is_assignments = []

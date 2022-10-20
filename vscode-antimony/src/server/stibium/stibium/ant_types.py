@@ -125,6 +125,10 @@ class ArithmeticExpr(TreeNode):
     '''Base class for arithmetic expressions.'''
     pass
 
+class BooleanExpr(TreeNode):
+    '''Base class for boolean expressions.'''
+    pass
+
 @dataclass
 class Expressions(TrunkNode):
     '''Base class for equalities and inequalities.'''
@@ -434,38 +438,6 @@ class EventDelay(TrunkNode):
             ret += delay.to_string()
         ret += ' after'
         return ret
-
-@dataclass
-class Expressions(TrunkNode):
-    children: Tuple[Optional[Operator], Union[Sum, VarName], Optional[CompareSign], Optional[Union[Sum, VarName]], Optional[Operator]] = field(repr=False)
-    
-    def get_left_var(self):
-        if type(self.children[1]) == VarName:
-            return self.children[1]
-        return None
-    
-    def get_left(self):
-        return self.children[1]
-    
-    def get_sign(self) -> CompareSign:
-        if len(self.children) >= 3:
-            return self.children[2]
-        return None
-    
-    def get_right_var(self):
-        if len(self.children) >= 3 and type(self.children[2]) == VarName:
-            return self.children[2]
-        return None
-    
-    def get_right(self):
-        if len(self.children) >= 3:
-            return self.children[2]
-        return None
-
-@dataclass
-class EventConditionList(TrunkNode):
-    def get_all_conditions(self) -> List[Expressions]:
-        return cast(List[Expressions], self.children[::2])
     
 @dataclass
 class EventTrigger(TrunkNode):
@@ -526,7 +498,7 @@ class EventAssignmentList(TrunkNode):
 @dataclass
 class Event(TrunkNode):
     children: Tuple[Optional[ReactionName], Keyword, Optional[EventDelay],
-                    Optional[EventConditionList], Optional[EventTriggerList],
+                    BooleanExpr, Optional[EventTriggerList],
                     Operator, EventAssignmentList] = field(repr=False)
     unnamed_label : int = -1
     def get_maybein(self):
@@ -552,17 +524,11 @@ class Event(TrunkNode):
             return self.get_event_delay().get_sum_text()
         return None
         
-    def get_condition_list(self) -> Optional[EventConditionList]:
+    def get_condition(self) -> BooleanExpr:
         return self.children[3]
 
     def get_trigger_list(self) -> Optional[EventTriggerList]:
         return self.children[4]
-
-    def get_conditions(self) -> List[Expressions]:
-        slist = self.get_condition_list()
-        if slist:
-            return slist.get_all_conditions()
-        return list()
 
     def get_triggers(self) -> List[EventTrigger]:
         slist = self.get_trigger_list()

@@ -376,6 +376,18 @@ class AntTreeAnalyzer:
                 if type(leaf) == Name:
                     leaf = cast(Name, leaf)
                     self.table.insert(QName(scope, leaf), SymbolType.Parameter)
+                    
+    def handle_bool_expr(self, scope: AbstractScope, expr: TreeNode):
+        if not hasattr(expr, 'children'):
+            if type(expr) == Name:
+                leaf = cast(Name, expr)
+                self.table.insert(QName(scope, leaf), SymbolType.Parameter)
+        else:
+            expr = cast(TrunkNode, expr)
+            for leaf in expr.scan_leaves():
+                if type(leaf) == Name:
+                    leaf = cast(Name, leaf)
+                    self.table.insert(QName(scope, leaf), SymbolType.Parameter)
 
     def handle_reaction(self, scope: AbstractScope, reaction: Reaction):
         name = reaction.get_name()
@@ -409,8 +421,8 @@ class AntTreeAnalyzer:
             event_delay_var = event_delay.get_sum()
             if type(event_delay_var) == VarName:
                 self.table.insert(QName(scope, event_delay_var.get_name()), SymbolType.Unknown, comp=comp)
-        for condition in event.get_conditions():
-            self.handle_arith_expr(scope, condition)
+        condition = event.get_condition()
+        self.handle_bool_expr(scope, condition)
 
         for assignment in event.get_assignments():
             qname = QName(scope, assignment.get_name())

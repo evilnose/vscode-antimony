@@ -12,11 +12,10 @@ species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
-event : [reaction_name] "at" [event_delay] [event_condition_list] [event_trigger_list] ":" event_assignment_list
+event : [reaction_name] "at" [event_delay] bool_exp [event_trigger_list] ":" event_assignment_list
 
 event_delay : sum "after"
 
-event_condition_list : expressions (LOGICAL expressions)*
 
 event_trigger_list : ("," event_trigger)*
 
@@ -71,8 +70,12 @@ VAR_MODIFIER: /\b(var|const)\b/
 SUB_MODIFIER: /\b(substanceOnly)\b/
 TYPE_MODIFIER: /\b(species|compartment|formula)\b/
 
+?bool_exp : expressions
+    | expressions LOGICAL expressions
+    | "(" expressions LOGICAL expressions ")"
+
 ?expressions : sum
-    | sum COMPARE sum
+    | sum (COMPARE sum)*
 
 ?sum : product
     | sum "+" product

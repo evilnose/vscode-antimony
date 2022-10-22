@@ -1,5 +1,8 @@
 
 import logging
+import requests
+from bioservices import ChEBI, UniProt, Rhea
+from bioservices_server.webservices import NetworkError
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode
 from .types import ObscuredEventTrigger, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
@@ -10,6 +13,16 @@ from itertools import chain
 from lark.lexer import Token
 from lark.tree import Tree
 
+SLASH = "/"
+HTTP = "http"
+RHEA_URL = "www.rhea-db.org"
+IDENTIFIERS_ORG = "identifiers.org"
+CHEBI_LOWER = "chebi"
+EQUATION_LOWER = "equation"
+EQUATION_CAP = "Equation"
+UNDERSCORE = "_"
+ONTOLOGIES_URL = "http://www.ebi.ac.uk/ols/api/ontologies/"
+ONTOLOGIES_URL_SECOND_PART = "/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F"
 
 def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
     '''Returns (context, token) the given position. `token` may be None if not found.
@@ -177,6 +190,7 @@ class AntTreeAnalyzer:
         # get list of warnings
         self.warning = self.table.warning
         self.handle_annotation_list()
+        self.get_annotation_descriptions()
         self.handle_is_assignment_list()
         self.pending_annotations = []
         self.pending_is_assignments = []
@@ -493,6 +507,61 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
+    
+    def get_annotation_descriptions(self):
+        for scope, annotation in self.pending_annotations:
+            self.get_annotation_description(scope, annotation)
+    
+    def get_annotation_description(self, scope: AbstractScope, annotation: Annotation):
+        name = annotation.get_var_name().get_name()
+        qname = QName(scope, name)
+        symbol = self.table.get(qname)
+        if symbol:
+            uri = annotation.get_uri()
+            if uri[0:4] != HTTP:
+                return
+            if uri in symbol[0].queried_annotations.keys():
+                return
+            uri_split = uri.split(SLASH)
+            website = uri_split[2]
+            chebi_id = uri_split[4]
+            if website == IDENTIFIERS_ORG:
+                if uri_split[3] == CHEBI_LOWER:
+                    chebi = ChEBI()
+                    res = chebi.getCompleteEntity(chebi_id)
+                    name = res.chebiAsciiName
+                    definition = res.definition
+                    queried = '\n{}\n\n{}\n'.format(name, definition)
+                    symbol[0].queried_annotations[uri] = queried
+                else:
+                    return
+                    # uniport = UniProt()
+            elif website == RHEA_URL:
+                rhea = Rhea()
+                df_res = rhea.query(uri_split[4], columns=EQUATION_LOWER, limit=10)
+                equation = df_res[EQUATION_CAP]
+                queried = '\n{}\n'.format(equation[0])
+                df_res += queried
+                symbol[0].queried_annotations[uri] = queried
+            else:
+                ontology_info = uri_split[-1]
+                ontology_info_split = ontology_info.split('_')
+                ontology_name = ontology_info_split[0].lower()
+                iri = uri_split[-1]
+                try:
+                    response = requests.get(ONTOLOGIES_URL + ontology_name + ONTOLOGIES_URL_SECOND_PART + iri).json()
+                    if ontology_name == 'pr' or ontology_name == 'ma' or ontology_name == 'obi' or ontology_name == 'fma':
+                        definition = response['description']
+                    else:
+                        response_annot = response['annotation']
+                        definition = response_annot['definition']
+                    name = response['label']
+                    queried =  '\n{}\n'.format(name)
+                    if definition:
+                        queried += '\n{}\n'.format(definition[0])
+                    symbol[0].queried_annotations[uri] = queried
+                except NetworkError:
+                    return
     
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
         self.pending_is_assignments.append((scope, is_assignment))

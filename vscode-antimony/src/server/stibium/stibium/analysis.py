@@ -64,10 +64,7 @@ class AntTreeAnalyzer:
         self.import_table = SymbolTable()
         self.root = root
         self.inserted = defaultdict(bool)
-        self.inserted_is = defaultdict(bool)
         self.inserted_decl = defaultdict(bool)
-        self.inserted_var_in = defaultdict(bool)
-        self.inserted_unit_assign = defaultdict(bool)
         self.unit_vals = defaultdict()
         self.unit_names = []
         self.pending_is_assignments = []
@@ -369,7 +366,7 @@ class AntTreeAnalyzer:
         return used
 
     def get_unique_name(self, prefix: str, insert: bool):
-        if insert is True:
+        if insert:
             return self.import_table.get_unique_name(prefix)
         else:
             return self.table.get_unique_name(prefix)
@@ -380,7 +377,7 @@ class AntTreeAnalyzer:
             # isinstance() is too slow here
             if child and type(child) == InComp:
                 child = cast(InComp, child)
-                if insert is True:
+                if insert:
                     self.import_table.insert(QName(scope, child.get_comp().get_name()), SymbolType.Compartment)
                 else:
                     self.table.insert(QName(scope, child.get_comp().get_name()), SymbolType.Compartment)
@@ -390,7 +387,7 @@ class AntTreeAnalyzer:
         if not hasattr(expr, 'children'):
             if type(expr) == Name:
                 leaf = cast(Name, expr)
-                if insert is True:
+                if insert:
                     self.import_table.insert(QName(scope, leaf), SymbolType.Parameter)
                 else:
                     self.table.insert(QName(scope, leaf), SymbolType.Parameter)
@@ -399,7 +396,7 @@ class AntTreeAnalyzer:
             for leaf in expr.scan_leaves():
                 if type(leaf) == Name:
                     leaf = cast(Name, leaf)
-                    if insert is True:
+                    if insert:
                         self.import_table.insert(QName(scope, leaf), SymbolType.Parameter)
                     else:
                         self.table.insert(QName(scope, leaf), SymbolType.Parameter)
@@ -413,13 +410,13 @@ class AntTreeAnalyzer:
             comp = reaction.get_comp().get_comp().get_name_text()
 
         if name is not None:
-            if insert is True:
+            if insert:
                 self.import_table.insert(QName(scope, name), SymbolType.Reaction, reaction, comp=comp)
             else:
                 self.table.insert(QName(scope, name), SymbolType.Reaction, reaction, comp=comp)
 
         for species in chain(reaction.get_reactants(), reaction.get_products()):
-            if insert is True:
+            if insert:
                 self.import_table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
             else:
                 self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
@@ -429,7 +426,7 @@ class AntTreeAnalyzer:
         comp = None
         if assignment.get_maybein() != None and assignment.get_maybein().is_in_comp():
             comp = assignment.get_maybein().get_comp().get_name_text()
-        if insert is True:
+        if insert:
             self.import_table.insert(QName(scope, assignment.get_name()), SymbolType.Parameter,
                             value_node=assignment, comp=comp)
         else:
@@ -473,12 +470,17 @@ class AntTreeAnalyzer:
             # as the value node. Otherwise put None. See that we can't directly put "value" as
             # argument "valud_node" since they are different things
             value_node = item if value else None
-            #vscode_logger.info(name)
-            #vscode_logger.info(is_const)
-            if insert is True:
+            if insert:
+                #vscode_logger.info(declaration.children)
+                #vscode_logger.info(stype)
+                #vscode_logger.info(name)
+                #vscode_logger.info(is_const)
                 if not self.table.get(QName(scope, name)) or self.table.get(QName(scope, name))[0].decl_node is None:
                     self.table.insert(QName(scope, name), stype, declaration, value_node, 
                                 is_const=is_const, comp=comp, is_sub=is_sub)
+                    vscode_logger.info(self.table.get(QName(scope, name))[0].name)
+                    vscode_logger.info(self.table.get(QName(scope, name))[0].value_node)
+                    vscode_logger.info(self.table.get(QName(scope, name))[0].is_const)
                     self.inserted_decl[self.table.get(QName(scope, name))[0].name] = True
                 elif self.table.get(QName(scope, name))[0].decl_node is not None and self.inserted_decl[self.table.get(QName(scope, name))[0].name]:
                     annot = self.table.get(QName(scope, name))[0].annotations
@@ -506,7 +508,7 @@ class AntTreeAnalyzer:
         # TODO(Gary) maybe we can have a narrower type here, since annotation is restricted only to
         # species or compartments? I'm not sure. If that's the case though, we'll need union types.
         qname = QName(scope, name)
-        if insert is True:
+        if insert:
             self.import_table.insert(qname, SymbolType.Parameter)
             self.import_table.insert_annotation(qname, annotation)
         else:
@@ -522,7 +524,6 @@ class AntTreeAnalyzer:
         for name in self.unit_names:
             value = self.table.get(name)[0]
             value.value_node.unit = self.unit_vals[name]
-            vscode_logger.info(self.unit_vals[name].get_name())
 
     def handle_import(self, scope: AbstractScope, imp: Import):
         name = imp.get_file_name()
@@ -675,29 +676,33 @@ class AntTreeAnalyzer:
     
     def handle_assignment_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_name())
-        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node is None:
+        in_table = self.table.get(cur_qname)
+        if not in_table or in_table[0].value_node is None:
             self.handle_assignment(scope, stmt, False)
-            self.inserted[self.table.get(cur_qname)[0].name] = True
-        elif self.table.get(cur_qname)[0].value_node is not None and self.inserted[self.table.get(cur_qname)[0].name]:
-            self.table.get(cur_qname)[0].value_node = stmt
+            self.inserted[in_table[0].name] = True
+        elif in_table[0].value_node is not None and self.inserted[in_table[0].name]:
+            in_table[0].value_node = stmt
             self.handle_arith_expr(scope, stmt.get_value(), False)
         self.handle_assignment(scope, stmt, True)
     
     def handle_is_assignment_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_var_name())
-        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].display_name is None:
+        in_table = self.table.get(cur_qname)
+        is_assign_ind = in_table[0].name + " is_assign"
+        if not in_table or in_table[0].display_name is None:
             self.handle_is_assignment(scope, stmt, False)
-            self.inserted_is[self.table.get(cur_qname)[0].name] = True
-        elif self.table.get(cur_qname)[0].display_name is not None and self.inserted_is[self.table.get(cur_qname)[0].name]:
-            self.table.get(cur_qname)[0].display_name = stmt.get_display_name().text
+            self.inserted[is_assign_ind] = True
+        elif in_table[0].display_name is not None and self.inserted[is_assign_ind]:
+            in_table[0].display_name = stmt.get_display_name().text
         self.handle_is_assignment(scope, stmt, True)
 
     def handle_unit_decl_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_var_name().get_name())
-        if not self.table.get(cur_qname):
+        in_table = self.table.get(cur_qname)
+        if not in_table:
             self.handle_unit_declaration(scope, stmt, False)
             self.inserted[stmt.get_var_name().get_name()] = True
-        elif self.table.get(cur_qname) and self.inserted[stmt.get_var_name().get_name()]:
+        elif in_table and self.inserted[stmt.get_var_name().get_name()]:
             self.replace_assign(cur_qname, stmt)
         self.handle_unit_declaration(scope, stmt, True)
 
@@ -707,9 +712,10 @@ class AntTreeAnalyzer:
         else:
             mmodel_name = stmt.get_name()
         cur_qname = QName(BaseScope(), mmodel_name)
-        if self.table.get(cur_qname):
+        in_table = self.table.get(cur_qname)
+        if in_table:
             self.error.append(DuplicateImportedMModelCall(name.range, mmodel_name.text))
-        elif not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node is None:
+        elif not in_table or in_table[0].value_node is None:
             self.handle_mmodel_call(BaseScope(), stmt, False)
         self.handle_mmodel_call(BaseScope(), stmt, True)
     
@@ -725,30 +731,30 @@ class AntTreeAnalyzer:
     
     def handle_reaction_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_name())
-        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].decl_node is None:
+        in_table = self.table.get(cur_qname)
+        if not in_table or in_table[0].decl_node is None:
             self.handle_reaction(scope, stmt, False)
-            self.inserted[self.table.get(cur_qname)[0].name] = True
-        elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted[self.table.get(cur_qname)[0].name]:
+            self.inserted[in_table[0].name] = True
+        elif in_table[0].decl_node is not None and self.inserted[in_table[0].name]:
             self.replace_assign(cur_qname, stmt)
         self.handle_reaction(scope, stmt, True)
     
     def handle_unit_assign_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_var_name().get_name())
-        vscode_logger.info(stmt.get_sum().get_name())
-        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node.unit is None:
+        in_table = self.table.get(cur_qname)
+        unit_assign_ind = in_table[0].name + " unit_assign"
+        if not in_table or in_table[0].value_node.unit is None:
             self.handle_unit_assignment(scope, stmt, False)
-            self.inserted_unit_assign[self.table.get(cur_qname)[0].name] = True
-        elif self.table.get(cur_qname)[0].value_node.unit is not None and self.inserted_unit_assign[self.table.get(cur_qname)[0].name]:
-            self.table.get(cur_qname)[0].value_node.unit = stmt.get_sum()
-        #else:
-        #    self.unit_vals[cur_qname] = self.table.get(cur_qname)[0].value_node.unit
-        #    self.unit_names.append(cur_qname)
+            self.inserted[unit_assign_ind] = True
+        elif in_table[0].value_node.unit is not None and self.inserted[unit_assign_ind]:
+            in_table[0].value_node.unit = stmt.get_sum()
         self.handle_unit_assignment(scope, stmt, True)
     
     def handle_annot_add(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_var_name().get_name())
-        if self.table.get(cur_qname)[0].annotations:
-            for annot in self.table.get(cur_qname)[0].annotations:
+        in_table = self.table.get(cur_qname)
+        if in_table[0].annotations:
+            for annot in in_table[0].annotations:
                 if annot.get_uri() == stmt.get_uri():
                     self.handle_annotation(scope, stmt, True)
                     return
@@ -757,19 +763,22 @@ class AntTreeAnalyzer:
     
     def handle_var_in_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_name().get_name())
-        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].decl_node is None:
+        in_table = self.table.get(cur_qname)
+        var_in_ind = in_table[0].name + "var_in"
+        if not in_table or in_table[0].decl_node is None:
             self.handle_variable_in(scope, stmt, False)
-            self.inserted_var_in[self.table.get(cur_qname)[0].name] = True
-        elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted_var_in[self.table.get(cur_qname)[0].name]:
-            self.table.get(cur_qname)[0].decl_node = stmt
+            self.inserted[var_in_ind] = True
+        elif in_table[0].decl_node is not None and self.inserted[var_in_ind]:
+            in_table[0].decl_node = stmt
         self.handle_variable_in(scope, stmt, True)
     
     def handle_func_call_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_name())
-        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].value_node is None:
+        in_table = self.table.get(cur_qname)
+        if not in_table or in_table[0].value_node is None:
             self.handle_function_call(scope, stmt, False)
-            self.inserted[self.table.get(cur_qname)[0].name] = True
-        elif self.table.get(cur_qname)[0].value_node is not None and self.inserted[self.table.get(cur_qname)[0].name]:
+            self.inserted[in_table[0].name] = True
+        elif in_table[0].value_node is not None and self.inserted[in_table[0].name]:
             self.replace_assign(cur_qname, stmt)
         self.handle_function_call(scope, stmt, True)
 
@@ -783,28 +792,28 @@ class AntTreeAnalyzer:
     def handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         name = is_assignment.get_var_name()
         qname = QName(scope, name)
-        if insert is True:
+        if insert:
             var = self.import_table.get(qname)
         else:
             var = self.table.get(qname)
         display_name = is_assignment.get_display_name().text
         if len(var) != 0:
             if var[0].display_name != None:
-                if insert is True:
+                if insert:
                     self.import_table.insert_warning(OverridingDisplayName(is_assignment.range, name.text))
                 else:
                     self.table.insert_warning(OverridingDisplayName(is_assignment.range, name.text))
             var[0].display_name = display_name
             if isinstance(var[0], FuncSymbol):
                 qname_f = QName(FunctionScope(str(var[0].type_name)), name)
-                if insert is True:
+                if insert:
                     f_var = self.import_table.get(qname_f)
                 else:
                     f_var = self.table.get(qname_f)
                 if len(f_var) != 0:
                     f_var[0].display_name = display_name
                 qname_b = QName(BaseScope(), name)
-                if insert is True:
+                if insert:
                     base_var = self.import_table.get(qname_b)
                 else:
                     base_var = self.table.get(qname_b)
@@ -812,14 +821,14 @@ class AntTreeAnalyzer:
                     base_var[0].display_name = display_name
             elif isinstance(var[0], MModelSymbol):
                 qname_m = QName(ModularModelScope(str(var[0].type_name)), name)
-                if insert is True:
+                if insert:
                     m_var = self.import_table.get(qname_m)
                 else:
                     m_var = self.table.get(qname_m)
                 if len(m_var) != 0:
                     m_var[0].display_name = display_name
                 qname_b = QName(BaseScope(), name)
-                if insert is True:
+                if insert:
                     base_var = self.import_table.get(qname_b)
                 else:
                     base_var = self.table.get(qname_b)
@@ -830,7 +839,7 @@ class AntTreeAnalyzer:
         varname = unitdec.get_var_name().get_name()
         unit_sum = unitdec.get_sum()
         qname = QName(scope, varname)
-        if insert is True:
+        if insert:
             self.import_table.insert(qname, SymbolType.Unit)
         else:
             self.table.insert(qname, SymbolType.Unit)
@@ -838,7 +847,7 @@ class AntTreeAnalyzer:
     def handle_unit_assignment(self, scope: AbstractScope, unitdec: UnitDeclaration, insert: bool):
         varname = unitdec.get_var_name().get_name()
         unit_sum = unitdec.get_sum()
-        if insert is True:
+        if insert:
             symbols = self.import_table.get(QName(scope, varname))
         else:
             symbols = self.table.get(QName(scope, varname))
@@ -859,7 +868,7 @@ class AntTreeAnalyzer:
         comp = None
         if mmodel_call.get_maybein() != None and mmodel_call.get_maybein().is_in_comp():
             comp = mmodel_call.get_maybein().get_comp().get_name_text()
-        if insert is True:
+        if insert:
             self.import_table.insert(QName(scope, name), SymbolType.Parameter,
                     value_node=mmodel_call, comp=comp)
         else:
@@ -870,7 +879,7 @@ class AntTreeAnalyzer:
         comp = None
         if function_call.get_maybein() != None and function_call.get_maybein().is_in_comp():
             comp = function_call.get_maybein().get_comp().get_name_text()
-        if insert is True:
+        if insert:
             self.import_table.insert(QName(scope, function_call.get_name()), SymbolType.Parameter,
                     value_node=function_call, comp=comp)
         else:
@@ -880,7 +889,7 @@ class AntTreeAnalyzer:
     def handle_variable_in(self, scope: AbstractScope, variable_in: VariableIn, insert: bool):
         name = variable_in.get_name().get_name()
         comp = variable_in.get_incomp().get_comp().get_name_text()
-        if insert is True:
+        if insert:
             self.import_table.insert(QName(scope, name), SymbolType.Variable, decl_node=variable_in, comp=comp)
         else:
             self.table.insert(QName(scope, name), SymbolType.Variable, decl_node=variable_in, comp=comp)
@@ -888,7 +897,7 @@ class AntTreeAnalyzer:
     def handle_parameters(self, scope: AbstractScope, parameters: Parameters, insert: bool):
         for parameter in parameters.get_items():
             qname = QName(scope, parameter)
-            if insert is True:
+            if insert:
                 self.import_table.insert(qname, SymbolType.Parameter)
             else:
                 self.table.insert(qname, SymbolType.Parameter)
@@ -902,12 +911,12 @@ class AntTreeAnalyzer:
         parameters = []
         for name in params:
             # get symbols
-            if insert is True:
+            if insert:
                 qname = self.resolve_import_qname(QName(scope, name))
             else:
                 qname = self.resolve_qname(QName(scope, name))
             parameters.append(qname)
-        if insert is True:
+        if insert:
             self.import_table.insert_function(QName(BaseScope(), function), SymbolType.Function, parameters)
             self.import_table.insert_function(QName(FunctionScope(str(function.get_name())), function),
                                     SymbolType.Function, parameters)
@@ -923,12 +932,12 @@ class AntTreeAnalyzer:
         scope = ModularModelScope(str(mmodel.get_name()))
         parameters = []
         for name in params:
-            if insert is True:
+            if insert:
                 qname = self.resolve_import_qname(QName(scope, name))
             else:
                 qname = self.resolve_qname(QName(scope, name))
             parameters.append(qname)
-        if insert is True:
+        if insert:
             self.import_table.insert_mmodel(QName(BaseScope(), mmodel), SymbolType.ModularModel, parameters)
             self.import_table.insert_mmodel(QName(ModularModelScope(str(mmodel.get_name())), mmodel),
                                     SymbolType.ModularModel, parameters)

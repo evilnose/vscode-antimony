@@ -7,6 +7,7 @@ kfc5 is "the last"
 J4: S1 -> S2; kfc*S1
 S1 = 2
 S2 = 4
+S10 = 2
 kfctotal is "original"
 unit count = mole
 unit vol = litre
@@ -16,6 +17,7 @@ compartment tester
 const tester
 tester = 1
 const species S1 in tester, S2 in tester
+substanceOnly species S10
 
 function quadratic(x, a, b, c)
   a*x^2 + b*x + c

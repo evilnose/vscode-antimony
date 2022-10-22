@@ -1,7 +1,7 @@
 from collections import defaultdict
 import logging
 import os
-from stibium.ant_types import UnitAssignment, FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
+from stibium.ant_types import Species, UnitAssignment, FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
 from .types import FunctionAlreadyExists, CircularImportFound, DuplicateImportedMModelCall, FileAlreadyImported, GrammarHasIssues, ModelAlreadyExists, NoImportFile, OverridingDisplayName, RedefinedFunction, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -556,6 +556,9 @@ class AntTreeAnalyzer:
                     }[stmt.__class__.__name__](scope, stmt)
                 if isinstance(node, Model):
                     scope = ModelScope(str(node.get_name()))
+                    if self.table.get(QName(BaseScope(), node.get_name())):
+                        self.error.append(ModelAlreadyExists(name.range, node.get_name_str()))
+                        return
                     for child in node.children:
                         if isinstance(child, ErrorToken):
                             continue
@@ -689,9 +692,12 @@ class AntTreeAnalyzer:
         stype = modifiers.get_type()
         is_const = (variab == Variability.CONSTANT)
         is_sub = (sub is not None)
+        
         for decl in stmt.get_items():
             name = decl.get_maybein().get_var_name().get_name()
             value = decl.get_value()
+            if stype == SymbolType.Species:
+                is_const = decl.get_maybein().get_var_name().is_const()
 
             comp = None
             if decl.get_maybein() != None and decl.get_maybein().is_in_comp():
@@ -751,12 +757,13 @@ class AntTreeAnalyzer:
     def handle_var_in_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_name().get_name())
         in_table = self.table.get(cur_qname)
-        var_in_ind = in_table[0].name + "var_in"
+        var_in_ind = in_table[0].name + " var_in"
         if not in_table or in_table[0].decl_node is None:
             self.handle_variable_in(scope, stmt, False)
             self.inserted[var_in_ind] = True
         elif in_table[0].decl_node is not None and self.inserted[var_in_ind]:
             in_table[0].decl_node = stmt
+            in_table[0].comp = stmt.get_incomp().get_comp().get_name_text()
         self.handle_variable_in(scope, stmt, True)
     
     def handle_func_call_overwrite(self, scope, stmt):

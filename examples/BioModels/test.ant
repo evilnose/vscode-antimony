@@ -1,5 +1,4 @@
 # This creates a model 'side_reaction', exposing the variables 'S' and 'k1':
-import "test2.ant"
 import "5.ant"
 import "test3.ant"
 
@@ -62,7 +61,7 @@ end
 #end
 #kfc = 2894
 kfc2 = 3
-kfc3 := kfc + kfc2 - kfc5 + kfctotal
+kfc3 := kfc + kfc2 - kfc5 + kfctotal + S10
 #kfctotal = S1 - S2
 J4: S2 -> S1; kfc3
 compartment final
@@ -70,7 +69,7 @@ kfc2 in tester
 final = 2
 S1 = 4
 S2 = 3
-S1 in final
+kfc5 in final
 #MC: test3()
 unit count = molecules
 S41 := quadratic(kfc, kfc2, kfc3, kfctotal)

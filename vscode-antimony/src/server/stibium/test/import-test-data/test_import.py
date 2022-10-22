@@ -1,4 +1,3 @@
-from __future__ import annotations
 import os
 import sys
 
@@ -310,11 +309,9 @@ def test_decl():
     error_count = 0
     for issue in issues:
         if str(issue.severity.__str__()) == "IssueSeverity.Error":
-            print(issue.message)
             error_count += 1
     assert error_count == 0, "Import unsuccessful"
     stmt = ant_file.tree.children[0].get_stmt()
-    print(ant_file.analyzer.table.get_all_qnames())
     assert isinstance(stmt, Import)
 
     # Testing different components of declarations from imported file
@@ -340,6 +337,14 @@ def test_decl():
     assert var.is_const
     assert not var.is_sub
     assert var.display_name is None
+
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(13, 1), SrcPosition(13, 3)), text='S1')))[0]
+    assert var.value_node.get_value().text == "7"
+    assert var.type == SymbolType.Species
+    assert var.comp == "decl"
+    assert not var.is_const
+    assert var.is_sub
+    assert var.display_name == "\"a species\""
 
     # Testing different components of declarations from base file
     var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(3, 9), SrcPosition(3, 11)), text='A3')))[0]

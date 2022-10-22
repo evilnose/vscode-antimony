@@ -5,7 +5,7 @@ from bioservices import ChEBI, UniProt, Rhea
 from bioservices_server.webservices import NetworkError
 from stibium.ant_types import Annotation, Name, TreeNode
 from .types import Issue, ObscuredValueCompartment, RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
-from .ant_types import VarName, Declaration, VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall
+from .ant_types import LeafNode, VarName, Declaration, VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall, Event
 
 import abc
 from collections import defaultdict, namedtuple
@@ -14,6 +14,8 @@ from typing import DefaultDict, Dict, List, Optional, Set, Tuple, Union
 from lark.lexer import Token
 
 from lark.tree import Tree
+
+vscode_logger = logging.getLogger("vscode logger: ")
 
 '''Classes that represent scopes. TODO rename all these to Scope, b/c Scope is not the same thing as scope'''
 class AbstractScope(abc.ABC):
@@ -119,6 +121,7 @@ class Symbol:
     comp: str
     is_const: bool
     is_sub: bool
+    events: List[Event]
 
     def __init__(self, name: str, typ: SymbolType, type_name: Name,
             decl_name: Name = None,
@@ -127,7 +130,8 @@ class Symbol:
             display_name: str = None,
             comp: str = None,
             is_const: bool = False,
-            is_sub: bool = False):
+            is_sub: bool = False,
+            ):
         self.name = name
         self.type = typ
         self.type_name = type_name
@@ -140,6 +144,7 @@ class Symbol:
         self.is_const = is_const
         self.is_sub = is_sub
         self.queried_annotations = dict()
+        self.events = list()
 
     def def_name(self):
         '''Return the Name that should be considered as the definition'''
@@ -206,6 +211,13 @@ class Symbol:
                     "Initialized Value:" + init_val)
         else:
             ret += '\n({}) {}\n'.format(self.type, self.name)
+        if self.events:
+            for event in self.events:
+                event_name = event.get_name_text()
+                if event_name is not None:
+                    ret += 'event {}\n'.format(event_name)
+                else:
+                    ret += 'unnamed event {}\n'.format(event.unnamed_label)
 
         if self.comp:
             ret += 'In compartment: {}\n'.format(self.comp)
@@ -516,3 +528,13 @@ class SymbolTable:
         else:
             sym = leaf_table[name]
         sym.annotations.append(node)
+        
+    def insert_event(self, qname: QName, node: Event):
+        leaf_table = self._leaf_table(qname.scope)
+        name = qname.name.text
+        if name not in leaf_table:
+            sym = VarSymbol(name, SymbolType.Unknown, qname.name)
+            leaf_table[name] = sym
+        else:
+            sym = leaf_table[name]
+        sym.events.append(node)

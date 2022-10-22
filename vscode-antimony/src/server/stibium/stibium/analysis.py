@@ -3,8 +3,8 @@ import logging
 import requests
 from bioservices import ChEBI, UniProt, Rhea
 from bioservices_server.webservices import NetworkError
-from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
-from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode
+from .types import ObscuredEventTrigger, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -76,6 +76,8 @@ class AntTreeAnalyzer:
         self.root = root
         self.pending_is_assignments = []
         self.pending_annotations = []
+        self.pending_events = []
+        self.unnamed_events_num = 0
         base_scope = BaseScope()
         for child in root.children:
             if isinstance(child, ErrorToken):
@@ -100,6 +102,7 @@ class AntTreeAnalyzer:
                                 continue
                             {
                                 'Reaction': self.handle_reaction,
+                                'Event': self.pre_handle_event,
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.pre_handle_annotation,
@@ -111,6 +114,7 @@ class AntTreeAnalyzer:
                                 'IsAssignment' : self.pre_handle_is_assignment,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
+                            self.handle_is_const(scope, stmt)
             if isinstance(child, ModularModel):
                 scope = ModularModelScope(str(child.get_name()))
                 for cchild in child.children:
@@ -129,6 +133,7 @@ class AntTreeAnalyzer:
                                 continue
                             {
                                 'Reaction': self.handle_reaction,
+                                'Event': self.pre_handle_event,
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.pre_handle_annotation,
@@ -140,6 +145,7 @@ class AntTreeAnalyzer:
                                 'IsAssignment' : self.pre_handle_is_assignment,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
+                            self.handle_is_const(scope, stmt)
                     if isinstance(cchild, Parameters):
                         self.handle_parameters(scope, cchild)
                 self.handle_mmodel(child)
@@ -165,6 +171,7 @@ class AntTreeAnalyzer:
                     continue
                 {
                     'Reaction': self.handle_reaction,
+                    'Event': self.pre_handle_event,
                     'Assignment': self.handle_assignment,
                     'Declaration': self.handle_declaration,
                     'Annotation': self.pre_handle_annotation,
@@ -176,6 +183,7 @@ class AntTreeAnalyzer:
                     'IsAssignment' : self.pre_handle_is_assignment,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
+                self.handle_is_const(base_scope, stmt)
         
         # get list of errors from the symbol table
         self.error = self.table.error
@@ -239,6 +247,8 @@ class AntTreeAnalyzer:
                     self.process_is_assignment(node, scope)
                 elif type(node.get_stmt()) == Assignment:
                     self.process_maybein(node, scope)
+                elif type(node.get_stmt()) == Event:
+                    self.process_event(node, scope)
 
     def check_parse_tree_function(self, function, scope):
         # check the expression
@@ -307,6 +317,8 @@ class AntTreeAnalyzer:
                     self.process_is_assignment(node, scope)
                 elif type(node.get_stmt()) == Assignment:
                     self.process_maybein(node, scope)
+                elif type(node.get_stmt()) == Event:
+                    self.process_event(node, scope)
         self.check_param_unused(used, params)
 
     def check_rate_law(self, rate_law, scope, params=set()):
@@ -352,8 +364,34 @@ class AntTreeAnalyzer:
                 child = cast(InComp, child)
                 self.table.insert(QName(scope, child.get_comp().get_name()), SymbolType.Compartment)
 
+    def handle_is_const(self, scope: AbstractScope, node: TrunkNode):
+        indicator = False
+        for child in node.descendants():
+            if indicator and child and type(child) == Name:
+                
+                child = cast(Name, child)
+                
+                self.table.insert(QName(scope, child), SymbolType.Unknown, is_const=True)
+            indicator = False
+            if child and type(child) == Operator:
+                child = cast(Operator, child)
+                if child.text == "$":
+                    indicator = True
+
     def handle_arith_expr(self, scope: AbstractScope, expr: TreeNode):
         # TODO handle dummy tokens
+        if not hasattr(expr, 'children'):
+            if type(expr) == Name:
+                leaf = cast(Name, expr)
+                self.table.insert(QName(scope, leaf), SymbolType.Parameter)
+        else:
+            expr = cast(TrunkNode, expr)
+            for leaf in expr.scan_leaves():
+                if type(leaf) == Name:
+                    leaf = cast(Name, leaf)
+                    self.table.insert(QName(scope, leaf), SymbolType.Parameter)
+                    
+    def handle_bool_expr(self, scope: AbstractScope, expr: TreeNode):
         if not hasattr(expr, 'children'):
             if type(expr) == Name:
                 leaf = cast(Name, expr)
@@ -379,6 +417,32 @@ class AntTreeAnalyzer:
         for species in chain(reaction.get_reactants(), reaction.get_products()):
             self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
         self.handle_arith_expr(scope, reaction.get_rate_law())
+        
+    def pre_handle_event(self, scope: AbstractScope, event: Event):
+        self.pending_events.append((scope, event))
+        name = event.get_name()
+        comp = None
+        if event.get_maybein() is not None and event.get_maybein().is_in_comp():
+            comp = event.get_maybein().get_comp().get_name_text()
+            
+        if name is not None:
+            self.table.insert(QName(scope, name), SymbolType.Event, event, comp=comp)
+        else:
+            self.unnamed_events_num += 1
+            event.unnamed_label = self.unnamed_events_num
+        event_delay = event.get_event_delay()
+        if event_delay:
+            expr = event_delay.get_expr()
+            self.handle_bool_expr(scope ,expr)
+        condition = event.get_condition()
+        self.handle_bool_expr(scope, condition)
+
+        for assignment in event.get_assignments():
+            qname = QName(scope, assignment.get_name())
+            self.table.insert_event(qname, event)
+            self.handle_arith_expr(scope, assignment)
+        
+            
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
         comp = None
@@ -723,6 +787,35 @@ class AntTreeAnalyzer:
         var = self.table.get(qname)
         if len(var) == 0:
             self.warning.append(VarNotFound(name.range, name.text))
+        
+        
+    def process_event(self, node, scope):
+        event: Event = node.get_stmt()
+        if event.get_event_delay():
+            self.handle_bool_expr(scope, event.get_event_delay().get_expr())
+        curr_triggers = dict()
+        for trigger in event.get_triggers():
+            if trigger.get_keyword().text in curr_triggers.keys():
+                self.warning.append(ObscuredEventTrigger(curr_triggers.get(trigger.get_keyword().text).range, trigger.range, curr_triggers.get(trigger.get_keyword().text).to_string()))
+            curr_triggers[trigger.get_keyword().text] = trigger
+        for assignment in event.get_assignments():
+            var_name = assignment.get_name()
+            self._check_event_var_name(var_name, scope)
+            if issubclass(type(assignment.get_value()), TrunkNode):
+                for leaf in assignment.get_value().descendants():
+                    if isinstance(leaf, Name):
+                        name = self.table.get(QName(scope, leaf))
+                        if name[0].value_node is None:
+                            self.error.append(RefUndefined(leaf.range, name[0].name))
+            # var = self.table.get(QName(scope, var_name))
+            # if not var[0].type.derives_from(SymbolType.Parameter):
+            #     self.warning.append(UninitVar(var_name.range, var_name.text))
+        self.process_maybein(node, scope)
+        
+    def _check_event_var_name(self, var_name, scope):
+        var = self.table.get(QName(scope, var_name))
+        if not var[0].type.derives_from(SymbolType.Parameter):
+            self.error.append(RefUndefined(var_name.range, var_name.text))
         
 
 # def get_ancestors(node: ASTNode):

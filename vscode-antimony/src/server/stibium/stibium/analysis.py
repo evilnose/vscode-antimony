@@ -192,7 +192,6 @@ class AntTreeAnalyzer:
         self.handle_annotation_list()
         self.get_annotation_descriptions()
         self.handle_is_assignment_list()
-        self.pending_annotations = []
         self.pending_is_assignments = []
         self.check_parse_tree(self.root, BaseScope())
 

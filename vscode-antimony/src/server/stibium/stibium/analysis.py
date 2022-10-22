@@ -211,8 +211,6 @@ class AntTreeAnalyzer:
         self.table.remove(given_qname)
         if isinstance(stmt, UnitDeclaration):
             self.handle_unit_declaration(BaseScope(), stmt, False)
-        if isinstance(stmt, Declaration):
-            self.handle_declaration(BaseScope(), stmt, False)
         if isinstance(stmt, Reaction):
             self.handle_reaction(BaseScope(), stmt, False)
         if isinstance(stmt, FunctionCall):
@@ -471,23 +469,6 @@ class AntTreeAnalyzer:
             # argument "valud_node" since they are different things
             value_node = item if value else None
             if insert:
-                #vscode_logger.info(declaration.children)
-                #vscode_logger.info(stype)
-                #vscode_logger.info(name)
-                #vscode_logger.info(is_const)
-                if not self.table.get(QName(scope, name)) or self.table.get(QName(scope, name))[0].decl_node is None:
-                    self.table.insert(QName(scope, name), stype, declaration, value_node, 
-                                is_const=is_const, comp=comp, is_sub=is_sub)
-                    vscode_logger.info(self.table.get(QName(scope, name))[0].name)
-                    vscode_logger.info(self.table.get(QName(scope, name))[0].value_node)
-                    vscode_logger.info(self.table.get(QName(scope, name))[0].is_const)
-                    self.inserted_decl[self.table.get(QName(scope, name))[0].name] = True
-                elif self.table.get(QName(scope, name))[0].decl_node is not None and self.inserted_decl[self.table.get(QName(scope, name))[0].name]:
-                    annot = self.table.get(QName(scope, name))[0].annotations
-                    self.table.remove(QName(scope, name))
-                    self.table.insert(QName(scope, name), stype, declaration, value_node, 
-                                is_const=is_const, comp=comp, is_sub=is_sub)
-                    self.table.get(QName(scope, name))[0].annotations = annot
                 self.import_table.insert(QName(scope, name), stype, declaration, value_node,
                                 is_const=is_const, comp=comp, is_sub=is_sub)
             else:
@@ -557,41 +538,22 @@ class AntTreeAnalyzer:
                     stmt = node.get_stmt()
                     if stmt is not None:
                         self.handle_child_incomp(scope, stmt, True)
-                    if isinstance(stmt, Assignment):
-                        self.handle_assignment_overwrite(scope, stmt)
-                        continue
-                    if isinstance(stmt, IsAssignment):
-                        self.handle_is_assignment_overwrite(scope, stmt)
-                        continue
-                    if isinstance(stmt, UnitDeclaration):
-                        self.handle_unit_decl_overwrite(scope, stmt)
-                        continue
                     if isinstance(stmt, ModularModelCall):
                         self.handle_mmodel_call_overwrite(stmt, name)
-                        continue
-                    #if isinstance(stmt, Declaration):
-                    #    self.handle_decl_overwrite(scope, stmt)
-                    #    continue
-                    if isinstance(stmt, Reaction):
-                        self.handle_reaction_overwrite(scope, stmt)
-                        continue
-                    if isinstance(stmt, UnitAssignment):
-                        self.handle_unit_assign_overwrite(scope, stmt)
-                        continue
-                    if isinstance(stmt, Annotation):
-                        self.handle_annot_add(scope, stmt)
-                        continue
-                    if isinstance(stmt, VariableIn):
-                        self.handle_var_in_overwrite(scope, stmt)
-                        continue
-                    if isinstance(stmt, FunctionCall):
-                        self.handle_func_call_overwrite(scope, stmt)
                         continue
                     if stmt is None:
                         continue
                     {
-                        'Declaration': self.handle_declaration,
-                    }[stmt.__class__.__name__](scope, stmt, True)
+                        'Reaction': self.handle_reaction_overwrite,
+                        'Assignment': self.handle_assignment_overwrite,
+                        'Declaration': self.handle_decl_overwrite,
+                        'Annotation': self.handle_annot_add,
+                        'UnitDeclaration': self.handle_unit_decl_overwrite,
+                        'UnitAssignment' : self.handle_unit_assign_overwrite,
+                        'FunctionCall' : self.handle_func_call_overwrite,
+                        'VariableIn' : self.handle_var_in_overwrite,
+                        'IsAssignment' : self.handle_is_assign_overwrite,
+                    }[stmt.__class__.__name__](scope, stmt)
                 if isinstance(node, Model):
                     scope = ModelScope(str(node.get_name()))
                     for child in node.children:
@@ -679,13 +641,13 @@ class AntTreeAnalyzer:
         in_table = self.table.get(cur_qname)
         if not in_table or in_table[0].value_node is None:
             self.handle_assignment(scope, stmt, False)
-            self.inserted[in_table[0].name] = True
+            self.inserted[self.table.get(cur_qname)[0].name] = True
         elif in_table[0].value_node is not None and self.inserted[in_table[0].name]:
             in_table[0].value_node = stmt
             self.handle_arith_expr(scope, stmt.get_value(), False)
         self.handle_assignment(scope, stmt, True)
     
-    def handle_is_assignment_overwrite(self, scope, stmt):
+    def handle_is_assign_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_var_name())
         in_table = self.table.get(cur_qname)
         is_assign_ind = in_table[0].name + " is_assign"
@@ -719,22 +681,47 @@ class AntTreeAnalyzer:
             self.handle_mmodel_call(BaseScope(), stmt, False)
         self.handle_mmodel_call(BaseScope(), stmt, True)
     
-    #def handle_decl_overwrite(self, scope, stmt):
-    #    for name in stmt.get_items():
-    #        cur_qname = QName(scope, name.get_maybein().get_var_name().get_name())
-    #        if not self.table.get(cur_qname) or self.table.get(cur_qname)[0].decl_node is None:
-    #            self.handle_declaration(scope, stmt, False)
-    #            self.inserted_decl[self.table.get(cur_qname)[0].name] = True
-    #        elif self.table.get(cur_qname)[0].decl_node is not None and self.inserted_decl[self.table.get(cur_qname)[0].name]:
-    #            self.replace_assign(cur_qname, stmt)
-    #    self.handle_declaration(scope, stmt, True)
+    def handle_decl_overwrite(self, scope, stmt):
+        modifiers = stmt.get_modifiers()
+        variab = modifiers.get_variab()
+        sub = modifiers.get_sub_modifier()
+
+        stype = modifiers.get_type()
+        is_const = (variab == Variability.CONSTANT)
+        is_sub = (sub is not None)
+        for decl in stmt.get_items():
+            name = decl.get_maybein().get_var_name().get_name()
+            value = decl.get_value()
+
+            comp = None
+            if decl.get_maybein() != None and decl.get_maybein().is_in_comp():
+                comp = decl.get_maybein().get_comp().get_name_text()
+                
+            value_node = decl if value else None
+            cur_qname = QName(scope, decl.get_maybein().get_var_name().get_name())
+            in_table = self.table.get(cur_qname)
+
+            if not in_table or in_table[0].decl_node is None:
+                self.table.insert(QName(scope, name), stype, stmt, value_node,
+                                is_const=is_const, comp=comp, is_sub=is_sub)
+                self.inserted_decl[self.table.get(cur_qname)[0].name] = True
+            elif in_table[0].decl_node is not None and self.inserted_decl[in_table[0].name]:
+                in_table[0].comp = comp
+                if not stype == SymbolType.Unknown:
+                    in_table[0].type = stype
+                if value_node is not None:
+                    in_table[0].value_node = value_node
+                in_table[0].decl_node = stmt
+                in_table[0].is_const = is_const
+                in_table[0].is_sub = is_sub
+        self.handle_declaration(scope, stmt, True)
     
     def handle_reaction_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_name())
         in_table = self.table.get(cur_qname)
         if not in_table or in_table[0].decl_node is None:
             self.handle_reaction(scope, stmt, False)
-            self.inserted[in_table[0].name] = True
+            self.inserted[self.table.get(cur_qname)[0].name] = True
         elif in_table[0].decl_node is not None and self.inserted[in_table[0].name]:
             self.replace_assign(cur_qname, stmt)
         self.handle_reaction(scope, stmt, True)
@@ -777,7 +764,7 @@ class AntTreeAnalyzer:
         in_table = self.table.get(cur_qname)
         if not in_table or in_table[0].value_node is None:
             self.handle_function_call(scope, stmt, False)
-            self.inserted[in_table[0].name] = True
+            self.inserted[self.table.get(cur_qname)[0].name] = True
         elif in_table[0].value_node is not None and self.inserted[in_table[0].name]:
             self.replace_assign(cur_qname, stmt)
         self.handle_function_call(scope, stmt, True)

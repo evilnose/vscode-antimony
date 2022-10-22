@@ -1,0 +1,9 @@
+compartment decl
+decl = 3
+k = 1
+A1 = 2
+A2 = 4
+
+const decl
+const species A1 in decl, A2 in decl
+T1: A1 -> A2; k

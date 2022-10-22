@@ -6,7 +6,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 sys.path.append(ROOT)
 
 from stibium.ant_types import Import, Name
-from stibium.types import SrcPosition, SrcRange
+from stibium.types import SrcPosition, SrcRange, SymbolType
 from stibium.symbols import BaseScope, QName
 from stibium.api import AntFile
 from stibium.parse import AntimonyParser
@@ -275,7 +275,6 @@ def test_imp_hierarchy():
     stmt = ant_file.tree.children[0].get_stmt()
     assert isinstance(stmt, Import)
     stmt = ant_file.tree.children[1].get_stmt()
-    print(ant_file.analyzer.table.get_all_qnames())
     assert isinstance(stmt, Import)
 
     # Testing import hierarchy by checking for values of variables from either the base file or the latest import that has the variable
@@ -301,3 +300,52 @@ def test_imp_hierarchy():
     var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(22, 1), SrcPosition(22, 3)), text='T3')))[0]
     mmodel = var.value_node.get_mmodel_name_str()
     assert mmodel == "test3", "Incorrect mmodel call"
+
+
+def test_decl():
+    file = os.path.join(directory, "decl.ant")
+    doc = Document(os.path.abspath(file))
+    ant_file = AntFile(doc.path, doc.source)
+    issues = ant_file.get_issues()
+    error_count = 0
+    for issue in issues:
+        if str(issue.severity.__str__()) == "IssueSeverity.Error":
+            print(issue.message)
+            error_count += 1
+    assert error_count == 0, "Import unsuccessful"
+    stmt = ant_file.tree.children[0].get_stmt()
+    print(ant_file.analyzer.table.get_all_qnames())
+    assert isinstance(stmt, Import)
+
+    # Testing different components of declarations from imported file
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(14, 1), SrcPosition(14, 5)), text='decl')))[0]
+    assert var.value_node.get_value().text == "3"
+    assert var.type == SymbolType.Compartment
+    assert var.is_const
+    assert not var.is_sub
+    assert var.display_name is None
+
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(10, 1), SrcPosition(10, 3)), text='A1')))[0]
+    assert var.value_node.get_value().text == "2"
+    assert var.type == SymbolType.Species
+    assert var.comp == "decl"
+    assert var.is_const
+    assert not var.is_sub
+    assert var.display_name is None
+
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(11, 1), SrcPosition(11, 3)), text='A2')))[0]
+    assert var.value_node.get_value().text == "4"
+    assert var.type == SymbolType.Species
+    assert var.comp == "decl"
+    assert var.is_const
+    assert not var.is_sub
+    assert var.display_name is None
+
+    # Testing different components of declarations from base file
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(3, 9), SrcPosition(3, 11)), text='A3')))[0]
+    assert var.value_node.get_value().text == "6"
+    assert var.type == SymbolType.Species
+    assert var.comp == "decl"
+    assert not var.is_const
+    assert not var.is_sub
+    assert var.display_name is None

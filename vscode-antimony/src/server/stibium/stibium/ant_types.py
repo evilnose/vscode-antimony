@@ -125,15 +125,6 @@ class ArithmeticExpr(TreeNode):
     '''Base class for arithmetic expressions.'''
     pass
 
-class BooleanExpr(TreeNode):
-    '''Base class for boolean expressions.'''
-    pass
-
-@dataclass
-class Expressions(TrunkNode):
-    '''Base class for equalities and inequalities.'''
-    pass
-
 @dataclass
 class Sum(ArithmeticExpr, TrunkNode):
     '''Arithmetic expression with an addition/subtraction root operator.'''
@@ -146,6 +137,15 @@ class Sum(ArithmeticExpr, TrunkNode):
                 if isinstance(node, LeafNode):
                     ret += node.text
         return ret
+    
+@dataclass
+class Expressions(Sum, TrunkNode):
+    '''Base class for equalities and inequalities.'''
+    pass
+
+class BooleanExpr(Expressions, TreeNode):
+    '''Base class for boolean expressions.'''
+    pass
 
 
 @dataclass

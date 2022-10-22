@@ -71,8 +71,7 @@ SUB_MODIFIER: /\b(substanceOnly)\b/
 TYPE_MODIFIER: /\b(species|compartment|formula)\b/
 
 ?bool_exp : expressions
-    | expressions LOGICAL expressions
-    | "(" expressions LOGICAL expressions ")"
+    | expressions (LOGICAL expressions)*
 
 ?expressions : sum
     | sum (COMPARE sum)*
@@ -96,7 +95,7 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
     | "+" atom
     | "(" sum ")"
     | func_call 
-    | "(" expressions ")"
+    | "(" bool_exp ")"
 
 func_call : var_name "(" [parameters] ")"
 

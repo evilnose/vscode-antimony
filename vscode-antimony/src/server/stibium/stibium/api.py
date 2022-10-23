@@ -12,7 +12,6 @@ from stibium.symbols import QName, BaseScope
 from stibium.tree_builder import Species, transform_tree
 from stibium.types import Issue, SrcLocation, SrcPosition
 from stibium.utils import to_uri
-vscode_logger = logging.getLogger("vscode-antimony logger")
 
 class AntCompletionKind(Enum):
     TEXT = auto()
@@ -196,7 +195,6 @@ class AntFile:
 
     def get_annotations(self, qname: QName):
         # TODO HACK this isn't very elegant -- no encapsulation
-        vscode_logger.info("we're concatenating annotations")
         cur_annot = self.analyzer.table.get(qname)[0].annotations
         import_annot = self.analyzer.import_table.get(qname)[0].annotations
         return cur_annot + import_annot

@@ -12,7 +12,6 @@ from lark.lexer import Token
 import pathlib
 import antimony
 
-vscode_logger = logging.getLogger("vscode-antimony logger")
 def get_abs_path(filename: str):
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), filename)
 

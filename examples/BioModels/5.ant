@@ -1,28 +1,4 @@
 // Created by libAntimony v2.8.0
-import "test2.ant"
-kfc = 1
-kfctotal = 423
-kfc5 = 1234
-kfc5 is "the last"
-J4: S1 -> S2; kfc*S1
-S1 = 2
-S2 = 4
-S10 = 2
-kfctotal is "original"
-unit count = mole
-unit vol = litre
-kfctotal has vol
-MC: test()
-compartment tester
-const tester
-tester = 1
-const species S1 in tester, S2 in tester
-substanceOnly species S10
-
-function quadratic(x, a, b, c)
-  a*x^2 + b*x + c
-end
-
 model *BIOMD0000000005()
 
   // Compartments and Species:
@@ -91,4 +67,3 @@ model *BIOMD0000000005()
   Reaction8 is "cdc2 kinase triggered degration of cyclin";
   Reaction9 is "activation of cdc2 kinase";
 end
-S1 identity "http://identifiers.org/chebi/CHEBI:763"

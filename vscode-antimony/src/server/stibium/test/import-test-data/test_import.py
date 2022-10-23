@@ -354,3 +354,24 @@ def test_decl():
     assert not var.is_const
     assert not var.is_sub
     assert var.display_name is None
+
+
+def test_var_in():
+    file = os.path.join(directory, "var_in.ant")
+    doc = Document(os.path.abspath(file))
+    ant_file = AntFile(doc.path, doc.source)
+    issues = ant_file.get_issues()
+    error_count = 0
+    for issue in issues:
+        if str(issue.severity.__str__()) == "IssueSeverity.Error":
+            error_count += 1
+    assert error_count == 0, "Import unsuccessful"
+    stmt = ant_file.tree.children[0].get_stmt()
+    assert isinstance(stmt, Import)
+
+    # Testing variable in compartments from imported and base files
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(34, 1), SrcPosition(34, 2)), text='f')))[0]
+    assert var.comp == "test"
+
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(3, 1), SrcPosition(3, 2)), text='g')))[0]
+    assert var.comp == "test"

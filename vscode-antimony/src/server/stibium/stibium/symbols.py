@@ -12,7 +12,6 @@ from typing import DefaultDict, Dict, List, Optional, Set, Tuple, Union
 from lark.lexer import Token
 
 from lark.tree import Tree
-vscode_logger = logging.getLogger("vscode-antimony logger")
 
 
 '''Classes that represent scopes. TODO rename all these to Scope, b/c Scope is not the same thing as scope'''

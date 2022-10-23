@@ -13,4 +13,5 @@
         "./src/server/stibium",
         "./pythonFiles/lib/python"
     ]
+    "terminal.integrated.inheritEnv": true
 }

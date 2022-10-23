@@ -6,7 +6,8 @@ import {
 	LanguageClientOptions,
 	ServerOptions,
 } from 'vscode-languageclient/node';
-import { multiStepInput } from './annotationInput';
+import { annotationMultiStepInput } from './annotationInput';
+import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
 
@@ -93,6 +94,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.createAnnotationDialog',
 			(...args: any[]) => createAnnotationDialog(context, args)));
+
+	// insert rate law
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.insertRateLawDialog',
+			(...args: any[]) => insertRateLawDialog(context, args)));
 
 	// switch visual annotations on
 	context.subscriptions.push(
@@ -195,9 +201,9 @@ async function startAntimonyWebview(context: vscode.ExtensionContext, args: any[
 		vscode.window.activeTextEditor.document.uri, "antimony.antimonyEditor", 2);
 }
 
-async function saveSBMLWebview(context: vscode.ExtensionContext, args: any[]) {
+// async function saveSBMLWebview(context: vscode.ExtensionContext, args: any[]) {
 
-}
+// }
 
 async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any[]) {
 	if (!client) {
@@ -276,14 +282,18 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 	}
 	await client.onReady();
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+  
 	// dialog for annotation
 	const selection = vscode.window.activeTextEditor.selection;
+  
 	// get the selected text
 	const doc = vscode.window.activeTextEditor.document;
 	const uri = doc.uri.toString();
 	const selectedText = doc.getText(selection);
+  
 	// get the position for insert
 	let line = selection.start.line;
+  
 	while (line <= doc.lineCount - 1) {
 		const text = doc.lineAt(line).text;
 		if (text.localeCompare("end", undefined, { sensitivity: 'accent' }) === 0) {
@@ -292,6 +302,7 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 		}
 		line += 1;
 	}
+  
 	const positionAt = selection.anchor;
 	const lineStr = positionAt.line.toString();
 	const charStr = positionAt.character.toString();
@@ -305,7 +316,7 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 	}
 	vscode.commands.executeCommand('antimony.sendType', lineStr, charStr, uri).then(async (result) => {
 		const selectedType = await getResult(result);
-		const selectedItem = await multiStepInput(context, initialQuery, selectedType);
+		const selectedItem = await annotationMultiStepInput(context, initialQuery, selectedType);
 		await insertAnnotation(selectedItem, initialEntity, line);
 	});
 }
@@ -321,7 +332,6 @@ export function deactivate(): Thenable<void> | undefined {
 	// shut down the language client
 	return client.stop();
 }
-
 /** Prompts user to reload editor window in order for configuration change to take effect. */
 function promptToReloadWindow() {
 	const action = 'Reload';
@@ -332,11 +342,11 @@ function promptToReloadWindow() {
 		action
 	  )
 	  .then(selectedAction => {
-		if (selectedAction === action) {
-		  vscode.commands.executeCommand('workbench.action.reloadWindow');
-		}
+		  if (selectedAction === action) {
+		    vscode.commands.executeCommand('workbench.action.reloadWindow');
+		  }
 	  });
-  }
+}
 
 async function switchIndicationOff(context: vscode.ExtensionContext, args: any[]) {
 	// wait till client is ready, or the Python server might not have started yet.
@@ -378,6 +388,34 @@ vscode.workspace.onDidChangeConfiguration(async (e) => {
 	}
 	promptToReloadWindow();
 });
+
+// insert rate law
+async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]) {
+	// wait till client is ready, or the Python server might not have started yet.
+	// note: this is necessary for any command that might use the Python language server.
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	
+	// Get the current focused document
+	const doc = vscode.window.activeTextEditor.document
+
+	// Obtain line number position of cursor right click
+	const selectionCol = vscode.window.activeTextEditor.selection.active
+	const lineNum = doc.lineAt(selectionCol).lineNumber;
+
+	// Obtain text of the line number position
+	const selectedLine = doc.lineAt(selectionCol);
+	const selectedText = selectedLine.text;
+
+	await new Promise<void>((resolve, reject) => {
+		rateLawSingleStepInput(context, lineNum, selectedText); 
+		resolve()
+    });
+}
 
 // ****** helper functions ******
 
@@ -469,7 +507,6 @@ class AntCodeLensProvider implements vscode.CodeLensProvider {
 			let codeLens = new vscode.CodeLens(topOfDocument, c);
 			return [codeLens];
 		}
-
 		return [];
 	}
 }
@@ -491,4 +528,3 @@ async function insertAnnotation(selectedItem, entityName, line) {
 	const pos = doc.lineAt(line).range.end;
 	vscode.window.activeTextEditor.insertSnippet(snippetStr, pos);
 }
-

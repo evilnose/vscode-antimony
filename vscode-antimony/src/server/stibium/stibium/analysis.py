@@ -1,5 +1,7 @@
 
 import logging
+from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
+from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UninitRateLaw, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 import requests
 from bioservices import ChEBI, UniProt, Rhea
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode
@@ -235,7 +237,8 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == Reaction:
                     reaction = node.get_stmt()
                     rate_law = reaction.get_rate_law()
-                    self.check_rate_law(rate_law, scope)
+                    if rate_law is not None:
+                        self.check_rate_law(rate_law, scope)
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
                     self.process_mmodel_call(node, scope)
@@ -305,7 +308,8 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == Reaction:
                     reaction = node.get_stmt()
                     rate_law = reaction.get_rate_law()
-                    used = set.union(used, self.check_rate_law(rate_law, scope, params))
+                    if rate_law is not None:
+                        used = set.union(used, self.check_rate_law(rate_law, scope, params))
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
                     self.process_mmodel_call(node, scope)
@@ -414,6 +418,9 @@ class AntTreeAnalyzer:
 
         for species in chain(reaction.get_reactants(), reaction.get_products()):
             self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
+        rate_law = reaction.get_rate_law()
+        if rate_law is not None:
+            self.handle_arith_expr(scope, rate_law)
         self.handle_arith_expr(scope, reaction.get_rate_law())
         
     def pre_handle_event(self, scope: AbstractScope, event: Event):
@@ -439,8 +446,6 @@ class AntTreeAnalyzer:
             qname = QName(scope, assignment.get_name())
             self.table.insert_event(qname, event)
             self.handle_arith_expr(scope, assignment)
-        
-            
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
         comp = None
@@ -715,6 +720,8 @@ class AntTreeAnalyzer:
     def process_reaction(self, node, scope):
         reaction = node.get_stmt()
         rate_law = reaction.get_rate_law()
+        if rate_law is None:
+            self.warning.append(UninitRateLaw(reaction.range, reaction.get_name_text()))
         # check if all species have been initialized
         species_list = []
         for species in reaction.get_reactants():

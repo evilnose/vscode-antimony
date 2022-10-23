@@ -12,11 +12,34 @@ species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
+event : [reaction_name] "at" [event_delay] bool_exp [event_trigger_list] ":" event_assignment_list
+
+event_delay : bool_exp "after"
+
+
+event_trigger_list : ("," event_trigger)*
+
+// atom has to be changed to (NUMBER | var_name)
+event_trigger : "t0" "=" BOOLEAN
+    | "priority" "=" sum
+    | "fromTrigger" "=" BOOLEAN
+    | "persistent" "=" BOOLEAN
+
+event_assignment_list : event_assignment ("," event_assignment)*
+event_assignment : var_name "=" sum
+
+BOOLEAN : "true" | "false"
+
+COMPARE : ">=" | "<=" | ">" | "<" | "=="
+
+
+LOGICAL : "&&" | "||"
+
 sboterm: var_name ".sboTerm" "=" SBOTERM
 SBOTERM: NUMBER
     | "SBO:" NUMBER
 
-assignment : namemaybein ("=" | AEQ) sum
+assignment : namemaybein ("=" | AEQ) sum 
 
 AEQ : ":="
 
@@ -76,6 +99,12 @@ VAR_MODIFIER: /\b(var|const)\b/
 SUB_MODIFIER: /\b(substanceOnly)\b/
 TYPE_MODIFIER: /\b(species|compartment|formula)\b/
 
+?bool_exp : expressions
+    | expressions (LOGICAL expressions)*
+
+?expressions : sum
+    | sum (COMPARE sum)*
+
 ?sum : product
     | sum "+" product
     | sum "-" product
@@ -95,6 +124,7 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
     | "+" atom
     | "(" sum ")"
     | func_call 
+    | "(" bool_exp ")"
 
 func_call : var_name "(" [parameters] ")"
 
@@ -113,6 +143,7 @@ func_call : var_name "(" [parameters] ")"
     | variable_in
     | is_assignment
     | sboterm
+    | event
 
 simple_stmt_list : simple_stmt+
 

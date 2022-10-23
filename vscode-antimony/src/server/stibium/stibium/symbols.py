@@ -1,8 +1,8 @@
 '''Classes for working with and storing symbols.
 '''
 import requests
+import logging
 from bioservices import ChEBI, UniProt, Rhea
-from bioservices_server.webservices import NetworkError
 from stibium.ant_types import Annotation, Name, TreeNode
 from .types import Issue, ObscuredValueCompartment, RedefinedFunction, OverrodeValue, ObscuredDeclaration, ObscuredValue, SrcRange, SymbolType, IncompatibleType
 from .ant_types import LeafNode, VarName, Declaration, VariableIn, Function, DeclItem, Assignment, ModularModel, Number, ModularModelCall, Event
@@ -266,21 +266,18 @@ class Symbol:
                 else:
                     ontology_name = uri_split[-1].split('_')[0].lower()
                     iri = uri_split[-1]
-                    try:
-                        response = requests.get('http://www.ebi.ac.uk/ols/api/ontologies/' + ontology_name + '/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F' + iri).json()
-                        if ontology_name == 'pr' or ontology_name == 'ma' or ontology_name == 'obi' or ontology_name == 'fma':
-                            definition = response['description']
-                        else:
-                            response_annot = response['annotation']
-                            definition = response_annot['definition']
-                        name = response['label']
-                        queried =  '\n{}\n'.format(name)
-                        if definition:
-                            queried += '\n{}\n'.format(definition[0])
-                        ret += queried
-                        self.queried_annotations[uri] = queried
-                    except NetworkError:
-                        continue
+                    response = requests.get('http://www.ebi.ac.uk/ols/api/ontologies/' + ontology_name + '/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F' + iri).json()
+                    if ontology_name == 'pr' or ontology_name == 'ma' or ontology_name == 'obi' or ontology_name == 'fma':
+                        definition = response['description']
+                    else:
+                        response_annot = response['annotation']
+                        definition = response_annot['definition']
+                    name = response['label']
+                    queried =  '\n{}\n'.format(name)
+                    if definition:
+                        queried += '\n{}\n'.format(definition[0])
+                    ret += queried
+                    self.queried_annotations[uri] = queried
                 
                 
 

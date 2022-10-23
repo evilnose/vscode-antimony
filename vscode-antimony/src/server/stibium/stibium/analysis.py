@@ -2,7 +2,6 @@
 import logging
 import requests
 from bioservices import ChEBI, UniProt, Rhea
-from bioservices_server.webservices import NetworkError
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode
 from .types import ObscuredEventTrigger, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
@@ -547,20 +546,18 @@ class AntTreeAnalyzer:
                 ontology_info_split = ontology_info.split('_')
                 ontology_name = ontology_info_split[0].lower()
                 iri = uri_split[-1]
-                try:
-                    response = requests.get(ONTOLOGIES_URL + ontology_name + ONTOLOGIES_URL_SECOND_PART + iri).json()
-                    if ontology_name == 'pr' or ontology_name == 'ma' or ontology_name == 'obi' or ontology_name == 'fma':
-                        definition = response['description']
-                    else:
-                        response_annot = response['annotation']
-                        definition = response_annot['definition']
-                    name = response['label']
-                    queried =  '\n{}\n'.format(name)
-                    if definition:
-                        queried += '\n{}\n'.format(definition[0])
-                    symbol[0].queried_annotations[uri] = queried
-                except NetworkError:
-                    return
+                
+                response = requests.get(ONTOLOGIES_URL + ontology_name + ONTOLOGIES_URL_SECOND_PART + iri).json()
+                if ontology_name == 'pr' or ontology_name == 'ma' or ontology_name == 'obi' or ontology_name == 'fma':
+                    definition = response['description']
+                else:
+                    response_annot = response['annotation']
+                    definition = response_annot['definition']
+                name = response['label']
+                queried =  '\n{}\n'.format(name)
+                if definition:
+                    queried += '\n{}\n'.format(definition[0])
+                symbol[0].queried_annotations[uri] = queried
     
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment):
         self.pending_is_assignments.append((scope, is_assignment))

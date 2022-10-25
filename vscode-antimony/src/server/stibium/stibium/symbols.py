@@ -122,6 +122,9 @@ class Symbol:
     comp: str
     is_const: bool
     is_sub: bool
+    rate_rule: str
+    in_reaction: bool
+    interaction: str
     events: List[Event]
 
     def __init__(self, name: str, typ: SymbolType, type_name: Name,
@@ -132,6 +135,8 @@ class Symbol:
             comp: str = None,
             is_const: bool = False,
             is_sub: bool = False,
+            rate_rule: str = None,
+            interaction = None
             ):
         self.name = name
         self.type = typ
@@ -145,6 +150,9 @@ class Symbol:
         self.comp = comp
         self.is_const = is_const
         self.is_sub = is_sub
+        self.rate_rule = rate_rule
+        self.in_reaction = False
+        self.interaction = interaction
         self.queried_annotations = dict()
         self.events = list()
 
@@ -166,6 +174,11 @@ class Symbol:
 
         if self.display_name != None:
             ret += '\n{}'.format(self.display_name)
+        if self.rate_rule is not None:
+            ret += '\n{}'.format("Rate Rule: " + self.rate_rule)
+        
+        if self.interaction != None:
+            ret += '\n{}'.format(self.interaction)
         
         if self.is_sub:
             ret += '\n{}'.format("Substance-only species")

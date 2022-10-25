@@ -18,3 +18,4 @@ antimony
 bioservices==1.8.3
 # ols_client==0.0.9
 AMAS-sb==0.0.1
+orjson==3.8.0

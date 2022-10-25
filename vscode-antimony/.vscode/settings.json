@@ -13,5 +13,8 @@
         "./pythonFiles/lib/python/antimony",
         "./src/server/stibium",
         "./pythonFiles/lib/python"
+        "./src/server/stibium",
+        "./pythonFiles/lib/python"
     ]
+    "terminal.integrated.inheritEnv": true
 }

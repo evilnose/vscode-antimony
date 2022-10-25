@@ -208,12 +208,6 @@ class UninitCompt(Issue):
         super().__init__(range, IssueSeverity.Warning)
         self.val = val
         self.message = ("Compartment '{}' has not been initialized, using default value").format(val)
-        
-class RateRuleNotInReaction(Issue):
-     def __init__(self, range, val):
-        super().__init__(range, IssueSeverity.Warning)
-        self.val = val
-        self.message = f"Variable {val} is also a non-fixed species defined in a reaction"
 
 
 class ObscuredEventTrigger(Issue):
@@ -234,12 +228,6 @@ class VarNotFound(Issue):
         super().__init__(range, IssueSeverity.Warning)
         self.val = val
         self.message = ("Variable '{}' not found").format(val)
-
-class RateRuleOverRidden(Issue):
-    def __init__(self, range, val, symbol): 
-        super().__init__(range, IssueSeverity.Warning)
-        self.val = val
-        self.message = f"Previous Rate Rule {symbol.rate_rule} of {val} is overridden"
 
 
 class ObscuredDeclaration(Issue):

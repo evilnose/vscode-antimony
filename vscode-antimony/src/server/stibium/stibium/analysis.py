@@ -3,8 +3,8 @@ from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, F
 from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UninitRateLaw, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 import requests
 from bioservices import ChEBI, UniProt, Rhea
-from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode
-from .types import ObscuredEventTrigger, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode, RateRules
+from .types import ObscuredEventTrigger, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition, RateRuleOverRidden, RateRuleNotInReaction
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -76,10 +76,13 @@ class AntTreeAnalyzer:
         self.root = root
         self.pending_is_assignments = []
         self.pending_annotations = []
+        # for dealing with rate rules not yet declared
+        self.pending_rate_rules = []
         self.pending_interactions = []
         self.pending_events = []
         self.unnamed_events_num = 0
         base_scope = BaseScope()
+        self.reaction_item = set()
         for child in root.children:
             if isinstance(child, ErrorToken):
                 continue
@@ -113,6 +116,7 @@ class AntTreeAnalyzer:
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
+                                'RateRules' : self.pre_handle_rate_rule,
                                 'Interaction' : self.pre_handle_interaction,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
@@ -145,6 +149,7 @@ class AntTreeAnalyzer:
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
+                                'RateRules' : self.pre_handle_rate_rule,
                                 'Interaction' : self.pre_handle_interaction,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
@@ -184,6 +189,7 @@ class AntTreeAnalyzer:
                     'FunctionCall' : self.handle_function_call,
                     'VariableIn' : self.handle_variable_in,
                     'IsAssignment' : self.pre_handle_is_assignment,
+                    'RateRules' : self.pre_handle_rate_rule,
                     'Interaction' : self.pre_handle_interaction,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
@@ -196,6 +202,8 @@ class AntTreeAnalyzer:
         self.handle_annotation_list()
         self.get_annotation_descriptions()
         self.handle_is_assignment_list()
+        # handle all rate rules after appended to list and finished parsing
+        self.handle_rate_rules()
         self.handle_interactions()
         self.pending_annotations = []
         self.pending_is_assignments = []
@@ -423,7 +431,8 @@ class AntTreeAnalyzer:
             self.table.insert(QName(scope, name), SymbolType.Reaction, reaction, comp=comp)
 
         for species in chain(reaction.get_reactants(), reaction.get_products()):
-            self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
+            self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp, is_const=species.is_const)
+            self.table.get(QName(scope, species.get_name()))[0].in_reaction = True
         rate_law = reaction.get_rate_law()
         if rate_law is not None:
             self.handle_arith_expr(scope, rate_law)
@@ -516,6 +525,38 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
+
+    def pre_handle_rate_rule(self, scope, rate_rule):
+        self.pending_rate_rules.append((scope, rate_rule))
+
+    def handle_rate_rules(self):
+        for scope, rate_rule in self.pending_rate_rules:
+            self.handle_rate_rule(scope, rate_rule)
+
+    def handle_rate_rule(self, scope, rate_rule : RateRules):
+        name = rate_rule.get_name()
+        qname = QName(scope, name)
+        expression = rate_rule.get_value()
+        all_names = self.table.get_all_names()
+        if len(self.table.get(qname)) != 0:
+            var = self.table.get(qname)[0]
+            if var.type == SymbolType.Species and var.in_reaction and not var.is_const:
+                self.error.append(RateRuleNotInReaction(rate_rule.range, name.text))
+            rate_rule_string = ""
+            for leaf in expression.scan_leaves():
+                if isinstance(leaf, Name) and leaf.text not in all_names:
+                    self.warning.append(VarNotFound(leaf.range, leaf.text))
+                if leaf.text == "+" or leaf.text == "-" or leaf.text == "*" or leaf.text == "/":
+                    rate_rule_string += " " + (leaf.text) + " "
+                else:
+                    rate_rule_string += (leaf.text)
+            if var.rate_rule != None:
+                self.warning.append(RateRuleOverRidden(rate_rule.get_name().range, rate_rule.get_name().text, var))
+            var.rate_rule = rate_rule_string
+        else:
+            self.warning.append(VarNotFound(rate_rule.get_name().range, rate_rule.get_name().text))
+            
+            
     
     def get_annotation_descriptions(self):
         for scope, annotation in self.pending_annotations:

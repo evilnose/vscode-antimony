@@ -414,34 +414,6 @@ class Reaction(TrunkNode):
             return self.children[6]
         return None
     
-@dataclass
-class InteractionName(TrunkNode):
-    children: Tuple[NameMaybeIn, Operator] = field(repr=False)
-    
-    def get_maybein(self):
-        return self.children[0]
-
-    def get_name(self):
-        return self.get_maybein().get_var_name().get_name()
-
-    def get_name_text(self):
-        return self.get_maybein().get_var_name().get_name_text()
-
-@dataclass 
-class Interaction(TrunkNode):
-    children: Tuple[InteractionName, Species, Operator, NameMaybeIn] = field(repr=False)
-    
-    def get_name(self):
-        return self.children[0]
-    
-    def get_opr(self):
-        return self.children[2]
-    
-    def get_species(self):
-        return self.children[1]
-    
-    def get_reaction_namemaybein(self) -> NameMaybeIn:
-        return self.children[3]
 
 @dataclass
 class ParenthesisList(TrunkNode):

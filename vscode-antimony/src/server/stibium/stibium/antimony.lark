@@ -9,6 +9,9 @@ reaction : [reaction_name] species_list ARROW [species_list] ";" [sum] [in_comp]
     | [reaction_name] [species_list] ARROW species_list ";" [sum] [in_comp]
 species_list : species ("+" species)*
 species : [NUMBER] ["$"] NAME
+INTERACTION_SYMBOL : "-o" | "-|" | "-("
+interaction : [reaction_name] species INTERACTION_SYMBOL namemaybein
+
 ARROW : "->"
     | "=>"
 
@@ -113,6 +116,7 @@ func_call : var_name "(" [parameters] ")"
     | function_call
     | variable_in
     | is_assignment
+    | interaction
     | event
 
 simple_stmt_list : simple_stmt+

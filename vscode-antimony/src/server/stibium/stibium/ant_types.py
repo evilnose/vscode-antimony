@@ -358,7 +358,7 @@ class SpeciesList(TrunkNode):
 @dataclass
 class Reaction(TrunkNode):
     children: Tuple[Optional[ReactionName], SpeciesList, Operator, SpeciesList, Operator,
-                    ArithmeticExpr, Optional[InComp]] = field(repr=False)
+                    Optional[ArithmeticExpr], Optional[InComp]] = field(repr=False)
 
     def get_maybein(self):
         if self.children[0] is None:
@@ -380,6 +380,13 @@ class Reaction(TrunkNode):
 
     def get_product_list(self) -> Optional[SpeciesList]:
         return self.children[3]
+    
+    def get_reactant_product_num(self) -> str:
+        '''
+        get the number of reactant and product in a reaction, return in string form:
+        for example, a reaction with one reactant and two products will return '12'
+        '''
+        return '' + str(len(self.get_reactants())) + str(len(self.get_products()))
 
     def get_reactants(self) -> List[Species]:
         slist = self.get_reactant_list()
@@ -394,17 +401,47 @@ class Reaction(TrunkNode):
         return list()
 
     def get_rate_law(self):
-        return self.children[5]
+        if self.children[5] is not None:
+            return self.children[5]
+        return None
 
     def is_reversible(self):
         assert self.children[2].text in ('->', '=>')
-        return self.children[2].text == '=>'
+        return self.children[2].text == '->'
     
     def get_comp(self):
         if self.children[6] is not None:
             return self.children[6]
         return None
     
+@dataclass
+class InteractionName(TrunkNode):
+    children: Tuple[NameMaybeIn, Operator] = field(repr=False)
+    
+    def get_maybein(self):
+        return self.children[0]
+
+    def get_name(self):
+        return self.get_maybein().get_var_name().get_name()
+
+    def get_name_text(self):
+        return self.get_maybein().get_var_name().get_name_text()
+
+@dataclass 
+class Interaction(TrunkNode):
+    children: Tuple[InteractionName, Species, Operator, NameMaybeIn] = field(repr=False)
+    
+    def get_name(self):
+        return self.children[0]
+    
+    def get_opr(self):
+        return self.children[2]
+    
+    def get_species(self):
+        return self.children[1]
+    
+    def get_reaction_namemaybein(self) -> NameMaybeIn:
+        return self.children[3]
 
 @dataclass
 class ParenthesisList(TrunkNode):

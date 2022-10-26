@@ -1,0 +1,18 @@
+model side_reaction(S, k1)
+  J0: S + E -> SE; k1*k2*S*E - k2*ES;
+  ES = 2;
+  SE = E+S;
+  k2 = 0.4;
+end
+
+side_reaction is "Constant flux (irreversible)"
+
+# In this model, 'side_reaction' is imported twice:
+model full_pathway()
+  k4 = 2
+  k5 = 1
+  A: side_reaction(S1, k4)
+  B: side_reaction(S2, k5)
+end
+
+B: side_reaction(S2, k5)

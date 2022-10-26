@@ -1,0 +1,4 @@
+model test
+    compartment C1;
+    C1 = 1.0;
+end

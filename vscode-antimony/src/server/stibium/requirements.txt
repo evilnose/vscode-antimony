@@ -1,0 +1,3 @@
+# TODO change this to the official distribution once a new version of Lark is published
+lark-parser @ git+git://github.com/lark-parser/lark.git@5b8c04ca83b98f8887a5967f8260d44dec2f7422
+dataclasses==0.8; python_version < '3.7'

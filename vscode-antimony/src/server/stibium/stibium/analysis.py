@@ -1,9 +1,10 @@
-
 import logging
-import requests
-from bioservices import ChEBI, UniProt, Rhea
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode
 from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UninitRateLaw, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+import requests
+from bioservices import ChEBI, UniProt, Rhea
+from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode, RateRules
+from .types import ObscuredEventTrigger, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition, RateRuleOverRidden, RateRuleNotInReaction
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -80,6 +81,7 @@ class AntTreeAnalyzer:
         self.pending_events = []
         self.unnamed_events_num = 0
         base_scope = BaseScope()
+        self.reaction_item = set()
         for child in root.children:
             if isinstance(child, ErrorToken):
                 continue
@@ -200,6 +202,7 @@ class AntTreeAnalyzer:
         self.handle_rate_rules()
         self.pending_annotations = []
         self.pending_is_assignments = []
+        
         self.check_parse_tree(self.root, BaseScope())
 
     def resolve_qname(self, qname: QName):
@@ -243,7 +246,8 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == Reaction:
                     reaction = node.get_stmt()
                     rate_law = reaction.get_rate_law()
-                    self.check_rate_law(rate_law, scope)
+                    if rate_law is not None:
+                        self.check_rate_law(rate_law, scope)
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
                     self.process_mmodel_call(node, scope)
@@ -313,7 +317,8 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == Reaction:
                     reaction = node.get_stmt()
                     rate_law = reaction.get_rate_law()
-                    used = set.union(used, self.check_rate_law(rate_law, scope, params))
+                    if rate_law is not None:
+                        used = set.union(used, self.check_rate_law(rate_law, scope, params))
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
                     self.process_mmodel_call(node, scope)
@@ -451,8 +456,6 @@ class AntTreeAnalyzer:
             qname = QName(scope, assignment.get_name())
             self.table.insert_event(qname, event)
             self.handle_arith_expr(scope, assignment)
-        
-            
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
         comp = None
@@ -517,6 +520,38 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
+
+    def pre_handle_rate_rule(self, scope, rate_rule):
+        self.pending_rate_rules.append((scope, rate_rule))
+
+    def handle_rate_rules(self):
+        for scope, rate_rule in self.pending_rate_rules:
+            self.handle_rate_rule(scope, rate_rule)
+
+    def handle_rate_rule(self, scope, rate_rule : RateRules):
+        name = rate_rule.get_name()
+        qname = QName(scope, name)
+        expression = rate_rule.get_value()
+        all_names = self.table.get_all_names()
+        if len(self.table.get(qname)) != 0:
+            var = self.table.get(qname)[0]
+            if var.type == SymbolType.Species and var.in_reaction and not var.is_const:
+                self.error.append(RateRuleNotInReaction(rate_rule.range, name.text))
+            rate_rule_string = ""
+            for leaf in expression.scan_leaves():
+                if isinstance(leaf, Name) and leaf.text not in all_names:
+                    self.warning.append(VarNotFound(leaf.range, leaf.text))
+                if leaf.text == "+" or leaf.text == "-" or leaf.text == "*" or leaf.text == "/":
+                    rate_rule_string += " " + (leaf.text) + " "
+                else:
+                    rate_rule_string += (leaf.text)
+            if var.rate_rule != None:
+                self.warning.append(RateRuleOverRidden(rate_rule.get_name().range, rate_rule.get_name().text, var))
+            var.rate_rule = rate_rule_string
+        else:
+            self.warning.append(VarNotFound(rate_rule.get_name().range, rate_rule.get_name().text))
+            
+            
     
     def get_annotation_descriptions(self):
         for scope, annotation in self.pending_annotations:
@@ -727,6 +762,8 @@ class AntTreeAnalyzer:
     def process_reaction(self, node, scope):
         reaction = node.get_stmt()
         rate_law = reaction.get_rate_law()
+        if rate_law is None:
+            self.warning.append(UninitRateLaw(reaction.range, reaction.get_name_text()))
         # check if all species have been initialized
         species_list = []
         for species in reaction.get_reactants():

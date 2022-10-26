@@ -39,6 +39,9 @@ assignment : namemaybein ("=" | AEQ) sum
 
 AEQ : ":="
 
+apostrophe : "'"
+rate_rule : NAME apostrophe "=" sum
+
 annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
 ANNOT_KEYWORD: "identity" | "hasPart"
 

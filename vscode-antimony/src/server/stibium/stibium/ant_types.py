@@ -358,7 +358,7 @@ class SpeciesList(TrunkNode):
 @dataclass
 class Reaction(TrunkNode):
     children: Tuple[Optional[ReactionName], SpeciesList, Operator, SpeciesList, Operator,
-                    ArithmeticExpr, Optional[InComp]] = field(repr=False)
+                    Optional[ArithmeticExpr], Optional[InComp]] = field(repr=False)
 
     def get_maybein(self):
         if self.children[0] is None:
@@ -380,6 +380,13 @@ class Reaction(TrunkNode):
 
     def get_product_list(self) -> Optional[SpeciesList]:
         return self.children[3]
+    
+    def get_reactant_product_num(self) -> str:
+        '''
+        get the number of reactant and product in a reaction, return in string form:
+        for example, a reaction with one reactant and two products will return '12'
+        '''
+        return '' + str(len(self.get_reactants())) + str(len(self.get_products()))
 
     def get_reactants(self) -> List[Species]:
         slist = self.get_reactant_list()
@@ -394,17 +401,18 @@ class Reaction(TrunkNode):
         return list()
 
     def get_rate_law(self):
-        return self.children[5]
+        if self.children[5] is not None:
+            return self.children[5]
+        return None
 
     def is_reversible(self):
         assert self.children[2].text in ('->', '=>')
-        return self.children[2].text == '=>'
+        return self.children[2].text == '->'
     
     def get_comp(self):
         if self.children[6] is not None:
             return self.children[6]
         return None
-    
 
 @dataclass
 class ParenthesisList(TrunkNode):
@@ -563,6 +571,16 @@ class Assignment(TrunkNode):
     def get_type(self):
         return self.unit
 
+@dataclass
+class RateRules(TrunkNode):
+    children: Tuple[Name, Operator, Operator, ArithmeticExpr] = field(repr=False)
+
+    def get_name(self):
+        return self.children[0]
+    
+    def get_value(self):
+        return self.children[3]
+
 
 @dataclass
 class VarModifier(Keyword):
@@ -671,6 +689,7 @@ class Declaration(TrunkNode):
         assert isinstance(self.children[2], Operator)
 
 
+
 # TODO All below
 @dataclass
 class Annotation(TrunkNode):
@@ -730,7 +749,7 @@ class IsAssignment(TrunkNode):
 
 @dataclass
 class SimpleStmt(TrunkNode):
-    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, UnitDeclaration, UnitAssignment, VariableIn], Union[Operator, Newline]] = field(repr=False)
+    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, UnitDeclaration, UnitAssignment, VariableIn, RateRules], Union[Operator, Newline]] = field(repr=False)
 
     def get_stmt(self):
         return self.children[0]

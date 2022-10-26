@@ -133,7 +133,7 @@ class Symbol:
             comp: str = None,
             is_const: bool = False,
             is_sub: bool = False,
-            rate_rule: str = None
+            rate_rule: str = None,
             ):
         self.name = name
         self.type = typ

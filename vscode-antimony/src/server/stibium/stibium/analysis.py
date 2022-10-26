@@ -1,6 +1,5 @@
+
 import logging
-from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Interaction
-from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UninitRateLaw, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 import requests
 from bioservices import ChEBI, UniProt, Rhea
 from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode, RateRules
@@ -78,7 +77,6 @@ class AntTreeAnalyzer:
         self.pending_annotations = []
         # for dealing with rate rules not yet declared
         self.pending_rate_rules = []
-        self.pending_interactions = []
         self.pending_events = []
         self.unnamed_events_num = 0
         base_scope = BaseScope()
@@ -117,7 +115,6 @@ class AntTreeAnalyzer:
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
                                 'RateRules' : self.pre_handle_rate_rule,
-                                'Interaction' : self.pre_handle_interaction,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
                             self.handle_is_const(scope, stmt)
@@ -150,7 +147,6 @@ class AntTreeAnalyzer:
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
                                 'RateRules' : self.pre_handle_rate_rule,
-                                'Interaction' : self.pre_handle_interaction,
                             }[stmt.__class__.__name__](scope, stmt)
                             self.handle_child_incomp(scope, stmt)
                             self.handle_is_const(scope, stmt)
@@ -190,7 +186,6 @@ class AntTreeAnalyzer:
                     'VariableIn' : self.handle_variable_in,
                     'IsAssignment' : self.pre_handle_is_assignment,
                     'RateRules' : self.pre_handle_rate_rule,
-                    'Interaction' : self.pre_handle_interaction,
                 }[stmt.__class__.__name__](base_scope, stmt)
                 self.handle_child_incomp(base_scope, stmt)
                 self.handle_is_const(base_scope, stmt)
@@ -204,10 +199,8 @@ class AntTreeAnalyzer:
         self.handle_is_assignment_list()
         # handle all rate rules after appended to list and finished parsing
         self.handle_rate_rules()
-        self.handle_interactions()
         self.pending_annotations = []
         self.pending_is_assignments = []
-        
         self.check_parse_tree(self.root, BaseScope())
 
     def resolve_qname(self, qname: QName):
@@ -251,8 +244,7 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == Reaction:
                     reaction = node.get_stmt()
                     rate_law = reaction.get_rate_law()
-                    if rate_law is not None:
-                        self.check_rate_law(rate_law, scope)
+                    self.check_rate_law(rate_law, scope)
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
                     self.process_mmodel_call(node, scope)
@@ -322,8 +314,7 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == Reaction:
                     reaction = node.get_stmt()
                     rate_law = reaction.get_rate_law()
-                    if rate_law is not None:
-                        used = set.union(used, self.check_rate_law(rate_law, scope, params))
+                    used = set.union(used, self.check_rate_law(rate_law, scope, params))
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
                     self.process_mmodel_call(node, scope)
@@ -433,9 +424,6 @@ class AntTreeAnalyzer:
         for species in chain(reaction.get_reactants(), reaction.get_products()):
             self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp, is_const=species.is_const)
             self.table.get(QName(scope, species.get_name()))[0].in_reaction = True
-        rate_law = reaction.get_rate_law()
-        if rate_law is not None:
-            self.handle_arith_expr(scope, rate_law)
         self.handle_arith_expr(scope, reaction.get_rate_law())
         
     def pre_handle_event(self, scope: AbstractScope, event: Event):
@@ -461,6 +449,8 @@ class AntTreeAnalyzer:
             qname = QName(scope, assignment.get_name())
             self.table.insert_event(qname, event)
             self.handle_arith_expr(scope, assignment)
+        
+            
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment):
         comp = None
@@ -645,32 +635,6 @@ class AntTreeAnalyzer:
                 base_var = self.table.get(qname_b)
                 if len(base_var) != 0:
                     base_var[0].display_name = display_name
-                    
-    def pre_handle_interaction(self, scope, Interaction):
-        self.pending_interactions.append((scope, Interaction))
-    
-    def handle_interactions(self):
-        for scope, interaction in self.pending_interactions:
-            self.handle_interaction(scope, interaction)
-    
-    def handle_interaction(self, scope, interaction : Interaction):
-        name = interaction.get_species().get_name()
-        reaction = interaction.get_reaction_namemaybein()
-        self.table.insert(QName(scope, reaction.get_var_name().get_name()), SymbolType.Reaction)
-        opr = interaction.get_opr().text
-        interaction_str = ''
-        if opr == '-o':
-            interaction_str += 'activation'
-        elif opr == '-|':
-            interaction_str += 'inhibition'
-        elif opr == '-(':
-            interaction_str += 'unknown interaction'
-        # interaction_str += ' in reaction: ' + reaction.text
-        self.table.insert(QName(scope, name), SymbolType.Unknown)
-        interaction_name = interaction.get_name()
-        if interaction_name:
-            self.table.insert(QName(scope, interaction_name.get_name()), SymbolType.Interaction)
-            self.table.get(QName(scope, interaction_name.get_name()))[0].interaction = interaction_str
     
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration):
         varname = unitdec.get_var_name().get_name()
@@ -793,8 +757,6 @@ class AntTreeAnalyzer:
     def process_reaction(self, node, scope):
         reaction = node.get_stmt()
         rate_law = reaction.get_rate_law()
-        if rate_law is None:
-            self.warning.append(UninitRateLaw(reaction.range, reaction.get_name_text()))
         # check if all species have been initialized
         species_list = []
         for species in reaction.get_reactants():

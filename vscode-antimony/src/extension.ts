@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as utils from './utils/utils';
 import * as path from 'path';
-import { TabChangeEvent } from 'vscode';
 import {
 	LanguageClient,
 	LanguageClientOptions,

@@ -42,6 +42,11 @@ function updateDecorations() {
 		vscode.commands.executeCommand('antimony.getAnnotation', uri).then(async (result: string) => {
 
 			annVars = result;
+			if (annVars == "" || annVars == null || annVars == " "){
+				vscode.workspace.getConfiguration('vscode-antimony').update('annotatedVariableIndicatorOn', false, true);
+				annDecorationType.dispose();
+				return;
+			}
 			regexFromAnnVarsHelp = new RegExp(annVars,'g');
 			regexFromAnnVars = new RegExp('\\b(' + regexFromAnnVarsHelp.source + ')\\b', 'g');
 
@@ -55,7 +60,7 @@ function updateDecorations() {
 			while ((match = regexFromAnnVars.exec(text))) {
 				const startPos = activeEditor.document.positionAt(match.index);
 				const endPos = activeEditor.document.positionAt(match.index + match[0].length);
-				const decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Annotated Variable' };
+				const decoration = { range: new vscode.Range(startPos, endPos) };
 					annotated.push(decoration);
 			}
 			activeEditor.setDecorations(annDecorationType, annotated);

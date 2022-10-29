@@ -210,7 +210,6 @@ class AntTreeAnalyzer:
         # handle all rate rules after appended to list and finished parsing
         self.handle_rate_rules()
         self.handle_interactions()
-        self.pending_annotations = []
         self.pending_sboterms = []
         self.pending_is_assignments = []
         

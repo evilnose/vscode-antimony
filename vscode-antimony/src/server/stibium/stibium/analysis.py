@@ -201,7 +201,6 @@ class AntTreeAnalyzer:
         # handle all rate rules after appended to list and finished parsing
         self.handle_rate_rules()
         self.pending_is_assignments = []
-        
         self.check_parse_tree(self.root, BaseScope())
 
     def resolve_qname(self, qname: QName):

@@ -5,7 +5,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
-import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, QuickPick } from 'vscode';
+import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, commands, QuickPick } from 'vscode';
+import { ProgressLocation } from 'vscode'
 
 /**
  * A multi-step input using window.createQuickPick() and window.createInputBox().
@@ -17,8 +18,19 @@ export async function singleStepInputRec(context: ExtensionContext, line: number
     let recommendations;
     let annotations
 
-    // going to try manually inserting something for the recommender and see what it returns. also, we can use a 
-    // conditional to check if the index is an array and don't display it otherwise since the percentage is 0
+    async function progressBar(input: MultiStepInput) {
+        window.withProgress({
+            location: ProgressLocation.Notification,
+            title: "Searching for annotations...",
+            cancellable: true
+        }, (progress, token) => {
+            return commands.executeCommand('antimony.recommender', lineStr, charStr, uri).then(async (result) => {
+                input.onQueryResults(result);
+            });
+        })
+    }
+
+    MultiStepInput.run(input => progressBar(input));
 
 	vscode.commands.executeCommand('antimony.recommender', lineStr, charStr, uri).then(async (result) => {
         recommendations = result;
@@ -40,7 +52,7 @@ export async function singleStepInputRec(context: ExtensionContext, line: number
 
         async function collectInputs() {
             const state = {initialEntity} as Partial<State>;
-            await MultiStepInput.run(input => pickDatabase(input, state));
+            MultiStepInput.run(input => pickDatabase(input, state));
             return state as State;
         }
 

@@ -18,7 +18,6 @@ parser = AntimonyParser()
 directory = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 
 
-
 @pytest.mark.parametrize("file_name, parse_tree_str", [
     ("base", "Tree('root', [Tree('simple_stmt', [Tree('import', [Token('IMPORT', 'import'), Token('ESCAPED_STRING', '\"import.ant\"')]), Token('NEWLINE', '\\n\\n')]), Tree('simple_stmt', [Tree('assignment', [Tree('namemaybein', [Tree('var_name', [None, Token('NAME', 'test')]), None]), Token('EQUAL', '='), Token('NUMBER', '4')]), Token('NEWLINE', '')])])"),
 ])
@@ -122,10 +121,10 @@ def test_unit_assign(assign_vals):
     assert assign_vals[0] == assignment, "Incorrect unit"
 
 
-@pytest.mark.parametrize("reactions", [
+@pytest.mark.parametrize("reaction_vals", [
     (["a", "b", "kfc"])
 ])
-def test_reaction(reactions):
+def test_reaction(reaction_vals):
     file = os.path.join(directory, "reaction.ant")
     doc = Document(os.path.abspath(file))
     ant_file = AntFile(doc.path, doc.source)
@@ -144,19 +143,19 @@ def test_reaction(reactions):
     reactants = reaction.get_reactants()
     products = reaction.get_products()
     constants = reaction.get_rate_law()
-    assert reactions[0] == reactants[0].get_name_text(), "Incorrect species"
-    assert reactions[1] == reactants[1].get_name_text(), "Incorrect species"
-    assert reactions[1] == products[0].get_name_text(), "Incorrect species"
-    assert reactions[2] == constants.get_name_text(), "Incorrect constant"
+    assert reaction_vals[0] == reactants[0].get_name_text(), "Incorrect species"
+    assert reaction_vals[1] == reactants[1].get_name_text(), "Incorrect species"
+    assert reaction_vals[1] == products[0].get_name_text(), "Incorrect species"
+    assert reaction_vals[2] == constants.get_name_text(), "Incorrect constant"
 
     # Test second reaction from imported file
     reaction = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(7, 1), SrcPosition(7, 3)), text='J0')))[0].decl_node
     reactants = reaction.get_reactants()
     products = reaction.get_products()
     constants = reaction.get_rate_law()
-    assert reactions[0] == reactants[0].get_name_text(), "Incorrect species"
-    assert reactions[1] == products[0].get_name_text(), "Incorrect species"
-    assert reactions[2] == constants.get_name_text(), "Incorrect constant"
+    assert reaction_vals[0] == reactants[0].get_name_text(), "Incorrect species"
+    assert reaction_vals[1] == products[0].get_name_text(), "Incorrect species"
+    assert reaction_vals[2] == constants.get_name_text(), "Incorrect constant"
 
 
 def test_mmodel_call():
@@ -202,6 +201,10 @@ def test_func_call():
 
     # Test second function call from imported file
     call = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(9, 1), SrcPosition(9, 4)), text='FC2')))[0].value_node
+    assert call.get_function_name_str() == "varsum"
+
+    # Test function call for function in imported file and call in base file
+    call = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(10, 1), SrcPosition(10, 4)), text='FC3')))[0].value_node
     assert call.get_function_name_str() == "varsum"
 
 
@@ -375,3 +378,20 @@ def test_var_in():
 
     var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(3, 1), SrcPosition(3, 2)), text='g')))[0]
     assert var.comp == "test"
+
+def test_failed_import():
+    file = os.path.join(directory, "bad.ant")
+    doc = Document(os.path.abspath(file))
+    ant_file = AntFile(doc.path, doc.source)
+    issues = ant_file.get_issues()
+    error_count = 0
+    for issue in issues:
+        if str(issue.severity.__str__()) == "IssueSeverity.Error":
+            error_count += 1
+    assert error_count == 1, "Import unsuccessful"
+
+    # Test for import file error message
+    error_msg = "The grammar contains issues, please fix before importing\n"
+    error_msg += "No such import file found\n"
+    error_msg += "Function 'failed_func' not defined\n"
+    assert error_msg == issues[0].message, "Incorrect error encountered"

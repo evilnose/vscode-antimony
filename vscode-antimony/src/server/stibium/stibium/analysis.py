@@ -535,6 +535,9 @@ class AntTreeAnalyzer:
                     if isinstance(node, ErrorNode):
                         continue
                     stmt = node.get_stmt()
+                    if isinstance(stmt, Import):
+                        self.pre_handle_import(BaseScope(), stmt)
+                        continue
                     if stmt is not None:
                         self.handle_child_incomp(scope, stmt, True)
                     if isinstance(stmt, ModularModelCall):
@@ -695,8 +698,6 @@ class AntTreeAnalyzer:
         for decl in stmt.get_items():
             name = decl.get_maybein().get_var_name().get_name()
             value = decl.get_value()
-            if stype == SymbolType.Species:
-                is_const = decl.get_maybein().get_var_name().is_const()
 
             comp = None
             if decl.get_maybein() != None and decl.get_maybein().is_in_comp():

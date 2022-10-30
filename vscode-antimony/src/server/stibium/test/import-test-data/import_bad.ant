@@ -1,0 +1,3 @@
+import "does_not_exist.ant"
+
+x = failed_func()

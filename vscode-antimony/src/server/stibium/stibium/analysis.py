@@ -766,7 +766,7 @@ class AntTreeAnalyzer:
         mmodel = self.table.get(QName(BaseScope(), mmodel_name))
         if len(mmodel) == 0:
             self.error.append(UninitMModel(mmodel_name.range, mmodel_name.text))
-        else:
+        elif isinstance(mmodel[0], ModularModelCall):
             call_params = node.get_stmt().get_params().get_items() if node.get_stmt().get_params() is not None else []
             if len(mmodel[0].parameters) != len(call_params):
                 self.error.append(IncorrectParamNum(node.range, len(mmodel[0].parameters), len(call_params)))

@@ -18,7 +18,10 @@ def creator():
         ant_file = AntFile(doc.path, doc.source)
         actual_str = parser.get_parse_tree_str(ant_file.text, recoverable=True)
         data[os.path.splitext(file_name)[0]] = actual_str
-    print(str(data))
+    json_data = json.dumps(data)
+    text_file = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "parsed_test_data.json"), "w")
+    text_file.write(json_data)
+    text_file.close()
 
 if __name__ == "__main__":
     creator()

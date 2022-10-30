@@ -536,8 +536,6 @@ class AntTreeAnalyzer:
         symbol_list = self.table.get(qname)
         if len(symbol_list) == 0:
             self.table.insert(qname, SymbolType.Parameter)
-        elif (not isinstance(symbol_list[0], MModelSymbol)) or symbol_list[0].type in (SymbolType.Function, SymbolType.Model, SymbolType.ModularModel):
-            self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_sboterm(qname, sboterm)
 
     def get_annotation_descriptions(self):

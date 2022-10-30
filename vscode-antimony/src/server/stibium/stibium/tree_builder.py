@@ -15,7 +15,7 @@ from stibium.ant_types import (FuncCall, IsAssignment, VariableIn, FunctionCall,
                                Boolean, BooleanExpr, CompareSign, Parenthesis, ParenthesisList, Logical,
                                Event, EventDelay, Expressions, EventTrigger, EventTriggerList, EventAssignment, EventAssignmentList,
                                Name, Newline, Number, Operator,
-                               Power, Product, Reaction, ReactionName,
+                               Power, Product, Reaction, ReactionName, Interaction,
                                SimpleStmt, Species, SpeciesList, StringLiteral,
                                Sum, TreeNode, TrunkNode, TypeModifier, VarModifier, SubModifier,
                                VarName, Model, SimpleStmtList, End, Function, Parameters, ModularModel, ModularModelCall)
@@ -50,6 +50,8 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'namemaybein': NameMaybeIn,
     'reaction_name': ReactionName,
     'reaction': Reaction,
+    'interaction' : Interaction,
+    'interaction_symbol' : Operator,
     'event': Event,
     'event_delay': EventDelay,
     'expressions': Expressions,
@@ -85,7 +87,7 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
 }
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',
-             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ", "DBLQUOTE",
+             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ", "DBLQUOTE", "INTERACTION_SYMBOL",
              'COMPARE', 'PARENTHESIS', 'BOOLEAN', 'LOGICAL' }
 KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL', 'FUNCTION', "UNIT", "HAS", "IS", "SUBSTANCEONLY",
             'PRIORITY', 'FROMTRIGGER', 'T0', 'PERSISTENT'}

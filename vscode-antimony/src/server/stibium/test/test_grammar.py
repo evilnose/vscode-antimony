@@ -412,3 +412,26 @@ def test_event(file_name, expected_parse_tree_str):
     #     actual_str = parser.get_parse_tree_str(ant_file.text)
         # assert expected_parse_tree_str == actual_str,\
         #     f'''Logging actual {repr(actual_str)} \n'''
+
+@pytest.mark.parametrize('file_name,expected_parse_tree_str', [
+    ('interactionActivation',''),
+    # ('interactionActivation_rt',''),
+    ('interactionGeneric',parsed_data['interactionGeneric']),
+    # ('interactionGeneric_rt',parsed_data['interactionGeneric_rt']),
+    ('interactionInhibition',parsed_data['interactionInhibition']),
+    # ('interactionInhibition_rt',parsed_data['interactionInhibition_rt']),
+])
+def test_interaction(file_name, expected_parse_tree_str):
+    f = os.path.join(directory, file_name + '.ant')
+    doc = Document(os.path.abspath(f))
+    ant_file = AntFile(doc.path, doc.source)
+    l_issues = ant_file.get_issues()
+    error_count = 0
+    for issue in l_issues:
+        if str(issue.severity.__str__()) == 'IssueSeverity.Error':
+            error_count += 1
+    assert error_count == 0
+    # if error_count == 0:
+    #     actual_str = parser.get_parse_tree_str(ant_file.text)
+        # assert expected_parse_tree_str == actual_str,\
+        #     f'''Logging actual {repr(actual_str)} \n'''

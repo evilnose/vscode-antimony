@@ -35,6 +35,10 @@ COMPARE : ">=" | "<=" | ">" | "<" | "=="
 
 LOGICAL : "&&" | "||"
 
+sboterm: var_name ".sboTerm" "=" SBOTERM
+SBOTERM: NUMBER
+    | "SBO:" NUMBER
+
 assignment : namemaybein ("=" | AEQ) sum 
 
 AEQ : ":="
@@ -43,7 +47,32 @@ apostrophe : "'"
 rate_rule : NAME apostrophe "=" sum
 
 annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
-ANNOT_KEYWORD: "identity" | "hasPart"
+ANNOT_KEYWORD: "identity"
+    | "hasPart"
+    | "biological_entity_is"
+    | "parthood"
+    | "part"
+    | "isPartOf"
+    | "isVersionOf"
+    | "hypernym"
+    | "hasVersion"
+    | "version"
+    | "isHomologTo"
+    | "homolog"
+    | "isDescribedBy"
+    | "description"
+    | "isEncodedBy"
+    | "encoder"
+    | "encodes"
+    | "encodement"
+    | "occursIn"
+    | "container"
+    | "hasProperty"
+    | "propertyBearer"
+    | "property"
+    | "isPropertyOf"
+    | "hasTaxon"
+    | "taxon"
 
 
 declaration : decl_modifiers decl_item ("," decl_item)*
@@ -117,6 +146,7 @@ func_call : var_name "(" [parameters] ")"
     | variable_in
     | is_assignment
     | rate_rule
+    | sboterm
     | event
 
 simple_stmt_list : simple_stmt+

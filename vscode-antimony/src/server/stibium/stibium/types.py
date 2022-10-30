@@ -204,16 +204,10 @@ class UnusedParameter(Issue):
         self.message = ("Parameter '{}' defined but not used").format(val)
 
 class UninitCompt(Issue):
-    def __init__(self, range, val):
+    def __init__(self, range, val): 
         super().__init__(range, IssueSeverity.Warning)
         self.val = val
         self.message = ("Compartment '{}' has not been initialized, using default value").format(val)
-        
-class RateRuleNotInReaction(Issue):
-     def __init__(self, range, val):
-        super().__init__(range, IssueSeverity.Warning)
-        self.val = val
-        self.message = f"Variable {val} is also a non-fixed species defined in a reaction"
 
 
 class ObscuredEventTrigger(Issue):
@@ -234,12 +228,6 @@ class VarNotFound(Issue):
         super().__init__(range, IssueSeverity.Warning)
         self.val = val
         self.message = ("Variable '{}' not found").format(val)
-
-class RateRuleOverRidden(Issue):
-    def __init__(self, range, val, symbol): 
-        super().__init__(range, IssueSeverity.Warning)
-        self.val = val
-        self.message = f"Previous Rate Rule {symbol.rate_rule} of {val} is overridden"
 
 
 class ObscuredDeclaration(Issue):
@@ -352,7 +340,6 @@ class SymbolType(Enum):
     Species = 'species'
     Compartment = 'compartment'
     Reaction = 'reaction'
-    Interaction = 'interaction'
     Event = 'event'
     Constraint = 'constraint'
 
@@ -368,7 +355,7 @@ class SymbolType(Enum):
 
         derives_from_param = self in (SymbolType.Species, SymbolType.Compartment,
                                       SymbolType.Reaction,
-                                      SymbolType.Constraint, SymbolType.Interaction)
+                                      SymbolType.Constraint)
 
         if other == SymbolType.Variable:
             return derives_from_param or self == SymbolType.Parameter
@@ -379,25 +366,21 @@ class SymbolType(Enum):
         if self in (SymbolType.Species, SymbolType.Compartment,
                                       SymbolType.Reaction,
                                       SymbolType.Constraint,
-                                      SymbolType.Parameter,
-                                      SymbolType.Interaction) and other not in (SymbolType.Species, 
+                                      SymbolType.Parameter) and other not in (SymbolType.Species, 
                                       SymbolType.Compartment,
                                       SymbolType.Reaction,
                                       SymbolType.Constraint,
-                                      SymbolType.Parameter,
-                                      SymbolType.Interaction):
+                                      SymbolType.Parameter):
             return False
         
         if other in (SymbolType.Species, SymbolType.Compartment,
                                       SymbolType.Reaction,
                                       SymbolType.Constraint,
-                                      SymbolType.Parameter,
-                                      SymbolType.Interaction) and self not in (SymbolType.Species, 
+                                      SymbolType.Parameter) and self not in (SymbolType.Species, 
                                       SymbolType.Compartment,
                                       SymbolType.Reaction,
                                       SymbolType.Constraint,
-                                      SymbolType.Parameter,
-                                      SymbolType.Interaction):
+                                      SymbolType.Parameter):
             return False
 
         return False

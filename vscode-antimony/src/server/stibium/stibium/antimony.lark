@@ -9,9 +9,6 @@ reaction : [reaction_name] species_list ARROW [species_list] ";" [sum] [in_comp]
     | [reaction_name] [species_list] ARROW species_list ";" [sum] [in_comp]
 species_list : species ("+" species)*
 species : [NUMBER] ["$"] NAME
-INTERACTION_SYMBOL : "-o" | "-|" | "-("
-interaction : [reaction_name] species INTERACTION_SYMBOL namemaybein
-
 ARROW : "->"
     | "=>"
 
@@ -45,9 +42,6 @@ SBOTERM: NUMBER
 assignment : namemaybein ("=" | AEQ) sum 
 
 AEQ : ":="
-
-apostrophe : "'"
-rate_rule : NAME apostrophe "=" sum
 
 annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
 ANNOT_KEYWORD: "identity"

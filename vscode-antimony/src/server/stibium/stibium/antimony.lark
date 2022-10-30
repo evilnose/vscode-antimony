@@ -143,8 +143,6 @@ func_call : var_name "(" [parameters] ")"
     | variable_in
     | is_assignment
     | sboterm
-    | rate_rule
-    | interaction
     | event
 
 simple_stmt_list : simple_stmt+

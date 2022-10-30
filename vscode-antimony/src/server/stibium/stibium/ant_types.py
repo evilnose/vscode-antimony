@@ -759,7 +759,7 @@ class IsAssignment(TrunkNode):
 
 @dataclass
 class SimpleStmt(TrunkNode):
-    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, Sboterm, UnitDeclaration, UnitAssignment, VariableIn, RateRules, Event, Interaction], Union[Operator, Newline]] = field(repr=False)
+    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, Sboterm, UnitDeclaration, UnitAssignment, VariableIn, Event], Union[Operator, Newline]] = field(repr=False)
 
     def get_stmt(self):
         return self.children[0]

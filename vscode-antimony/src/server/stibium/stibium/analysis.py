@@ -200,7 +200,6 @@ class AntTreeAnalyzer:
         self.handle_is_assignment_list()
         # handle all rate rules after appended to list and finished parsing
         self.handle_rate_rules()
-        self.pending_annotations = []
         self.pending_is_assignments = []
         
         self.check_parse_tree(self.root, BaseScope())

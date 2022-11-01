@@ -417,7 +417,6 @@ class Reaction(TrunkNode):
         if self.children[6] is not None:
             return self.children[6]
         return None
-    
 
 @dataclass
 class ParenthesisList(TrunkNode):
@@ -576,6 +575,16 @@ class Assignment(TrunkNode):
     def get_type(self):
         return self.unit
 
+@dataclass
+class RateRules(TrunkNode):
+    children: Tuple[Name, Operator, Operator, ArithmeticExpr] = field(repr=False)
+
+    def get_name(self):
+        return self.children[0]
+    
+    def get_value(self):
+        return self.children[3]
+
 
 @dataclass
 class VarModifier(Keyword):
@@ -684,6 +693,7 @@ class Declaration(TrunkNode):
         assert isinstance(self.children[2], Operator)
 
 
+
 # TODO All below
 @dataclass
 class Annotation(TrunkNode):
@@ -759,7 +769,7 @@ class IsAssignment(TrunkNode):
 
 @dataclass
 class SimpleStmt(TrunkNode):
-    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, Sboterm, UnitDeclaration, UnitAssignment, VariableIn, Event], Union[Operator, Newline]] = field(repr=False)
+    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, Sboterm, UnitDeclaration, UnitAssignment, VariableIn, RateRules, Event], Union[Operator, Newline]] = field(repr=False)
 
     def get_stmt(self):
         return self.children[0]

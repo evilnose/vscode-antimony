@@ -4,8 +4,9 @@ import * as path from 'path';
 import {
 	LanguageClient,
 	LanguageClientOptions,
-	ServerOptions,
+	ServerOptions
 } from 'vscode-languageclient/node';
+import { singleStepInputRec } from './annotationRecommender';
 import { annotationMultiStepInput } from './annotationInput';
 import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
@@ -14,6 +15,7 @@ import { AntimonyEditorProvider } from './AntimonyEditor';
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
 let lastChangeInterp = 0;
+
 let timestamp = new Date();
 
 let highlightColor = "indigo";
@@ -99,6 +101,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.createAnnotationDialog',
 			(...args: any[]) => createAnnotationDialog(context, args)));
+
+	// create annotations
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.recommendAnnotationDialog',
+			(...args: any[]) => recommendAnnotationDialog(context, args)));
 
 	// insert rate law
 	context.subscriptions.push(
@@ -206,10 +213,6 @@ async function startAntimonyWebview(context: vscode.ExtensionContext, args: any[
 		vscode.window.activeTextEditor.document.uri, "antimony.antimonyEditor", 2);
 }
 
-// async function saveSBMLWebview(context: vscode.ExtensionContext, args: any[]) {
-
-// }
-
 async function convertAntimonyToSBML(context: vscode.ExtensionContext, args: any[]) {
 	if (!client) {
 		utils.pythonInterpreterError();
@@ -298,7 +301,7 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
   
 	// get the position for insert
 	let line = selection.start.line;
-  
+
 	while (line <= doc.lineCount - 1) {
 		const text = doc.lineAt(line).text;
 		if (text.localeCompare("end", undefined, { sensitivity: 'accent' }) === 0) {
@@ -324,6 +327,49 @@ async function createAnnotationDialog(context: vscode.ExtensionContext, args: an
 		const selectedItem = await annotationMultiStepInput(context, initialQuery, selectedType);
 		await insertAnnotation(selectedItem, initialEntity, line);
 	});
+}
+
+async function recommendAnnotationDialog(context: vscode.ExtensionContext, args: any[]) {
+	// wait till client is ready, or the Python server might not have started yet.
+	// note: this is necessary for any command that might use the Python language server.
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	// dialog for annotation
+	const selection = vscode.window.activeTextEditor.selection
+	// get the selected text
+	const doc = vscode.window.activeTextEditor.document
+	const uri = doc.uri.toString();
+	const selectedText = doc.getText(selection);
+	// get the position for insert
+	let line = selection.start.line
+	while (line <= doc.lineCount - 1) {
+		const text = doc.lineAt(line).text
+		if (text.localeCompare("end", undefined, { sensitivity: 'accent' }) == 0) {
+			line -= 1;
+			break;
+		}
+		line += 1;
+	}
+	const positionAt = selection.anchor;
+	const lineStr = positionAt.line.toString();
+	const charStr = positionAt.character.toString();
+	const initialEntity = selectedText || 'entityName';
+	let initialQuery;
+	// get current file
+	if (args.length == 2) {
+		initialQuery = args[1];
+	} else {
+		initialQuery = selectedText;
+	}
+
+	await new Promise<void>((resolve, reject) => {
+		const selectedItem = singleStepInputRec(context, line, lineStr, charStr, uri, initialQuery, initialEntity); 
+		resolve()
+    });
 }
 
 async function getResult(result) {

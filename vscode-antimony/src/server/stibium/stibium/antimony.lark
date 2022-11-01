@@ -46,6 +46,9 @@ assignment : namemaybein ("=" | AEQ) sum
 
 AEQ : ":="
 
+apostrophe : "'"
+rate_rule : NAME apostrophe "=" sum
+
 annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
 ANNOT_KEYWORD: "identity"
     | "hasPart"
@@ -146,6 +149,7 @@ func_call : var_name "(" [parameters] ")"
     | variable_in
     | is_assignment
     | interaction
+    | rate_rule
     | sboterm
     | event
 

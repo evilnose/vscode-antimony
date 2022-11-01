@@ -211,7 +211,7 @@ class UninitCompt(Issue):
         
 class RateRuleNotInReaction(Issue):
      def __init__(self, range, val):
-        super().__init__(range, IssueSeverity.Warning)
+        super().__init__(range, IssueSeverity.Error)
         self.val = val
         self.message = f"Variable {val} is also a non-fixed species defined in a reaction"
 

@@ -34,6 +34,8 @@ from pygls.types import (CompletionItem, CompletionItemKind, CompletionList, Com
                          TextDocumentContentChangeEvent, TextDocumentPositionParams, Position)
 import threading
 import time
+from AMAS import recommender, species_annotation
+from bioservices import ChEBI
 
 # TODO remove this for production
 logging.basicConfig(filename='vscode-antimony-dep.log', filemode='w', level=logging.DEBUG)
@@ -179,8 +181,11 @@ def get_annotations(ls: LanguageServer, args):
     doc = server.workspace.get_document(uri)
     antfile_cache = get_antfile(doc)
     all_annotations: list = antfile_cache.analyzer.pending_annotations
+    all_sbos: list = antfile_cache.analyzer.pending_sboterms
     annotation_texts = list()
     for tup in all_annotations:
+        annotation_texts.append(tup[1].get_name_text())
+    for tup in all_sbos:
         annotation_texts.append(tup[1].get_name_text())
     return "|".join(annotation_texts)
 
@@ -253,6 +258,47 @@ def get_rate_law_dict(ls: LanguageServer, args):
             'error': 'Rate law already exists.'
         }
     return reader.relevant_rate_laws
+
+@server.thread()
+@server.command('antimony.recommender')
+def recommend(ls: LanguageServer, args):
+    '''
+    get a list of recommended annotations, user has to select a symbol.
+    params:
+    {
+        args[0]: string of line number,
+        args[1]: string of character number where the symbol starts,
+        args[2]: doc uri
+    }
+    '''
+    line = args[0]
+    character = args[1]
+    uri = args[2]
+    doc = server.workspace.get_document(uri)
+    antfile_cache = get_antfile(doc)
+    recom = recommender.Recommender()
+    position  = SrcPosition(int(line) + 1, int(character) + 1)
+    symbol = antfile_cache.symbols_at(position)[0][0]
+    display_name = symbol.display_name
+    if display_name is not None:
+        annotations = recom.getSpeciesAnnotation(pred_str=display_name.replace("\"", ""))
+    else:
+        annotations = recom.getSpeciesAnnotation(pred_str=symbol.name)
+    chebi = species_annotation.chebi_low_synonyms
+    ret = list()
+    limit = 0
+    for annotation in annotations.candidates:
+        sorted_chebi = sorted(chebi[annotation[0]], key=len)
+        ret.append({
+            'label': sorted_chebi[0],
+            'id': annotation[0]
+        })
+        limit += 1
+        if limit >= 10:
+            break
+    return {
+        'annotations': ret
+    }
 
 #### Hover for displaying information ####
 @server.feature(HOVER)

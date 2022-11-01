@@ -4,7 +4,7 @@ from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, F
 from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UninitRateLaw, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 import requests
 from bioservices import ChEBI, UniProt, Rhea
-from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode
+from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Sbo, Annotation, Sboterm, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Event, SimpleStmt, TreeNode, TrunkNode
 from .types import ObscuredEventTrigger, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
@@ -78,6 +78,8 @@ class AntTreeAnalyzer:
         self.pending_is_assignments = []
         self.pending_annotations = []
         self.pending_interactions = []
+        self.pending_sboterms = []
+        # for dealing with rate rules not yet declared
         self.pending_events = []
         self.unnamed_events_num = 0
         base_scope = BaseScope()
@@ -108,6 +110,7 @@ class AntTreeAnalyzer:
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.pre_handle_annotation,
+                                'Sboterm': self.pre_handle_sboterm,
                                 'UnitDeclaration': self.handle_unit_declaration,
                                 'UnitAssignment' : self.handle_unit_assignment,
                                 'ModularModelCall' : self.handle_mmodel_call,
@@ -140,6 +143,7 @@ class AntTreeAnalyzer:
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.pre_handle_annotation,
+                                'Sboterm': self.pre_handle_sboterm,
                                 'UnitDeclaration': self.handle_unit_declaration,
                                 'UnitAssignment' : self.handle_unit_assignment,
                                 'ModularModelCall' : self.handle_mmodel_call,
@@ -179,6 +183,7 @@ class AntTreeAnalyzer:
                     'Assignment': self.handle_assignment,
                     'Declaration': self.handle_declaration,
                     'Annotation': self.pre_handle_annotation,
+                    'Sboterm': self.pre_handle_sboterm,
                     'UnitDeclaration': self.handle_unit_declaration,
                     'UnitAssignment' : self.handle_unit_assignment,
                     'ModularModelCall' : self.handle_mmodel_call,
@@ -195,9 +200,11 @@ class AntTreeAnalyzer:
         # get list of warnings
         self.warning = self.table.warning
         self.handle_annotation_list()
+        self.handle_sboterm_list()
         self.get_annotation_descriptions()
         self.handle_is_assignment_list()
         self.handle_interactions()
+        # handle all rate rules after appended to list and finished parsing
         self.pending_is_assignments = []
         self.check_parse_tree(self.root, BaseScope())
 
@@ -253,6 +260,8 @@ class AntTreeAnalyzer:
                     self.process_is_assignment(node, scope)
                 elif type(node.get_stmt()) == Assignment:
                     self.process_maybein(node, scope)
+                elif type(node.get_stmt()) == Sboterm or type(node.get_stmt()) == Annotation:
+                    self.process_annotation(node, scope)
                 elif type(node.get_stmt()) == Event:
                     self.process_event(node, scope)
 
@@ -324,6 +333,8 @@ class AntTreeAnalyzer:
                     self.process_is_assignment(node, scope)
                 elif type(node.get_stmt()) == Assignment:
                     self.process_maybein(node, scope)
+                elif type(node.get_stmt()) == Sboterm or type(node.get_stmt()) == Annotation:
+                    self.process_annotation(node, scope)
                 elif type(node.get_stmt()) == Event:
                     self.process_event(node, scope)
         self.check_param_unused(used, params)
@@ -516,6 +527,21 @@ class AntTreeAnalyzer:
         self.table.insert(qname, SymbolType.Parameter)
         self.table.insert_annotation(qname, annotation)
     
+    def pre_handle_sboterm(self, scope: AbstractScope, sboterm: Sboterm):
+        self.pending_sboterms.append((scope, sboterm))
+    
+    def handle_sboterm_list(self):
+        for scope, sboterm in self.pending_sboterms:
+            self.handle_sboterm(scope, sboterm)
+    
+    def handle_sboterm(self, scope: AbstractScope, sboterm: Sboterm):
+        name = sboterm.get_var_name().get_name()
+        qname = QName(scope, name)
+        symbol_list = self.table.get(qname)
+        if len(symbol_list) == 0:
+            self.table.insert(qname, SymbolType.Parameter)
+        self.table.insert_sboterm(qname, sboterm)
+
     def get_annotation_descriptions(self):
         for scope, annotation in self.pending_annotations:
             self.get_annotation_description(scope, annotation)
@@ -821,6 +847,20 @@ class AntTreeAnalyzer:
         var = self.table.get(qname)
         if len(var) == 0:
             self.warning.append(VarNotFound(name.range, name.text))
+            
+    def process_annotation(self, node, scope):
+        name = node.get_stmt().get_var_name().get_name()
+        qname = QName(scope, name)
+        var = self.table.get(qname)
+        if var[0].value_node is None and var[0].type == SymbolType.Species:
+            self.error.append(RefUndefined(name.range, name.text))
+            
+    def process_sbo(self, node, scope):
+        name = node.get_stmt().get_var_name().get_name()
+        qname = QName(scope, name)
+        var = self.table.get(qname)
+        if var[0].value_node is None and var[0].type == SymbolType.Species:
+            self.error.append(RefUndefined(name.range, name.text))
         
         
     def process_event(self, node, scope):

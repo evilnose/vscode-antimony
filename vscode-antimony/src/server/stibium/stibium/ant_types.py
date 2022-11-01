@@ -249,6 +249,10 @@ class StringLiteral(LeafNode):
     def get_str(self):
         '''Get the string within the quotes.'''
         return self.text[1:-1]
+    
+@dataclass
+class Sbo(LeafNode):
+    pass
 
 
 # NOTE for now, the EOF is constructed as a Newline with text being an empty string. In the future,
@@ -724,6 +728,22 @@ class Annotation(TrunkNode):
 
     def get_uri(self):
         return self.children[2].get_str()
+    
+@dataclass
+class Sboterm(TrunkNode):
+    children: Tuple[VarName, Keyword, Operator, Number]
+    
+    def get_var_name(self):
+        return self.children[0]
+
+    def get_name_text(self):
+        return self.get_var_name().get_name_text()
+
+    def get_keyword(self):
+        return self.children[1].text[1:]
+
+    def get_val(self):
+        return self.children[3].text
 
 @dataclass
 class UnitDeclaration(TrunkNode):
@@ -767,7 +787,7 @@ class IsAssignment(TrunkNode):
 
 @dataclass
 class SimpleStmt(TrunkNode):
-    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, UnitDeclaration, UnitAssignment, VariableIn], Union[Operator, Newline]] = field(repr=False)
+    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, Sboterm, UnitDeclaration, UnitAssignment, VariableIn, Event], Union[Operator, Newline]] = field(repr=False)
 
     def get_stmt(self):
         return self.children[0]

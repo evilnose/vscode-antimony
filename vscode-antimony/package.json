@@ -23,6 +23,7 @@
 	"activationEvents": [
 		"onLanguage:antimony",
 		"onCommand:antimony.createAnnotationDialog",
+		"onCommand:antimony.recommendAnnotationDialog",
 		"onCommand:antimony.insertRateLaw",
 		"onCommand:antimony.switchIndicationOn",
 		"onCommand:antimony.switchIndicationOff",
@@ -98,6 +99,10 @@
 				"title": "Create Annotation"
 			},
 			{
+				"command": "antimony.recommendAnnotationDialog",
+				"title": "Annotation Recommender"
+      },
+      {
 				"command": "antimony.insertRateLawDialog",
 				"title": "Insert Rate Law"
       },
@@ -150,6 +155,12 @@
 					"when": "editorLangId == antimony"
 				},
 				{
+					"command": "antimony.recommendAnnotationDialog",
+					"title": "Annotation Recommender",
+					"group": "1_modification",
+					"when": "editorLangId == antimony"
+        },
+        {
 					"command": "antimony.insertRateLawDialog",
 					"title": "Insert Rate Law",
 					"group": "1_modification",

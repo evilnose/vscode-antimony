@@ -181,8 +181,11 @@ def get_annotations(ls: LanguageServer, args):
     doc = server.workspace.get_document(uri)
     antfile_cache = get_antfile(doc)
     all_annotations: list = antfile_cache.analyzer.pending_annotations
+    all_sbos: list = antfile_cache.analyzer.pending_sboterms
     annotation_texts = list()
     for tup in all_annotations:
+        annotation_texts.append(tup[1].get_name_text())
+    for tup in all_sbos:
         annotation_texts.append(tup[1].get_name_text())
     return "|".join(annotation_texts)
 

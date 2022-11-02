@@ -451,7 +451,7 @@ def test_event(file_name, expected_parse_tree_str):
         #     f'''Logging actual {repr(actual_str)} \n'''
 
 @pytest.mark.parametrize('file_name,expected_parse_tree_str', [
-    ('interactionActivation',''),
+    ('interactionActivation',parsed_data['interactionActivation']),
     # ('interactionActivation_rt',''),
     ('interactionGeneric',parsed_data['interactionGeneric']),
     # ('interactionGeneric_rt',parsed_data['interactionGeneric_rt']),

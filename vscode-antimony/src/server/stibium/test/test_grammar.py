@@ -48,11 +48,11 @@ def test_comment(code, expected_parse_tree_str):
     ('reaction',parsed_data['reaction']),
     ('reaction_rt', parsed_data['reaction_rt']),
     #('namedstoich_assignment',""),
-    ('namedstoich_assignment_rt',""),
+    # ('namedstoich_assignment_rt',""),
     #('namedstoich_basic',""),
-    ('namedstoich_basic_rt',""),
+    # ('namedstoich_basic_rt',""),
     #('namedstoich_value',""),
-    ('namedstoich_value_rt',""),
+    # ('namedstoich_value_rt',""),
 ]) # all reactions included
 
 def test_reactions(file_name, expected_parse_tree_str):
@@ -76,7 +76,7 @@ def test_reactions(file_name, expected_parse_tree_str):
         
         
 @pytest.mark.parametrize('code,file_name,expected_parse_tree_str', [
-    ('a = ;','',"Tree('root', [])"),
+    # ('a = ;','',"Tree('root', [])"),
     ('','initialAmount',parsed_data['initialAmount']),
     ('','initialAmount_rt',parsed_data['initialAmount_rt']),
     ('','initialAssignment',parsed_data['initialAssignment']),
@@ -140,7 +140,7 @@ def test_defining_species_compartments(file_name, expected_parse_tree_str):
             
 
 @pytest.mark.parametrize('file_name,expected_parse_tree_str', [
-    ('default_compartment',parsed_data['default_compartment']),
+    # ('default_compartment',parsed_data['default_compartment']),
     ('defaultOrNotCompartment_rt',parsed_data['defaultOrNotCompartment_rt']),
     ('defaultOrNotCompartment',parsed_data['defaultOrNotCompartment']),
     ('defaultSubCompartment',parsed_data['defaultSubCompartment']),
@@ -189,50 +189,50 @@ def test_function(file_name,expected_parse_tree_str):
         f"this test has no dependencies"
             
             
-@pytest.mark.parametrize('file_name', [
-    ('identity'),
-    ('identity_rt'),
-    ('hasPart_rt'),
-    ('hasProperty'),
-    ('hasProperty_rt'),
-    ('hasTaxon'),
-    ('hasTaxon_rt'),
-    ('hasVersion'),
-    ('hasVersion_rt'),
-    ('isHomologTo'),
-    ('isHomologTo_rt'),
-    ('isPartOf'),
-    ('isPartOf_rt'),
-    ('isEncodedBy'),
-    ('isEncodedBy_rt'),
-    ('isDescribedBy'),
-    ('isDescribedBy_rt'),
-    ('isPropertyOf'),
-    ('isPropertyOf_rt'),
-    ('isVersionOf'),
-    ('isVersionOf_rt'),
-    ('encodes'),
-    ('encodes_rt'),
-    ('occursIn'),
-    ('occursIn_rt'),
-    ('SBO_compartment'),#not supported yet
-    ('SBO_event'),
-    ('SBO_event_rt'), #variable initialization problem
-    ('SBO_function'),
-    ('SBO_function_rt'),
-    ('SBO_localvar'),
-    ('SBO_localvar_rt'),
-    ('SBO_module'),
-    ('SBO_module_rt'),
-    ('SBO_param'),
-    # ('SBO_param_rt'),
-    ('SBO_param2'),
-    ('SBO_param2_rt'),
-    # ('SBO_reaction'),
-    # ('SBO_species'), #not supported yet
-    ('SBO_submodel'), #submodel not supported
+@pytest.mark.parametrize('file_name,expected_parse_tree_str', [
+    ('identity',parsed_data['identity']),
+    ('identity_rt',parsed_data['identity_rt']),
+    ('hasPart_rt',parsed_data['hasPart_rt']),
+    ('hasProperty',parsed_data['hasProperty']),
+    ('hasProperty_rt',parsed_data['hasProperty_rt']),
+    ('hasTaxon',parsed_data['hasTaxon']),
+    ('hasTaxon_rt',parsed_data['hasTaxon_rt']),
+    ('hasVersion',parsed_data['hasVersion']),
+    ('hasVersion_rt',parsed_data['hasVersion_rt']),
+    ('isHomologTo',parsed_data['isHomologTo']),
+    ('isHomologTo_rt',parsed_data['isHomologTo_rt']),
+    ('isPartOf',parsed_data['isPartOf']),
+    ('isPartOf_rt',parsed_data['isPartOf_rt']),
+    ('isEncodedBy',parsed_data['isEncodedBy']),
+    ('isEncodedBy_rt',parsed_data['isEncodedBy_rt']),
+    ('isDescribedBy',parsed_data['isDescribedBy']),
+    ('isDescribedBy_rt',parsed_data['isDescribedBy_rt']),
+    ('isPropertyOf',parsed_data['isPropertyOf']),
+    ('isPropertyOf_rt',parsed_data['isPropertyOf_rt']),
+    ('isVersionOf',parsed_data['isVersionOf']),
+    ('isVersionOf_rt',parsed_data['isVersionOf_rt']),
+    ('encodes',parsed_data['encodes']),
+    ('encodes_rt',parsed_data['encodes_rt']),
+    ('occursIn',parsed_data['occursIn']),
+    ('occursIn_rt',parsed_data['occursIn_rt']),
+    # ('SBO_compartment',parsed_data['SBO_compartment']),#not supported yet
+    ('SBO_event',parsed_data['SBO_event']),
+    # ('SBO_event_rt',parsed_data['SBO_event_rt']), #variable initialization problem
+    ('SBO_function',parsed_data['SBO_function']),
+    ('SBO_function_rt',parsed_data['SBO_function_rt']),
+    ('SBO_localvar',parsed_data['SBO_localvar']),
+    ('SBO_localvar_rt',parsed_data['SBO_localvar_rt']),
+    ('SBO_module',parsed_data['SBO_module']),
+    ('SBO_module_rt',parsed_data['SBO_module_rt']),
+    ('SBO_param',parsed_data['SBO_param']),
+    # ('SBO_param_rt',parsed_data['']),
+    ('SBO_param2',parsed_data['SBO_param2']),
+    ('SBO_param2_rt',parsed_data['SBO_param2_rt']),
+    # ('SBO_reaction',parsed_data['']),
+    # ('SBO_species',parsed_data['']), #not supported yet
+    ('SBO_submodel',parsed_data['SBO_submodel']), #submodel not supported
 ])
-def test_annotation(file_name):
+def test_annotation(file_name, expected_parse_tree_str):
     f = os.path.join(directory, file_name + '.ant')
     doc = Document(os.path.abspath(f))
     ant_file = AntFile(doc.path, doc.source)
@@ -245,8 +245,8 @@ def test_annotation(file_name):
     f"this test has no dependencies"
     if error_count == 0:
         actual_str = parser.get_parse_tree_str(ant_file.text)
-        # assert expected_parse_tree_str == actual_str,\
-        # f"this test has no dependencies"
+        assert expected_parse_tree_str == actual_str,\
+        f"this test has no dependencies"
 
     
 
@@ -419,8 +419,8 @@ def test_replace(file_name, expected_parse_tree_str):
     
     
 @pytest.mark.parametrize('file_name,expected_parse_tree_str', [
-    ('boolean_event_delays',''),
-    ('boolean_triggers',''),
+    ('boolean_event_delays',parsed_data['boolean_event_delays']),
+    ('boolean_triggers',parsed_data['boolean_triggers']),
     ('event',parsed_data['event']),
     # ('event_rt',parsed_data['event_rt']),
     # ('eventDelay',parsed_data['eventDelay']),
@@ -468,7 +468,7 @@ def test_interaction(file_name, expected_parse_tree_str):
         if str(issue.severity.__str__()) == 'IssueSeverity.Error':
             error_count += 1
     assert error_count == 0
-    # if error_count == 0:
-    #     actual_str = parser.get_parse_tree_str(ant_file.text)
-        # assert expected_parse_tree_str == actual_str,\
-        #     f'''Logging actual {repr(actual_str)} \n'''
+    if error_count == 0:
+        actual_str = parser.get_parse_tree_str(ant_file.text)
+        assert expected_parse_tree_str == actual_str,\
+            f'''Logging actual {repr(actual_str)} \n'''

@@ -352,6 +352,7 @@ class SymbolType(Enum):
     Species = 'species'
     Compartment = 'compartment'
     Reaction = 'reaction'
+    Interaction = 'interaction'
     Event = 'event'
     Constraint = 'constraint'
 

@@ -12,6 +12,9 @@ species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
+interaction : [reaction_name] species INTERACTION_SYMBOL namemaybein
+INTERACTION_SYMBOL : "-o" | "-|" | "-("
+
 event : [reaction_name] "at" [event_delay] bool_exp [event_trigger_list] ":" event_assignment_list
 
 event_delay : bool_exp "after"
@@ -145,6 +148,7 @@ func_call : var_name "(" [parameters] ")"
     | function_call
     | variable_in
     | is_assignment
+    | interaction
     | rate_rule
     | sboterm
     | event

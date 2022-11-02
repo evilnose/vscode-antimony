@@ -122,6 +122,7 @@ class Symbol:
     comp: str
     is_const: bool
     is_sub: bool
+    interaction: str
     rate_rule: str
     in_reaction: bool
     events: List[Event]
@@ -134,6 +135,7 @@ class Symbol:
             comp: str = None,
             is_const: bool = False,
             is_sub: bool = False,
+            interaction = None,
             rate_rule: str = None,
             ):
         self.name = name
@@ -148,6 +150,7 @@ class Symbol:
         self.comp = comp
         self.is_const = is_const
         self.is_sub = is_sub
+        self.interaction = interaction
         self.rate_rule = rate_rule
         self.in_reaction = False
         self.queried_annotations = dict()
@@ -174,6 +177,9 @@ class Symbol:
         if self.rate_rule is not None:
             ret += '\n{}'.format("Rate Rule: " + self.rate_rule)
         
+        if self.interaction != None:
+            ret += '\n{}'.format(self.interaction)
+
         if self.is_sub:
             ret += '\n{}'.format("Substance-only species")
 

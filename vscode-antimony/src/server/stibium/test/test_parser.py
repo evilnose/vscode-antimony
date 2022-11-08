@@ -131,11 +131,11 @@ def test_reaction(code: str, expected_args: Tuple[str, str, Optional[str]]):
 def test_reaction_reversibility():
     tree = parser.parse('A -> B; 1')
     reaction = tree.children[0].children[0]
-    assert isinstance(reaction, Reaction) and not reaction.is_reversible()
+    assert isinstance(reaction, Reaction) and reaction.is_reversible()
 
     tree = parser.parse('A => B; 1')
     reaction = tree.children[0].children[0]
-    assert isinstance(reaction, Reaction) and reaction.is_reversible()
+    assert isinstance(reaction, Reaction) and not reaction.is_reversible()
 
 
 # Classes for easier testing
@@ -194,7 +194,8 @@ def test_declaration(code: str, expected: Decl):
     assert isinstance(declmod, DeclModifiers)
     assert declmod.children[0] is None or isinstance(declmod.children[0], Keyword)
     assert declmod.children[1] is None or isinstance(declmod.children[1], Keyword)
-    assert declmod.children[0] is not None or declmod.children[1] is not None
+    assert declmod.children[2] is None or isinstance(declmod.children[2], Keyword)
+    assert declmod.children[0] is not None or declmod.children[1] is not None or declmod.children[2] is not None
     assert isinstance(declaration.children[1], DeclItem)
     for i in range(2, len(declaration.children), 2):
         assert isinstance(declaration.children[i], Operator)
@@ -215,7 +216,6 @@ def test_declaration(code: str, expected: Decl):
     '1: A -> B;1',  # illegal name
     ':A->B;1',  # no name
     '=>;1',  # no reactants or products
-    'A->B;',  # no rate law
 
     # declarations/assignments
     'a, b',
@@ -229,9 +229,7 @@ def test_declaration(code: str, expected: Decl):
     'A -> B\n5',  # reaction divider cannot be newline
 
     # numbers
-    'a = 1_5_0',
     'a = 12e-2.2',
-    'a = 0x12dummy',  # no hex (append dummy unit to make sure x is not parsed as a unit)
 
     # strings
     'a in "\\"',
@@ -306,11 +304,11 @@ def test_numbers(code: str, expected: float):
 
 @pytest.mark.parametrize('code,name,keyword,uri', [
     ('i122 identity "http://identifiers.org/chebi/CHEBI:17234"', 'i122', 'identity',
-        '"http://identifiers.org/chebi/CHEBI:17234"'),
-    ('aga hasPart ""', 'aga', 'hasPart', '""'),  # empty uri
-    ('aga hasPart "\\n"', 'aga', 'hasPart', '"\\n"'),  # escaped character
-    ('aga hasPart ";"', 'aga', 'hasPart', '";"'),  # semicolon
-    ('aga hasPart "const"', 'aga', 'hasPart', '"const"'),  # keyword
+        'http://identifiers.org/chebi/CHEBI:17234'),
+    ('aga hasPart ""', 'aga', 'hasPart', ''),  # empty uri
+    ('aga hasPart "\\n"', 'aga', 'hasPart', '\\n'),  # escaped character
+    ('aga hasPart ";"', 'aga', 'hasPart', ';'),  # semicolon
+    ('aga hasPart "const"', 'aga', 'hasPart', 'const'),  # keyword
 ])
 def test_annotation(code: str, name: str, keyword: str, uri: str):
     # TODO

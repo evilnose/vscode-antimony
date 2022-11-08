@@ -391,31 +391,6 @@ def test_negative_parenthesis(file_name, expected_parse_tree_str):
         actual_str = parser.get_parse_tree_str(ant_file.text)
         assert expected_parse_tree_str == actual_str,\
             f'''Logging actual {repr(actual_str)} \n'''
-            
-            
-@pytest.mark.parametrize('file_name,expected_parse_tree_str', [
-    # ('replaceAssignmentRule',""),
-    # ('replaceAssignmentRule_rt',""),
-    # ('replaceCompartment',""),
-    # ('replaceCompartment_rt',""),
-    # ('replaceInitialAssignment',""),
-    # ('replaceInitialAssignment_rt',""),
-    # ('replaceParameter',""),
-    # ('replaceParameter_rt',""),
-])
-def test_replace(file_name, expected_parse_tree_str):
-    '''
-    warning: not implemented feature
-    '''
-    f = os.path.join(directory, file_name + '.ant')
-    doc = Document(os.path.abspath(f))
-    ant_file = AntFile(doc.path, doc.source)
-    l_issues = ant_file.get_issues()
-    error_count = 0
-    for issue in l_issues:
-        if str(issue.severity.__str__()) == 'IssueSeverity.Error':
-            error_count += 1
-    assert error_count == 0
     
     
 @pytest.mark.parametrize('file_name,expected_parse_tree_str', [

@@ -362,11 +362,8 @@ class AntTreeAnalyzer:
                     self.warning.append(SpeciesUndefined(leaf.range, text))
         return used
 
-    def get_unique_name(self, prefix: str, insert: bool):
-        if insert:
-            return self.import_table.get_unique_name(prefix)
-        else:
-            return self.table.get_unique_name(prefix)
+    def get_unique_name(self, prefix: str):
+        return self.table.get_unique_name(prefix)
 
     def handle_child_incomp(self, scope: AbstractScope, node: TrunkNode, insert: bool):
         '''Find all `incomp` nodes among the descendants of node and record the compartment names.'''

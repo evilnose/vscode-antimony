@@ -392,6 +392,6 @@ def test_failed_import():
 
     # Test for import file error message
     error_msg = "The grammar contains issues, please fix before importing\n"
-    error_msg += "No such import file found\n"
+    error_msg += "File not found\n"
     error_msg += "Function 'failed_func' not defined\n"
     assert error_msg == issues[0].message, "Incorrect error encountered"

@@ -291,7 +291,7 @@ class OverrodeValue(Issue):
 class NoImportFile(Issue):
     def __init__(self, range):
         super().__init__(range, IssueSeverity.Error)
-        self.message = "No such import file found"
+        self.message = "File not found"
 
 class GrammarHasIssues(Issue):
     def __init__(self, range, issues: list()):

@@ -70,16 +70,9 @@ def get_file_info(file: str):
     isfile = os.path.isfile(os.path.abspath(file))
     if isfile:
         from .api import AntFile
-        #sbml_file = antimony.loadSBMLFile(file)
-        #if sbml_file >= 0:
-        #    ant_str = antimony.getAntimonyString()
-        #    return AntFile(os.path.abspath(file), ant_str)
-        if (file[-4:] == ".txt" or file[-4:] == ".ant"):
+        file_ext = os.path.splitext(file)[1]
+        if (file_ext == ".txt" or file_ext == ".ant"):
             with open(file, "r") as open_file:
                 content = open_file.read()
             return AntFile(os.path.abspath(file), content)
-        #ant_file = antimony.loadAntimonyFile(file)
-        #if ant_file >= 0:
-        #    ant_str = antimony.getAntimonyString()
-        #    return AntFile(os.path.abspath(file), ant_str)
     return None

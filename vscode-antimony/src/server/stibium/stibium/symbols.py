@@ -218,8 +218,8 @@ class Symbol:
 
         if self.annotations:
             # adds all annotations as represented by Tellurium
-            for i in self.annotations:
-                ret += '\n***\n{}\n'.format(i.get_uri())
+            for annot in self.annotations:
+                ret += '\n***\n{}\n'.format(annot.get_uri())
 
         return ret
 

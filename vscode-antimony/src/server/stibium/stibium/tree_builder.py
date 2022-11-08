@@ -8,15 +8,17 @@ from typing import Callable, Dict, Optional, Type, TypeVar, Union, cast
 from lark.lexer import Token
 from lark.tree import Tree
 
-from stibium.ant_types import (FuncCall, IsAssignment, VariableIn, FunctionCall, UnitAssignment, BuiltinUnit, UnitDeclaration, Annotation, ArithmeticExpr, Assignment, Atom, DeclModifiers,
+from stibium.ant_types import (FuncCall, IsAssignment, VariableIn, FunctionCall, UnitAssignment, BuiltinUnit, UnitDeclaration, Annotation, Sboterm, Sbo, ArithmeticExpr, Assignment, Atom, DeclModifiers,
                                Declaration, DeclAssignment,
                                DeclItem, ErrorNode, ErrorToken,
                                FileNode, InComp, Keyword, LeafNode, NameMaybeIn,
+                               Boolean, BooleanExpr, CompareSign, Parenthesis, ParenthesisList, Logical,
+                               Event, EventDelay, Expressions, EventTrigger, EventTriggerList, EventAssignment, EventAssignmentList,
                                Name, Newline, Number, Operator,
-                               Power, Product, Reaction, ReactionName,
+                               Power, Product, Reaction, ReactionName, Interaction,
                                SimpleStmt, Species, SpeciesList, StringLiteral,
                                Sum, TreeNode, TrunkNode, TypeModifier, VarModifier, SubModifier,
-                               VarName, Model, SimpleStmtList, End, Function, Parameters, ModularModel, ModularModelCall, Import)
+                               VarName, Model, SimpleStmtList, End, Function, Parameters, ModularModel, ModularModelCall, Import, RateRules)
 from stibium.symbols import AbstractScope, BaseScope, FuncSymbol
 from stibium.types import ASTNode, SrcRange, SymbolType, Variability
 from stibium.utils import get_tree_range, get_token_range
@@ -32,7 +34,14 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'TYPE_MODIFIER': TypeModifier,
     'ESCAPED_STRING': StringLiteral,
     'ANNOT_KEYWORD': Keyword,
+    'SBOTERM': Sbo,
     'SEMICOLON': Operator,
+    'boolean': Boolean,
+    'bool_exp': BooleanExpr,
+    'compare_sign': CompareSign,
+    'parenthesis': Parenthesis,
+    'parenthesis_list': ParenthesisList,
+    'logical': Logical,
     'error_node': ErrorNode,
     'root': FileNode,
     'simple_stmt': SimpleStmt,
@@ -42,6 +51,15 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'namemaybein': NameMaybeIn,
     'reaction_name': ReactionName,
     'reaction': Reaction,
+    'interaction' : Interaction,
+    'interaction_symbol' : Operator,
+    'event': Event,
+    'event_delay': EventDelay,
+    'expressions': Expressions,
+    'event_trigger': EventTrigger,
+    'event_trigger_list': EventTriggerList,
+    'event_assignment': EventAssignment,
+    'event_assignment_list': EventAssignmentList,
     'species': Species,
     'species_list': SpeciesList,
     'assignment': Assignment,
@@ -50,6 +68,7 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'decl_assignment': DeclAssignment,
     'decl_modifiers': DeclModifiers,
     'annotation': Annotation,
+    'sboterm': Sboterm,
     'sum': Sum,
     'product': Product,
     'power': Power,
@@ -68,11 +87,14 @@ TREE_MAP: Dict[str, Type[TreeNode]] = {
     'variable_in' : VariableIn,
     'is_assignment' : IsAssignment,
     'import' : Import,
+    "rate_rule" : RateRules,
 }
 
 OPERATORS = {'EQUAL', 'COLON', 'ARROW', 'SEMICOLON', 'LPAR', 'RPAR', 'STAR', 'PLUS', 'MINUS',
-             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ", "DBLQUOTE"}
-KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL', 'FUNCTION', "UNIT", "HAS", "IS", "SUBSTANCEONLY", "IMPORT"}
+             'DOLLAR', 'CIRCUMFLEX', 'COMMA', 'SLASH', "AEQ", "DBLQUOTE", "INTERACTION_SYMBOL",
+             'COMPARE', 'PARENTHESIS', 'BOOLEAN', 'LOGICAL' }
+KEYWORDS = {'ANNOT_KEYWORD', 'IN', 'MODEL', 'FUNCTION', "UNIT", "HAS", "IS", "SUBSTANCEONLY",
+            "IMPORT", 'PRIORITY', 'FROMTRIGGER', 'T0', 'PERSISTENT'}
 
 for name in OPERATORS:
     TREE_MAP[name] = Operator

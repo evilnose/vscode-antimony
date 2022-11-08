@@ -1,8 +1,12 @@
 from collections import defaultdict
 import logging
 import os
-from stibium.ant_types import UnitAssignment, FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
-from .types import FunctionAlreadyExists, CircularImportFound, DuplicateImportedMModelCall, FileAlreadyImported, GrammarHasIssues, ModelAlreadyExists, NoImportFile, OverridingDisplayName, RedefinedFunction, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+import requests
+from bioservices import ChEBI, UniProt, Rhea
+from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Interaction, SimpleStmt, TreeNode, TrunkNode
+from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UninitRateLaw, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
+from stibium.ant_types import UnitAssignment, FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Sbo, Annotation, Sboterm, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, RateRules, Reaction, Event, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
+from .types import FunctionAlreadyExists, CircularImportFound, DuplicateImportedMModelCall, FileAlreadyImported, GrammarHasIssues, ModelAlreadyExists, NoImportFile, ObscuredEventTrigger, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition, RateRuleOverRidden, RateRuleNotInReaction
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -10,6 +14,17 @@ from typing import Any, List, Optional, Set, cast
 from itertools import chain
 from lark.lexer import Token
 from lark.tree import Tree
+
+SLASH = "/"
+HTTP = "http"
+RHEA_URL = "www.rhea-db.org"
+IDENTIFIERS_ORG = "identifiers.org"
+CHEBI_LOWER = "chebi"
+EQUATION_LOWER = "equation"
+EQUATION_CAP = "Equation"
+UNDERSCORE = "_"
+ONTOLOGIES_URL = "http://www.ebi.ac.uk/ols/api/ontologies/"
+ONTOLOGIES_URL_SECOND_PART = "/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252F"
 
 def get_qname_at_position(root: FileNode, pos: SrcPosition) -> Optional[QName]:
     '''Returns (context, token) the given position. `token` may be None if not found.
@@ -70,7 +85,15 @@ class AntTreeAnalyzer:
         self.pending_annotations = []
         self.pending_imports = []
         self.cur_file_name = os.path.basename(path)
+        self.pending_interactions = []
+        self.pending_sboterms = []
+        # for dealing with rate rules not yet declared
+        self.pending_rate_rules = []
+        self.pending_sboterms = []
+        self.pending_events = []
+        self.unnamed_events_num = 0
         base_scope = BaseScope()
+        self.reaction_item = set()
         for child in root.children:
             if isinstance(child, ErrorToken):
                 continue
@@ -94,17 +117,22 @@ class AntTreeAnalyzer:
                                 continue
                             {
                                 'Reaction': self.handle_reaction,
+                                'Event': self.pre_handle_event,
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.pre_handle_annotation,
+                                'Sboterm': self.pre_handle_sboterm,
                                 'UnitDeclaration': self.handle_unit_declaration,
                                 'UnitAssignment' : self.handle_unit_assignment,
                                 'ModularModelCall' : self.handle_mmodel_call,
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
+                                'Interaction' : self.pre_handle_interaction,
+                                'RateRules' : self.pre_handle_rate_rule,
                             }[stmt.__class__.__name__](scope, stmt, False)
                             self.handle_child_incomp(scope, stmt, False)
+                            self.handle_is_const(scope, stmt, False)
             if isinstance(child, ModularModel):
                 scope = ModularModelScope(str(child.get_name()))
                 for cchild in child.children:
@@ -123,17 +151,22 @@ class AntTreeAnalyzer:
                                 continue
                             {
                                 'Reaction': self.handle_reaction,
+                                'Event': self.pre_handle_event,
                                 'Assignment': self.handle_assignment,
                                 'Declaration': self.handle_declaration,
                                 'Annotation': self.pre_handle_annotation,
+                                'Sboterm': self.pre_handle_sboterm,
                                 'UnitDeclaration': self.handle_unit_declaration,
                                 'UnitAssignment' : self.handle_unit_assignment,
                                 'ModularModelCall' : self.handle_mmodel_call,
                                 'FunctionCall' : self.handle_function_call,
                                 'VariableIn' : self.handle_variable_in,
                                 'IsAssignment' : self.pre_handle_is_assignment,
+                                'Interaction' : self.pre_handle_interaction,
+                                'RateRules' : self.pre_handle_rate_rule,
                             }[stmt.__class__.__name__](scope, stmt, False)
                             self.handle_child_incomp(scope, stmt, False)
+                            self.handle_is_const(scope, stmt, False)
                     if isinstance(cchild, Parameters):
                         self.handle_parameters(scope, cchild, False)
                 self.handle_mmodel(child, False)
@@ -166,26 +199,35 @@ class AntTreeAnalyzer:
                     continue
                 {
                     'Reaction': self.handle_reaction,
+                    'Event': self.pre_handle_event,
                     'Assignment': self.handle_assignment,
                     'Declaration': self.handle_declaration,
                     'Annotation': self.pre_handle_annotation,
+                    'Sboterm': self.pre_handle_sboterm,
                     'UnitDeclaration': self.handle_unit_declaration,
                     'UnitAssignment' : self.handle_unit_assignment,
                     'ModularModelCall' : self.handle_mmodel_call,
                     'FunctionCall' : self.handle_function_call,
                     'VariableIn' : self.handle_variable_in,
                     'IsAssignment' : self.pre_handle_is_assignment,
+                    'Interaction' : self.pre_handle_interaction,
+                    'RateRules' : self.pre_handle_rate_rule,
                 }[stmt.__class__.__name__](base_scope, stmt, False)
                 self.handle_child_incomp(base_scope, stmt, False)
+                self.handle_is_const(base_scope, stmt, False)
         
         # get list of errors from the symbol table
         self.error = self.table.error
         # get list of warnings
         self.warning = self.table.warning
         self.handle_annotation_list()
+        self.handle_sboterm_list()
+        self.get_annotation_descriptions()
         self.handle_is_assignment_list()
         self.handle_import_list()
-        self.pending_annotations = []
+        self.handle_interactions()
+        # handle all rate rules after appended to list and finished parsing
+        self.handle_rate_rules()
         self.pending_is_assignments = []
         self.pending_imports = []
         self.check_parse_tree(self.root, BaseScope())
@@ -246,7 +288,8 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == Reaction:
                     reaction = node.get_stmt()
                     rate_law = reaction.get_rate_law()
-                    self.check_rate_law(rate_law, scope)
+                    if rate_law is not None:
+                        self.check_rate_law(rate_law, scope)
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
                     self.process_mmodel_call(node, scope)
@@ -256,6 +299,10 @@ class AntTreeAnalyzer:
                     self.process_is_assignment(node, scope)
                 elif type(node.get_stmt()) == Assignment:
                     self.process_maybein(node, scope)
+                elif type(node.get_stmt()) == Sboterm or type(node.get_stmt()) == Annotation:
+                    self.process_annotation(node, scope)
+                elif type(node.get_stmt()) == Event:
+                    self.process_event(node, scope)
 
     def check_parse_tree_function(self, function, scope):
         # check the expression
@@ -314,7 +361,8 @@ class AntTreeAnalyzer:
                 elif type(node.get_stmt()) == Reaction:
                     reaction = node.get_stmt()
                     rate_law = reaction.get_rate_law()
-                    used = set.union(used, self.check_rate_law(rate_law, scope, params))
+                    if rate_law is not None:
+                        used = set.union(used, self.check_rate_law(rate_law, scope, params))
                     self.process_reaction(node, scope)
                 elif type(node.get_stmt()) == ModularModelCall:
                     self.process_mmodel_call(node, scope)
@@ -324,6 +372,10 @@ class AntTreeAnalyzer:
                     self.process_is_assignment(node, scope)
                 elif type(node.get_stmt()) == Assignment:
                     self.process_maybein(node, scope)
+                elif type(node.get_stmt()) == Sboterm or type(node.get_stmt()) == Annotation:
+                    self.process_annotation(node, scope)
+                elif type(node.get_stmt()) == Event:
+                    self.process_event(node, scope)
         self.check_param_unused(used, params)
 
     def check_rate_law(self, rate_law, scope, params=set()):
@@ -376,6 +428,23 @@ class AntTreeAnalyzer:
                 else:
                     self.table.insert(QName(scope, child.get_comp().get_name()), SymbolType.Compartment)
 
+    def handle_is_const(self, scope: AbstractScope, node: TrunkNode, insert: bool):
+        indicator = False
+        for child in node.descendants():
+            if indicator and child and type(child) == Name:
+                
+                child = cast(Name, child)
+                
+                if insert:
+                    self.import_table.insert(QName(scope, child), SymbolType.Unknown, is_const=True)
+                else:
+                    self.table.insert(QName(scope, child), SymbolType.Unknown, is_const=True)
+            indicator = False
+            if child and type(child) == Operator:
+                child = cast(Operator, child)
+                if child.text == "$":
+                    indicator = True
+
     def handle_arith_expr(self, scope: AbstractScope, expr: TreeNode, insert: bool):
         # TODO handle dummy tokens
         if not hasattr(expr, 'children'):
@@ -394,6 +463,18 @@ class AntTreeAnalyzer:
                         self.import_table.insert(QName(scope, leaf), SymbolType.Parameter)
                     else:
                         self.table.insert(QName(scope, leaf), SymbolType.Parameter)
+                    
+    def handle_bool_expr(self, scope: AbstractScope, expr: TreeNode):
+        if not hasattr(expr, 'children'):
+            if type(expr) == Name:
+                leaf = cast(Name, expr)
+                self.table.insert(QName(scope, leaf), SymbolType.Parameter)
+        else:
+            expr = cast(TrunkNode, expr)
+            for leaf in expr.scan_leaves():
+                if type(leaf) == Name:
+                    leaf = cast(Name, leaf)
+                    self.table.insert(QName(scope, leaf), SymbolType.Parameter)
 
     def handle_reaction(self, scope: AbstractScope, reaction: Reaction, insert: bool):
         name = reaction.get_name()
@@ -412,9 +493,38 @@ class AntTreeAnalyzer:
         for species in chain(reaction.get_reactants(), reaction.get_products()):
             if insert:
                 self.import_table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
+                self.import_table.get(QName(scope, species.get_name()))[0].in_reaction = True
             else:
                 self.table.insert(QName(scope, species.get_name()), SymbolType.Species, comp=comp)
+                self.table.get(QName(scope, species.get_name()))[0].in_reaction = True
+        rate_law = reaction.get_rate_law()
+        if rate_law is not None:
+            self.handle_arith_expr(scope, rate_law, insert)
         self.handle_arith_expr(scope, reaction.get_rate_law(), insert)
+        
+    def pre_handle_event(self, scope: AbstractScope, event: Event):
+        self.pending_events.append((scope, event))
+        name = event.get_name()
+        comp = None
+        if event.get_maybein() is not None and event.get_maybein().is_in_comp():
+            comp = event.get_maybein().get_comp().get_name_text()
+            
+        if name is not None:
+            self.table.insert(QName(scope, name), SymbolType.Event, event, comp=comp)
+        else:
+            self.unnamed_events_num += 1
+            event.unnamed_label = self.unnamed_events_num
+        event_delay = event.get_event_delay()
+        if event_delay:
+            expr = event_delay.get_expr()
+            self.handle_bool_expr(scope ,expr)
+        condition = event.get_condition()
+        self.handle_bool_expr(scope, condition)
+
+        for assignment in event.get_assignments():
+            qname = QName(scope, assignment.get_name())
+            self.table.insert_event(qname, event)
+            self.handle_arith_expr(scope, assignment)
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment, insert: bool):
         comp = None
@@ -718,7 +828,7 @@ class AntTreeAnalyzer:
                 in_table[0].is_const = is_const
                 in_table[0].is_sub = is_sub
         self.handle_declaration(scope, stmt, True)
-    
+        
     def handle_reaction_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_name())
         in_table = self.table.get(cur_qname)
@@ -773,6 +883,110 @@ class AntTreeAnalyzer:
             self.replace_assign(cur_qname, stmt)
         self.handle_function_call(scope, stmt, True)
 
+    def pre_handle_rate_rule(self, scope, rate_rule):
+        self.pending_rate_rules.append((scope, rate_rule))
+
+    def handle_rate_rules(self):
+        for scope, rate_rule in self.pending_rate_rules:
+            self.handle_rate_rule(scope, rate_rule)
+
+    def handle_rate_rule(self, scope, rate_rule : RateRules):
+        name = rate_rule.get_name()
+        qname = QName(scope, name)
+        expression = rate_rule.get_value()
+        all_names = self.table.get_all_names()
+        if len(self.table.get(qname)) != 0:
+            var = self.table.get(qname)[0]
+            if var.type == SymbolType.Species and var.in_reaction and not var.is_const:
+                self.error.append(RateRuleNotInReaction(rate_rule.range, name.text))
+            rate_rule_string = ""
+            for leaf in expression.scan_leaves():
+                if isinstance(leaf, Name) and leaf.text not in all_names:
+                    self.warning.append(VarNotFound(leaf.range, leaf.text))
+                if leaf.text == "+" or leaf.text == "-" or leaf.text == "*" or leaf.text == "/":
+                    rate_rule_string += " " + (leaf.text) + " "
+                else:
+                    rate_rule_string += (leaf.text)
+            if var.rate_rule != None:
+                self.warning.append(RateRuleOverRidden(rate_rule.get_name().range, rate_rule.get_name().text, var))
+            var.rate_rule = rate_rule_string
+        else:
+            self.warning.append(VarNotFound(rate_rule.get_name().range, rate_rule.get_name().text))
+            
+    def pre_handle_sboterm(self, scope: AbstractScope, sboterm: Sboterm, insert: bool):
+        self.pending_sboterms.append((scope, sboterm, insert))
+    
+    def handle_sboterm_list(self):
+        for scope, sboterm, insert in self.pending_sboterms:
+            self.handle_sboterm(scope, sboterm, insert)
+    
+    def handle_sboterm(self, scope: AbstractScope, sboterm: Sboterm, insert: bool):
+        name = sboterm.get_var_name().get_name()
+        qname = QName(scope, name)
+        symbol_list = self.table.get(qname)
+        if len(symbol_list) == 0:
+            if insert:
+                self.import_table.insert(qname, SymbolType.Parameter)
+            else:
+                self.table.insert(qname, SymbolType.Parameter)
+        if insert:
+            self.import_table.insert_sboterm(qname, sboterm)
+        else:
+            self.table.insert_sboterm(qname, sboterm)
+
+    def get_annotation_descriptions(self):
+        for scope, annotation in self.pending_annotations:
+            self.get_annotation_description(scope, annotation)
+    
+    def get_annotation_description(self, scope: AbstractScope, annotation: Annotation):
+        name = annotation.get_var_name().get_name()
+        qname = QName(scope, name)
+        symbol = self.table.get(qname)
+        if symbol:
+            uri = annotation.get_uri()
+            if uri[0:4] != HTTP:
+                return
+            if uri in symbol[0].queried_annotations.keys():
+                return
+            uri_split = uri.split(SLASH)
+            website = uri_split[2]
+            chebi_id = uri_split[4]
+            if website == IDENTIFIERS_ORG:
+                if uri_split[3] == CHEBI_LOWER:
+                    chebi = ChEBI()
+                    res = chebi.getCompleteEntity(chebi_id)
+                    name = res.chebiAsciiName
+                    definition = res.definition
+                    queried = '\n{}\n\n{}\n'.format(name, definition)
+                    symbol[0].queried_annotations[uri] = queried
+                else:
+                    return
+                    # uniport = UniProt()
+            elif website == RHEA_URL:
+                rhea = Rhea()
+                df_res = rhea.query(uri_split[4], columns=EQUATION_LOWER, limit=10)
+                equation = df_res[EQUATION_CAP]
+                queried = '\n{}\n'.format(equation[0])
+                df_res += queried
+                symbol[0].queried_annotations[uri] = queried
+            else:
+                ontology_info = uri_split[-1]
+                ontology_info_split = ontology_info.split('_')
+                ontology_name = ontology_info_split[0].lower()
+                iri = uri_split[-1]
+                
+                response = requests.get(ONTOLOGIES_URL + ontology_name + ONTOLOGIES_URL_SECOND_PART + iri).json()
+                if ontology_name == 'pr' or ontology_name == 'ma' or ontology_name == 'obi' or ontology_name == 'fma':
+                    definition = response['description']
+                else:
+                    response_annot = response['annotation']
+                    definition = response_annot['definition']
+                name = response['label']
+                queried =  '\n{}\n'.format(name)
+                if definition:
+                    queried += '\n{}\n'.format(definition[0])
+                symbol[0].queried_annotations[uri] = queried
+
     def pre_handle_is_assignment(self, scope: AbstractScope, is_assignment: IsAssignment, insert: bool):
         self.pending_is_assignments.append((scope, is_assignment, insert))
     
@@ -826,6 +1040,32 @@ class AntTreeAnalyzer:
                 if len(base_var) != 0:
                     base_var[0].display_name = display_name
     
+    def pre_handle_interaction(self, scope, Interaction):
+        self.pending_interactions.append((scope, Interaction))
+
+    def handle_interactions(self):
+        for scope, interaction in self.pending_interactions:
+            self.handle_interaction(scope, interaction)
+
+    def handle_interaction(self, scope, interaction : Interaction):
+        name = interaction.get_species().get_name()
+        reaction = interaction.get_reaction_namemaybein()
+        self.table.insert(QName(scope, reaction.get_var_name().get_name()), SymbolType.Reaction)
+        opr = interaction.get_opr().text
+        interaction_str = ''
+        if opr == '-o':
+            interaction_str += 'activation'
+        elif opr == '-|':
+            interaction_str += 'inhibition'
+        elif opr == '-(':
+            interaction_str += 'unknown interaction'
+        # interaction_str += ' in reaction: ' + reaction.text
+        self.table.insert(QName(scope, name), SymbolType.Unknown)
+        interaction_name = interaction.get_name()
+        if interaction_name:
+            self.table.insert(QName(scope, interaction_name.get_name()), SymbolType.Interaction)
+            self.table.get(QName(scope, interaction_name.get_name()))[0].interaction = interaction_str
+
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration, insert: bool):
         varname = unitdec.get_var_name().get_name()
         unit_sum = unitdec.get_sum()
@@ -986,6 +1226,8 @@ class AntTreeAnalyzer:
     def process_reaction(self, node, scope):
         reaction = node.get_stmt()
         rate_law = reaction.get_rate_law()
+        if rate_law is None:
+            self.warning.append(UninitRateLaw(reaction.range, reaction.get_name_text()))
         # check if all species have been initialized
         species_list = []
         for species in reaction.get_reactants():
@@ -1068,6 +1310,49 @@ class AntTreeAnalyzer:
             var = self.import_table.get(qname)
         if len(var) == 0:
             self.warning.append(VarNotFound(name.range, name.text))
+            
+    def process_annotation(self, node, scope):
+        name = node.get_stmt().get_var_name().get_name()
+        qname = QName(scope, name)
+        var = self.table.get(qname)
+        if var[0].value_node is None and var[0].type == SymbolType.Species:
+            self.error.append(RefUndefined(name.range, name.text))
+            
+    def process_sbo(self, node, scope):
+        name = node.get_stmt().get_var_name().get_name()
+        qname = QName(scope, name)
+        var = self.table.get(qname)
+        if var[0].value_node is None and var[0].type == SymbolType.Species:
+            self.error.append(RefUndefined(name.range, name.text))
+        
+        
+    def process_event(self, node, scope):
+        event: Event = node.get_stmt()
+        if event.get_event_delay():
+            self.handle_bool_expr(scope, event.get_event_delay().get_expr())
+        curr_triggers = dict()
+        for trigger in event.get_triggers():
+            if trigger.get_keyword().text in curr_triggers.keys():
+                self.warning.append(ObscuredEventTrigger(curr_triggers.get(trigger.get_keyword().text).range, trigger.range, curr_triggers.get(trigger.get_keyword().text).to_string()))
+            curr_triggers[trigger.get_keyword().text] = trigger
+        for assignment in event.get_assignments():
+            var_name = assignment.get_name()
+            self._check_event_var_name(var_name, scope)
+            if issubclass(type(assignment.get_value()), TrunkNode):
+                for leaf in assignment.get_value().descendants():
+                    if isinstance(leaf, Name):
+                        name = self.table.get(QName(scope, leaf))
+                        if name[0].value_node is None:
+                            self.error.append(RefUndefined(leaf.range, name[0].name))
+            # var = self.table.get(QName(scope, var_name))
+            # if not var[0].type.derives_from(SymbolType.Parameter):
+            #     self.warning.append(UninitVar(var_name.range, var_name.text))
+        self.process_maybein(node, scope)
+        
+    def _check_event_var_name(self, var_name, scope):
+        var = self.table.get(QName(scope, var_name))
+        if not var[0].type.derives_from(SymbolType.Parameter):
+            self.error.append(RefUndefined(var_name.range, var_name.text))
         
 
 # def get_ancestors(node: ASTNode):

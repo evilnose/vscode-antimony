@@ -5,19 +5,77 @@ namemaybein : var_name [in_comp]
 
 empty:
 reaction_name : namemaybein ":"
-reaction : [reaction_name] species_list ARROW [species_list] ";" sum [in_comp]
-    | [reaction_name] [species_list] ARROW species_list ";" sum [in_comp]
+reaction : [reaction_name] species_list ARROW [species_list] ";" [sum] [in_comp]
+    | [reaction_name] [species_list] ARROW species_list ";" [sum] [in_comp]
 species_list : species ("+" species)*
 species : [NUMBER] ["$"] NAME
 ARROW : "->"
     | "=>"
 
+interaction : [reaction_name] species INTERACTION_SYMBOL namemaybein
+INTERACTION_SYMBOL : "-o" | "-|" | "-("
+
+event : [reaction_name] "at" [event_delay] bool_exp [event_trigger_list] ":" event_assignment_list
+
+event_delay : bool_exp "after"
+
+
+event_trigger_list : ("," event_trigger)*
+
+// atom has to be changed to (NUMBER | var_name)
+event_trigger : "t0" "=" BOOLEAN
+    | "priority" "=" sum
+    | "fromTrigger" "=" BOOLEAN
+    | "persistent" "=" BOOLEAN
+
+event_assignment_list : event_assignment ("," event_assignment)*
+event_assignment : var_name "=" sum
+
+BOOLEAN : "true" | "false"
+
+COMPARE : ">=" | "<=" | ">" | "<" | "=="
+
+
+LOGICAL : "&&" | "||"
+
+sboterm: var_name ".sboTerm" "=" SBOTERM
+SBOTERM: NUMBER
+    | "SBO:" NUMBER
+
 assignment : namemaybein ("=" | AEQ) sum 
 
 AEQ : ":="
 
+apostrophe : "'"
+rate_rule : NAME apostrophe "=" sum
+
 annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
-ANNOT_KEYWORD: "identity" | "hasPart"
+ANNOT_KEYWORD: "identity"
+    | "hasPart"
+    | "biological_entity_is"
+    | "parthood"
+    | "part"
+    | "isPartOf"
+    | "isVersionOf"
+    | "hypernym"
+    | "hasVersion"
+    | "version"
+    | "isHomologTo"
+    | "homolog"
+    | "isDescribedBy"
+    | "description"
+    | "isEncodedBy"
+    | "encoder"
+    | "encodes"
+    | "encodement"
+    | "occursIn"
+    | "container"
+    | "hasProperty"
+    | "propertyBearer"
+    | "property"
+    | "isPropertyOf"
+    | "hasTaxon"
+    | "taxon"
 
 
 declaration : decl_modifiers decl_item ("," decl_item)*
@@ -47,6 +105,12 @@ VAR_MODIFIER: /\b(var|const)\b/
 SUB_MODIFIER: /\b(substanceOnly)\b/
 TYPE_MODIFIER: /\b(species|compartment|formula)\b/
 
+?bool_exp : expressions
+    | expressions (LOGICAL expressions)*
+
+?expressions : sum
+    | sum (COMPARE sum)*
+
 ?sum : product
     | sum "+" product
     | sum "-" product
@@ -57,6 +121,7 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
 
 ?power: atom
     | power "^" atom
+    | "exp" atom
 
 ?atom : NUMBER
     | var_name
@@ -65,6 +130,7 @@ TYPE_MODIFIER: /\b(species|compartment|formula)\b/
     | "+" atom
     | "(" sum ")"
     | func_call 
+    | "(" bool_exp ")"
 
 func_call : var_name "(" [parameters] ")"
 
@@ -83,6 +149,10 @@ func_call : var_name "(" [parameters] ")"
     | variable_in
     | is_assignment
     | import
+    | interaction
+    | rate_rule
+    | sboterm
+    | event
 
 simple_stmt_list : simple_stmt+
 

@@ -1,0 +1,6 @@
+import "import_rate_rule.ant"
+
+S2 = 3
+kfc = 2
+S1' = kfc*S2
+S2' = kfc-(S1*S2)

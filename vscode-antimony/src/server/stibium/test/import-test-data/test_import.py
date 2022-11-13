@@ -416,5 +416,28 @@ def test_sboterm():
     assert var.sboterms[0].get_val() == "15"
 
     var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(4, 1), SrcPosition(4, 3)), text='S2')))[0]
-    print(var.sboterms)
     assert var.sboterms[0].get_val() == "12"
+
+def test_rate_rule():
+    file = os.path.join(directory, "rate_rule.ant")
+    doc = Document(os.path.abspath(file))
+    ant_file = AntFile(doc.path, doc.source)
+    issues = ant_file.get_issues()
+    error_count = 0
+    for issue in issues:
+        if str(issue.severity.__str__()) == "IssueSeverity.Error":
+            error_count += 1
+    assert error_count == 0, "Import unsuccessful"
+    assert len(issues) == 1, "Incorrect issue count"
+    stmt = ant_file.tree.children[0].get_stmt()
+    assert isinstance(stmt, Import)
+
+    # Test imported rate rule and base file rate rule
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(1, 1), SrcPosition(1, 3)), text='S1')))[0]
+    assert var.rate_rule == "kfc * S2"
+
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(3, 1), SrcPosition(3, 3)), text='S2')))[0]
+    assert var.rate_rule == "kfc - (S1 * S2)"
+
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(2, 1), SrcPosition(2, 3)), text='S3')))[0]
+    assert var.rate_rule == "(S1 - S3) * k1"

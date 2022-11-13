@@ -256,6 +256,8 @@ class AntTreeAnalyzer:
             self.handle_function_call(BaseScope(), stmt, False)
         if isinstance(stmt, Interaction):
             self.handle_interaction(BaseScope(), stmt, False)
+        if isinstance(stmt, RateRules):
+            self.handle_rate_rule(BaseScope(), stmt, False)
 
     def check_parse_tree(self, root, scope):
         # 1. check rate laws:
@@ -665,6 +667,7 @@ class AntTreeAnalyzer:
                         'IsAssignment' : self.handle_is_assign_overwrite,
                         'Interaction' : self.handle_interaction_overwrite,
                         'Sboterm' : self.handle_sboterm_overwrite,
+                        'RateRules' : self.handle_rate_rule_overwrite,
                     }[stmt.__class__.__name__](scope, stmt)
                 if isinstance(node, Model):
                     scope = ModelScope(str(node.get_name()))
@@ -811,6 +814,17 @@ class AntTreeAnalyzer:
         elif in_table and self.inserted[sboterm_ind]:
             in_table[0].sboterms[0].children[3].text = stmt.get_val()
         self.handle_sboterm(scope, stmt, True)
+    
+    def handle_rate_rule_overwrite(self, scope, stmt):
+        cur_qname = QName(scope, stmt.get_name())
+        in_table = self.table.get(cur_qname)
+        rate_rule_ind = in_table[0].name + " rate_rule"
+        if not in_table:
+            self.handle_rate_rule(scope, stmt, False)
+            self.inserted[rate_rule_ind] = True
+        elif in_table and self.inserted[rate_rule_ind]:
+            self.replace_assign(cur_qname, stmt)
+        self.handle_rate_rule(scope, stmt, True)
 
     def handle_mmodel_call_overwrite(self, stmt, name):
         if stmt.get_name() is None:
@@ -927,13 +941,17 @@ class AntTreeAnalyzer:
         qname = QName(scope, name)
         expression = rate_rule.get_value()
         all_names = self.table.get_all_names()
-        if len(self.table.get(qname)) != 0:
-            var = self.table.get(qname)[0]
+        import_names = self.import_table.get_all_names()
+        if len(self.table.get(qname)) != 0 or len(self.import_table.get(qname)) != 0:
+            if len(self.table.get(qname)) == 0:
+                var = self.import_table.get(qname)[0]
+            else:
+                var = self.table.get(qname)[0]
             if var.type == SymbolType.Species and var.in_reaction and not var.is_const:
                 self.error.append(RateRuleNotInReaction(rate_rule.range, name.text))
             rate_rule_string = ""
             for leaf in expression.scan_leaves():
-                if isinstance(leaf, Name) and leaf.text not in all_names:
+                if isinstance(leaf, Name) and leaf.text not in all_names and leaf.text not in import_names:
                     self.warning.append(VarNotFound(leaf.range, leaf.text))
                 if leaf.text == "+" or leaf.text == "-" or leaf.text == "*" or leaf.text == "/":
                     rate_rule_string += " " + (leaf.text) + " "

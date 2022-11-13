@@ -3,10 +3,8 @@ import logging
 import os
 import requests
 from bioservices import ChEBI, UniProt, Rhea
-from stibium.ant_types import FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Annotation, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, Reaction, Interaction, SimpleStmt, TreeNode, TrunkNode
-from .types import OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UninitRateLaw, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition
-from stibium.ant_types import UnitAssignment, FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Sbo, Annotation, Sboterm, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, RateRules, Reaction, Event, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
-from .types import FunctionAlreadyExists, CircularImportFound, DuplicateImportedMModelCall, FileAlreadyImported, GrammarHasIssues, ModelAlreadyExists, NoImportFile, ObscuredEventTrigger, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition, RateRuleOverRidden, RateRuleNotInReaction
+from stibium.ant_types import Interaction, UnitAssignment, FuncCall, IsAssignment, VariableIn, NameMaybeIn, FunctionCall, ModularModelCall, Number, Operator, VarName, DeclItem, UnitDeclaration, Parameters, ModularModel, Function, SimpleStmtList, End, Keyword, Sbo, Annotation, Sboterm, ArithmeticExpr, Assignment, Declaration, ErrorNode, ErrorToken, FileNode, Function, InComp, LeafNode, Model, Name, RateRules, Reaction, Event, SimpleStmt, TreeNode, TrunkNode, Import, StringLiteral
+from .types import FunctionAlreadyExists, CircularImportFound, DuplicateImportedMModelCall, FileAlreadyImported, GrammarHasIssues, ModelAlreadyExists, NoImportFile, ObscuredEventTrigger, UninitRateLaw, OverridingDisplayName, SubError, VarNotFound, SpeciesUndefined, IncorrectParamNum, ParamIncorrectType, UninitFunction, UninitMModel, UninitCompt, UnusedParameter, RefUndefined, ASTNode, Issue, SymbolType, SyntaxErrorIssue, UnexpectedEOFIssue, UnexpectedNewlineIssue, UnexpectedTokenIssue, Variability, SrcPosition, RateRuleOverRidden, RateRuleNotInReaction
 from .symbols import FuncSymbol, AbstractScope, BaseScope, FunctionScope, MModelSymbol, ModelScope, QName, SymbolTable, ModularModelScope
 
 from dataclasses import dataclass
@@ -256,6 +254,8 @@ class AntTreeAnalyzer:
             self.handle_reaction(BaseScope(), stmt, False)
         if isinstance(stmt, FunctionCall):
             self.handle_function_call(BaseScope(), stmt, False)
+        if isinstance(stmt, Interaction):
+            self.handle_interaction(BaseScope(), stmt, False)
 
     def check_parse_tree(self, root, scope):
         # 1. check rate laws:
@@ -501,8 +501,9 @@ class AntTreeAnalyzer:
         if rate_law is not None:
             self.handle_arith_expr(scope, rate_law, insert)
         self.handle_arith_expr(scope, reaction.get_rate_law(), insert)
-        
-    def pre_handle_event(self, scope: AbstractScope, event: Event):
+    
+    # Events currently not supported through import    
+    def pre_handle_event(self, scope: AbstractScope, event: Event, insert: bool):
         self.pending_events.append((scope, event))
         name = event.get_name()
         comp = None
@@ -524,7 +525,7 @@ class AntTreeAnalyzer:
         for assignment in event.get_assignments():
             qname = QName(scope, assignment.get_name())
             self.table.insert_event(qname, event)
-            self.handle_arith_expr(scope, assignment)
+            self.handle_arith_expr(scope, assignment, insert)
 
     def handle_assignment(self, scope: AbstractScope, assignment: Assignment, insert: bool):
         comp = None
@@ -662,6 +663,8 @@ class AntTreeAnalyzer:
                         'FunctionCall' : self.handle_func_call_overwrite,
                         'VariableIn' : self.handle_var_in_overwrite,
                         'IsAssignment' : self.handle_is_assign_overwrite,
+                        'Interaction' : self.handle_interaction_overwrite,
+                        'Sboterm' : self.handle_sboterm_overwrite,
                     }[stmt.__class__.__name__](scope, stmt)
                 if isinstance(node, Model):
                     scope = ModelScope(str(node.get_name()))
@@ -693,6 +696,10 @@ class AntTreeAnalyzer:
                                     'FunctionCall' : self.handle_function_call,
                                     'VariableIn' : self.handle_variable_in,
                                     'IsAssignment' : self.pre_handle_is_assignment,
+                                    'Interaction' : self.pre_handle_interaction,
+                                    'RateRules' : self.pre_handle_rate_rule,
+                                    'Sboterm' : self.pre_handle_sboterm,
+                                    'Event' : self.pre_handle_event,
                                 }[stmt.__class__.__name__](scope, stmt, True)
                                 self.handle_child_incomp(scope, stmt, True)
                 if isinstance(node, ModularModel):
@@ -725,6 +732,10 @@ class AntTreeAnalyzer:
                                     'FunctionCall' : self.handle_function_call,
                                     'VariableIn' : self.handle_variable_in,
                                     'IsAssignment' : self.pre_handle_is_assignment,
+                                    'Interaction' : self.pre_handle_interaction,
+                                    'RateRules' : self.pre_handle_rate_rule,
+                                    'Sboterm' : self.pre_handle_sboterm,
+                                    'Event' : self.pre_handle_event,
                                 }[stmt.__class__.__name__](scope, stmt, True)
                                 self.handle_child_incomp(scope, stmt, True)
                         if isinstance(child, Parameters):
@@ -779,6 +790,27 @@ class AntTreeAnalyzer:
         elif in_table and self.inserted[stmt.get_var_name().get_name()]:
             self.replace_assign(cur_qname, stmt)
         self.handle_unit_declaration(scope, stmt, True)
+
+    def handle_interaction_overwrite(self, scope, stmt):
+        cur_qname = QName(scope, stmt.get_name().get_name())
+        in_table = self.table.get(cur_qname)
+        if not in_table:
+            self.handle_interaction(scope, stmt, False)
+            self.inserted[stmt.get_name().get_name()] = True
+        elif in_table and self.inserted[stmt.get_name().get_name()]:
+            self.replace_assign(cur_qname, stmt)
+        self.handle_interaction(scope, stmt, True)
+    
+    def handle_sboterm_overwrite(self, scope, stmt):
+        cur_qname = QName(scope, stmt.get_var_name().get_name())
+        in_table = self.table.get(cur_qname)
+        sboterm_ind = in_table[0].name + " sboterm"
+        if not in_table or not in_table[0].sboterms:
+            self.handle_sboterm(scope, stmt, False)
+            self.inserted[sboterm_ind] = True
+        elif in_table and self.inserted[sboterm_ind]:
+            in_table[0].sboterms[0].children[3].text = stmt.get_val()
+        self.handle_sboterm(scope, stmt, True)
 
     def handle_mmodel_call_overwrite(self, stmt, name):
         if stmt.get_name() is None:
@@ -883,14 +915,14 @@ class AntTreeAnalyzer:
             self.replace_assign(cur_qname, stmt)
         self.handle_function_call(scope, stmt, True)
 
-    def pre_handle_rate_rule(self, scope, rate_rule):
-        self.pending_rate_rules.append((scope, rate_rule))
+    def pre_handle_rate_rule(self, scope, rate_rule, insert: bool):
+        self.pending_rate_rules.append((scope, rate_rule, insert))
 
     def handle_rate_rules(self):
-        for scope, rate_rule in self.pending_rate_rules:
-            self.handle_rate_rule(scope, rate_rule)
+        for scope, rate_rule, insert in self.pending_rate_rules:
+            self.handle_rate_rule(scope, rate_rule, insert)
 
-    def handle_rate_rule(self, scope, rate_rule : RateRules):
+    def handle_rate_rule(self, scope, rate_rule : RateRules, insert: bool):
         name = rate_rule.get_name()
         qname = QName(scope, name)
         expression = rate_rule.get_value()
@@ -923,7 +955,10 @@ class AntTreeAnalyzer:
     def handle_sboterm(self, scope: AbstractScope, sboterm: Sboterm, insert: bool):
         name = sboterm.get_var_name().get_name()
         qname = QName(scope, name)
-        symbol_list = self.table.get(qname)
+        if insert:
+            symbol_list = self.import_table.get(qname)
+        else:
+            symbol_list = self.table.get(qname)
         if len(symbol_list) == 0:
             if insert:
                 self.import_table.insert(qname, SymbolType.Parameter)
@@ -935,7 +970,7 @@ class AntTreeAnalyzer:
             self.table.insert_sboterm(qname, sboterm)
 
     def get_annotation_descriptions(self):
-        for scope, annotation in self.pending_annotations:
+        for scope, annotation, insert in self.pending_annotations:
             self.get_annotation_description(scope, annotation)
     
     def get_annotation_description(self, scope: AbstractScope, annotation: Annotation):
@@ -1040,17 +1075,20 @@ class AntTreeAnalyzer:
                 if len(base_var) != 0:
                     base_var[0].display_name = display_name
     
-    def pre_handle_interaction(self, scope, Interaction):
-        self.pending_interactions.append((scope, Interaction))
+    def pre_handle_interaction(self, scope, Interaction, insert: bool):
+        self.pending_interactions.append((scope, Interaction, insert))
 
     def handle_interactions(self):
-        for scope, interaction in self.pending_interactions:
-            self.handle_interaction(scope, interaction)
+        for scope, interaction, insert in self.pending_interactions:
+            self.handle_interaction(scope, interaction, insert)
 
-    def handle_interaction(self, scope, interaction : Interaction):
+    def handle_interaction(self, scope, interaction : Interaction, insert: bool):
         name = interaction.get_species().get_name()
         reaction = interaction.get_reaction_namemaybein()
-        self.table.insert(QName(scope, reaction.get_var_name().get_name()), SymbolType.Reaction)
+        if insert:
+            self.import_table.insert(QName(scope, reaction.get_var_name().get_name()), SymbolType.Reaction)
+        else:
+            self.table.insert(QName(scope, reaction.get_var_name().get_name()), SymbolType.Reaction)
         opr = interaction.get_opr().text
         interaction_str = ''
         if opr == '-o':
@@ -1060,11 +1098,18 @@ class AntTreeAnalyzer:
         elif opr == '-(':
             interaction_str += 'unknown interaction'
         # interaction_str += ' in reaction: ' + reaction.text
-        self.table.insert(QName(scope, name), SymbolType.Unknown)
+        if insert:
+            self.import_table.insert(QName(scope, name), SymbolType.Unknown)
+        else:
+            self.table.insert(QName(scope, name), SymbolType.Unknown)
         interaction_name = interaction.get_name()
         if interaction_name:
-            self.table.insert(QName(scope, interaction_name.get_name()), SymbolType.Interaction)
-            self.table.get(QName(scope, interaction_name.get_name()))[0].interaction = interaction_str
+            if insert:
+                self.import_table.insert(QName(scope, interaction_name.get_name()), SymbolType.Interaction)
+                self.import_table.get(QName(scope, interaction_name.get_name()))[0].interaction = interaction_str
+            else:
+                self.table.insert(QName(scope, interaction_name.get_name()), SymbolType.Interaction)
+                self.table.get(QName(scope, interaction_name.get_name()))[0].interaction = interaction_str
 
     def handle_unit_declaration(self, scope: AbstractScope, unitdec: UnitDeclaration, insert: bool):
         varname = unitdec.get_var_name().get_name()

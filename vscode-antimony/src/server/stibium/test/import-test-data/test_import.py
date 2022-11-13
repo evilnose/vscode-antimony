@@ -379,6 +379,7 @@ def test_var_in():
     var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(3, 1), SrcPosition(3, 2)), text='g')))[0]
     assert var.comp == "test"
 
+
 def test_failed_import():
     file = os.path.join(directory, "bad.ant")
     doc = Document(os.path.abspath(file))
@@ -395,3 +396,25 @@ def test_failed_import():
     error_msg += "File not found\n"
     error_msg += "Function 'failed_func' not defined\n"
     assert error_msg == issues[0].message, "Incorrect error encountered"
+
+
+def test_sboterm():
+    file = os.path.join(directory, "sboterm.ant")
+    doc = Document(os.path.abspath(file))
+    ant_file = AntFile(doc.path, doc.source)
+    issues = ant_file.get_issues()
+    error_count = 0
+    for issue in issues:
+        if str(issue.severity.__str__()) == "IssueSeverity.Error":
+            error_count += 1
+    assert error_count == 0, "Import unsuccessful"
+    stmt = ant_file.tree.children[0].get_stmt()
+    assert isinstance(stmt, Import)
+
+    # Test sboterms for imported assignments
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(3, 1), SrcPosition(3, 3)), text='S1')))[0]
+    assert var.sboterms[0].get_val() == "15"
+
+    var = ant_file.analyzer.table.get(QName(BaseScope(), name=Name(range=SrcRange(SrcPosition(4, 1), SrcPosition(4, 3)), text='S2')))[0]
+    print(var.sboterms)
+    assert var.sboterms[0].get_val() == "12"

@@ -797,8 +797,20 @@ class IsAssignment(TrunkNode):
         return self.children[2]
 
 @dataclass
+class Import(TrunkNode):
+    children: Tuple[Keyword, StringLiteral] = field(repr=False)
+    
+    def get_file_name(self):
+        return self.children[1]
+    
+    def get_file(self):
+        from stibium.utils import get_file_info
+        file_str = get_file_info(self.get_file_name().get_str())
+        return file_str
+
+@dataclass
 class SimpleStmt(TrunkNode):
-    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, Sboterm, UnitDeclaration, UnitAssignment, VariableIn, RateRules, Event], Union[Operator, Newline]] = field(repr=False)
+    children: Tuple[Union[IsAssignment, Reaction, Assignment, Declaration, Annotation, Sboterm, UnitDeclaration, UnitAssignment, VariableIn, Import, RateRules, Event], Union[Operator, Newline]] = field(repr=False)
 
     def get_stmt(self):
         return self.children[0]

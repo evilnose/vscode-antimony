@@ -1,0 +1,4 @@
+import "import.ant"
+
+a identity "http://identifiers.org/chebi/CHEBI:763"
+b identity "http://identifiers.org/chebi/CHEBI:763"

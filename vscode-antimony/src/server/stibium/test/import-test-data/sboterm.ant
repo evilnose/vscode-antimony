@@ -1,0 +1,3 @@
+import "import_sboterm.ant"
+
+S1.sboTerm = 15

@@ -13,7 +13,6 @@ from stibium.tree_builder import Species, transform_tree
 from stibium.types import Issue, SrcLocation, SrcPosition
 from stibium.utils import to_uri
 
-
 class AntCompletionKind(Enum):
     TEXT = auto()
     RATE_LAW = auto()
@@ -52,6 +51,7 @@ class Completer:
         # TODO replace None with qname.token after get_qname_at_position is fixed
         puppet = parser.get_puppet_at_position(text, position)
         basics = [AntCompletion(name, AntCompletionKind.TEXT) for name in analyzer.get_all_names()]
+        imports = [AntCompletion(name, AntCompletionKind.TEXT) for name in analyzer.get_all_import_names()]
 
         # special rate law completions
         rate_laws = list()
@@ -86,7 +86,7 @@ class Completer:
                                                 reaction.is_reversible())
             rate_laws.append(AntCompletion(snippet, AntCompletionKind.RATE_LAW))
 
-        self._completions = basics + rate_laws
+        self._completions = basics + imports + rate_laws
 
     def _mass_action_ratelaw(self, name: str, reactants: List[Species], products: List[Species],
                              reversible: bool):
@@ -132,7 +132,7 @@ class AntFile:
         self.text = text
         self.parser = AntimonyParser()
         self.tree = self.parser.parse(text, recoverable=True)
-        self.analyzer = AntTreeAnalyzer(self.tree)
+        self.analyzer = AntTreeAnalyzer(self.tree, self.path)
 
     def symbols_at(self, position: SrcPosition):
         '''Return (symbols, range) where symbols is the list of symbols that the token at
@@ -148,8 +148,13 @@ class AntFile:
         assert qname.name is not None
         resolved = self.analyzer.resolve_qname(qname)
         if len(resolved) == 0:
+            resolved = self.analyzer.resolve_import_qname(qname)
+        if len(resolved) == 0:
             qname.scope = BaseScope()
             resolved = self.analyzer.resolve_qname(qname)
+        if len(resolved) == 0:
+            qname.scope = BaseScope()
+            resolved = self.analyzer.resolve_import_qname(qname)
         return resolved, qname.name.range
 
     def goto(self, position: SrcPosition):
@@ -190,4 +195,6 @@ class AntFile:
 
     def get_annotations(self, qname: QName):
         # TODO HACK this isn't very elegant -- no encapsulation
-        return self.analyzer.table.get(qname)[0].annotations
+        cur_annot = self.analyzer.table.get(qname)[0].annotations
+        import_annot = self.analyzer.import_table.get(qname)[0].annotations
+        return cur_annot + import_annot

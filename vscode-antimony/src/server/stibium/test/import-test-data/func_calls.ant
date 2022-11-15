@@ -1,0 +1,10 @@
+import "import_func_calls.ant"
+
+function constant(a)
+  a + 1
+end
+
+y = 3
+z = 1
+FC := constant(z)
+FC3 = varsum(y, z)

@@ -148,6 +148,7 @@ func_call : var_name "(" [parameters] ")"
     | function_call
     | variable_in
     | is_assignment
+    | import
     | interaction
     | rate_rule
     | sboterm
@@ -158,6 +159,8 @@ simple_stmt_list : simple_stmt+
 // For some reason we need to have at least one suite in the model, even if it is just
 // a newline or a semicolon
 model : ("model" | "module") NAME simple_stmt_list END
+
+import : "import" ESCAPED_STRING
 
 // Modular Model
 modular_model : "model" ["*"] NAME "(" [parameters] ")" simple_stmt_list END

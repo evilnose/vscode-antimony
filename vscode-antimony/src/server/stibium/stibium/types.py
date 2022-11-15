@@ -322,6 +322,45 @@ class OverrodeValue(Issue):
             new_column=new_range.start.column,
         )
 
+class NoImportFile(Issue):
+    def __init__(self, range):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = "File not found"
+
+class GrammarHasIssues(Issue):
+    def __init__(self, range, issues: list()):
+        super().__init__(range, IssueSeverity.Error)
+        issue_list = "The grammar contains issues, please fix before importing\n"
+        for issue in issues:
+            issue_list += "{}\n".format(issue)
+        self.message = issue_list
+
+class FileAlreadyImported(Issue):
+    def __init__(self, range, file: str):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("'{file}' has already been imported, please remove any extra "
+                        "import statements for '{file}'").format(file=file)
+
+class ModelAlreadyExists(Issue):
+    def __init__(self, range, model: str):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("Model '{}' is already defined, or there is a circular import").format(model)
+
+class DuplicateImportedMModelCall(Issue):
+    def __init__(self, range, mmodelcall: str):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("The modular model call '{}' has been duplicated, please make sure "
+                        "there is only one modular model call of this name").format(mmodelcall)
+
+class CircularImportFound(Issue):
+    def __init__(self, range):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = "Circular import found"
+
+class FunctionAlreadyExists(Issue):
+    def __init__(self, range, function: str):
+        super().__init__(range, IssueSeverity.Error)
+        self.message = ("Function '{}' is already defined").format(function)
 
 class AntimonySyntaxError(Exception):
     # TODO this is far from complete. To include: filename, possible token choices,
@@ -344,6 +383,7 @@ class SymbolType(Enum):
     Function = 'function'
     Unit = 'unit'
     ModularModel = 'mmodel'
+    Import = 'import'
 
     # Subtype of VARIABLE. Also known as "formula"
     Parameter = 'parameter'

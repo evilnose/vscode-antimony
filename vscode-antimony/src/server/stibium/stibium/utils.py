@@ -1,6 +1,7 @@
 
 import os
 from typing import Optional
+import logging
 
 from lark.tree import Tree
 from stibium.ant_types import Atom, ErrorToken, LeafNode, Name, Newline, Number, Operator, SimpleStmt, StringLiteral, TreeNode, TrunkNode
@@ -9,7 +10,7 @@ from .types import ASTNode, SrcPosition, SrcRange
 from lark.lexer import Token
 
 import pathlib
-
+import antimony
 
 def get_abs_path(filename: str):
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), filename)
@@ -62,3 +63,16 @@ def formatted_code(node: Optional[TreeNode]):
 
 def to_uri(path: str) -> str:
     return pathlib.Path(path).as_uri()
+
+def get_file_info(file: str):
+    antimony.clearPreviousLoads()
+    antimony.freeAll()
+    isfile = os.path.isfile(os.path.abspath(file))
+    if isfile:
+        from .api import AntFile
+        file_ext = os.path.splitext(file)[1]
+        if (file_ext == ".txt" or file_ext == ".ant"):
+            with open(file, "r") as open_file:
+                content = open_file.read()
+            return AntFile(os.path.abspath(file), content)
+    return None

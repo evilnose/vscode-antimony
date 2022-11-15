@@ -1,0 +1,8 @@
+function varsum(a, b)
+  a + b
+end
+
+x = 3
+y = 2
+FC := varsum(x, y)
+FC2 := varsum(x, y)

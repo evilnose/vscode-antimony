@@ -653,6 +653,9 @@ class AntTreeAnalyzer:
                     if isinstance(stmt, ModularModelCall):
                         self.handle_mmodel_call_overwrite(stmt, name)
                         continue
+                    if isinstance(stmt, Interaction):
+                        self.handle_interaction(scope, stmt, True)
+                        continue
                     if stmt is None:
                         continue
                     {
@@ -665,7 +668,6 @@ class AntTreeAnalyzer:
                         'FunctionCall' : self.handle_func_call_overwrite,
                         'VariableIn' : self.handle_var_in_overwrite,
                         'IsAssignment' : self.handle_is_assign_overwrite,
-                        'Interaction' : self.handle_interaction_overwrite,
                         'Sboterm' : self.handle_sboterm_overwrite,
                         'RateRules' : self.handle_rate_rule_overwrite,
                     }[stmt.__class__.__name__](scope, stmt)
@@ -793,16 +795,6 @@ class AntTreeAnalyzer:
         elif in_table and self.inserted[stmt.get_var_name().get_name()]:
             self.replace_assign(cur_qname, stmt)
         self.handle_unit_declaration(scope, stmt, True)
-
-    def handle_interaction_overwrite(self, scope, stmt):
-        cur_qname = QName(scope, stmt.get_name().get_name())
-        in_table = self.table.get(cur_qname)
-        if not in_table:
-            self.handle_interaction(scope, stmt, False)
-            self.inserted[stmt.get_name().get_name()] = True
-        elif in_table and self.inserted[stmt.get_name().get_name()]:
-            self.replace_assign(cur_qname, stmt)
-        self.handle_interaction(scope, stmt, True)
     
     def handle_sboterm_overwrite(self, scope, stmt):
         cur_qname = QName(scope, stmt.get_var_name().get_name())

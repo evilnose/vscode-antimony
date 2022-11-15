@@ -1,0 +1,4 @@
+import "import2.ant"
+
+g = 6
+g in test

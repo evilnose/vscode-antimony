@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./vscode-antimony/pythonFiles/lib/python"
+    ]
+}

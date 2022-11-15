@@ -1,0 +1,6 @@
+model foo()
+    a = 3
+end
+
+MC: foo()
+MC2: foo()

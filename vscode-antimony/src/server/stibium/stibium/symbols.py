@@ -122,6 +122,7 @@ class Symbol:
     comp: str
     is_const: bool
     is_sub: bool
+    imp: str
     interaction: str
     rate_rule: str
     in_reaction: bool
@@ -135,6 +136,7 @@ class Symbol:
             comp: str = None,
             is_const: bool = False,
             is_sub: bool = False,
+            imp: str = None,
             interaction = None,
             rate_rule: str = None,
             ):
@@ -150,6 +152,7 @@ class Symbol:
         self.comp = comp
         self.is_const = is_const
         self.is_sub = is_sub
+        self.imp = imp
         self.interaction = interaction
         self.rate_rule = rate_rule
         self.in_reaction = False
@@ -236,6 +239,9 @@ class Symbol:
 
         if self.comp:
             ret += 'In compartment: {}\n'.format(self.comp)
+
+        if self.imp:
+            ret += 'The imported data: \n{}\n'.format(self.imp)
 
         ret += '```'
 
@@ -409,6 +415,10 @@ class SymbolTable:
         else:
             return []
     
+    def remove(self, qname: QName):
+        leaf_table = self._leaf_table(qname.scope)
+        leaf_table.pop(qname.name.text)
+    
     def insert_warning(self, issue: Issue):
         self.warning.append(issue)
     
@@ -462,7 +472,7 @@ class SymbolTable:
 
     def insert(self, qname: QName, typ: SymbolType, decl_node: TreeNode = None,
                value_node: TreeNode = None, is_const : bool = False, comp : str = None, 
-               is_sub : bool = False):
+               is_sub : bool = False, imp : str = None):
         '''Insert a variable symbol into the symbol table.'''
         # TODO create more functions like insert_var(), insert_reaction(), insert_model() and
         # create more specific symbols. Need to store things like value for types like var.
@@ -474,7 +484,7 @@ class SymbolTable:
         name = qname.name.text
         if name not in leaf_table:
             # first time parsing, insert directly in the table
-            sym = VarSymbol(name, typ, qname.name, is_const=is_const, comp=comp, is_sub=is_sub)
+            sym = VarSymbol(name, typ, qname.name, is_const=is_const, comp=comp, is_sub=is_sub, imp=imp)
             leaf_table[name] = sym
         else:
             # variable already exists
@@ -490,6 +500,8 @@ class SymbolTable:
                     sym.comp = comp
                 if is_sub:
                     sym.is_sub = is_sub
+                if not sym.imp:
+                    sym.imp = imp
             elif old_type.derives_from(typ):
                 # legal, but useless information
                 if is_const:
@@ -498,6 +510,8 @@ class SymbolTable:
                     sym.comp = comp
                 if is_sub:
                     sym.is_sub = is_sub
+                if not sym.imp:
+                    sym.imp = imp
             else:
                 old_range = sym.type_name.range
                 new_range = qname.name.range

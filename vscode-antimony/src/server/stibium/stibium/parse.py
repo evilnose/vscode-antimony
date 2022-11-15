@@ -90,7 +90,10 @@ class AntimonyParser:
         set_parents(root)
         set_leaf_pointers(root)
         return root
-
+    
+    def get_parse_tree_str(self, text: str, recoverable=False) -> str:
+        root_puppet = get_puppet(self.parser, 'root', text)
+        return str(self._parse_with_puppet(root_puppet, recoverable, text))
 
     def get_parse_tree_str(self, text: str, recoverable=False) -> str:
         root_puppet = get_puppet(self.parser, 'root', text)

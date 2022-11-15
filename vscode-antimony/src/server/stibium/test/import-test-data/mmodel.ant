@@ -1,0 +1,5 @@
+import "import_mmodel.ant"
+
+model foo()
+    b = 5
+end

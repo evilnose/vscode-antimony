@@ -1,0 +1,4 @@
+import "import_decl.ant"
+
+species A3 in decl
+A3 = 6

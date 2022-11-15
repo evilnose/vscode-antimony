@@ -161,14 +161,13 @@ def test_wrong_name():
 def test_multiple_tokens():
     tree = parser.parse('$$==]$%', recoverable=True)
 
-    assert len(tree.children) == 7
+    assert len(tree.children) == 6
     assert isinstance(tree.children[0], ErrorNode)  # $
     assert isinstance(tree.children[1], ErrorToken)  # $
-    assert isinstance(tree.children[2], ErrorToken)  # =
-    assert isinstance(tree.children[3], ErrorToken)  # =
-    assert isinstance(tree.children[4], ErrorToken)  # ]
-    assert isinstance(tree.children[5], ErrorNode)  # $
-    assert isinstance(tree.children[6], ErrorToken)  # %
+    assert isinstance(tree.children[2], ErrorToken)  # ==
+    assert isinstance(tree.children[3], ErrorToken)  # ]
+    assert isinstance(tree.children[4], ErrorNode)  # $
+    assert isinstance(tree.children[5], ErrorToken)  # %
 
 
 def test_unmatched_quote():

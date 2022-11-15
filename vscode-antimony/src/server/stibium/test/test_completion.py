@@ -21,8 +21,8 @@ badfruit = 5
 badfruit = 10
 badfruitother = 
 nothing
+i122 = 0
 
-i122 identity "http://identifiers.org/chebi/CHEBI:17234"
     '''
     antfile = AntFile('', code)
     position = SrcPosition(4, 1)
@@ -37,38 +37,38 @@ i122 identity "http://identifiers.org/chebi/CHEBI:17234"
 
 
 @pytest.mark.parametrize('code,pos,text_comps,snippet_comps', [
-    ('2A -> B;  ', SrcPosition(1, 9), [], ['${1:k_f_J0} * A^2']),
+    ('2A -> B;  ', SrcPosition(1, 9), ['A', 'B'], []),
     # space after
-    (' A -> B;  ', SrcPosition(1, 10), [], ['${1:k_f_J0} * A']),
+    (' A -> B;  ', SrcPosition(1, 10), ['A', 'B'], []),
     # garbage tokens afterwards
-    ('A -> B;      *&&^(', SrcPosition(1, 9), [], ['${1:k_f_J0} * A']),
+    ('A => B;      *&&^(', SrcPosition(1, 9), [], ['${1:k_f_J0} * A']),
     # statement afterwards
-    ('A -> B;      ; k = 10.5', SrcPosition(1, 9), ['k'], ['${1:k_f_J0} * A']),
+    ('A => B;      ; k = 10.5', SrcPosition(1, 9), ['A', 'B','k'], ['${1:k_f_J0} * A']),
     # reaction name and two reactants
-    ('J12: 2A +   3B -> B;  ', SrcPosition(1, 21), [], ['${1:k_f_J12} * A^2 * B^3']),
+    ('J12: 2A +   3B => B;  ', SrcPosition(1, 21), ['A', 'B', 'J12'], []),
     # reversible
-    ('J3: 2A +   3 B => B + 4.5C;             ', SrcPosition(1, 30), [],
+    ('J3: 2A +   3 B -> B + 4.5C; 1             ', SrcPosition(1, 29), ['A', 'B', 'C', 'J3'],
        ['${1:k_f_J3} * A^2 * B^3 - ${2:k_b_J3} * B * C^4.5']),
     # generate unique name
-    ('J0: 1A -> B;1\nA->B;     \nJ1: C->D;1', SrcPosition(2, 7), ['A', 'B', 'C', 'D', 'J0', 'J1'], ['${1:k_f_J2} * A']),
+    ('J0: 1A => B;1\nA=>B;     \nJ1: C=>D;1', SrcPosition(2, 7), ['A', 'B', 'C', 'D', 'J0', 'J1'], ['${1:k_f_J2} * A']),
     # no reactants
-    ('J3:          -> B + 4.5C;             ', SrcPosition(1, 30), [], ['${1:k_f_J3}']),
+    ('J3:          => B + 4.5C;             ', SrcPosition(1, 30), ['B', 'C', 'J3'], []),
     # no reactants (reversible)
-    ('J3:          => B;           ', SrcPosition(1, 30), [], ['${1:k_f_J3} - ${2:k_b_J3} * B']),
+    ('J3:          -> B;           ', SrcPosition(1, 30), ['B', 'J3'], []),
     # no products (no completions for that for now)
-    ('J3:       A   =>         ;             ', SrcPosition(1, 30), [], ['${1:k_f_J3} * A - ${2:k_b_J3}']),
+    ('J3:       A   =>         ;             ', SrcPosition(1, 30), ['A', 'J3'], []),
     # wrong place (name)
-    ('J3:    A    =>    B    ;             ', SrcPosition(1, 2), [], []),
+    ('J3:    A    =>    B    ;             ', SrcPosition(1, 2), ['A', 'B', 'J3'], []),
     # wrong place (reactants)
-    ('J3:    A    =>    B    ;             ', SrcPosition(1, 5), [], []),
+    ('J3:    A    =>    B    ;             ', SrcPosition(1, 5), ['A', 'B', 'J3'], []),
     # wrong place (products)
-    ('J3:    A    =>    B    ;             ', SrcPosition(1, 17), [], []),
+    ('J3:    A    =>    B    ;             ', SrcPosition(1, 17), ['A', 'B', 'J3'], []),
     # wrong place (after existing rate law)
-    ('J3:    A    =>    B    ;  1   ;         ', SrcPosition(1, 28), ['A', 'B', 'J3'], []),
+    ('J3:    A    ->    B    ;  1   ;         ', SrcPosition(1, 28), ['A', 'B', 'J3'], []),
     # wrong place (after reaction)
-    ('J3:    A    =>    B    ;  1   ;         ', SrcPosition(1, 33), ['A', 'B', 'J3'], []),
+    ('J3:    A    ->    B    ;  1   ;         ', SrcPosition(1, 33), ['A', 'B', 'J3'], []),
     # wrong place (no semicolon)
-    ('J3:    A    =>    B                     ', SrcPosition(1, 33), [], []),
+    ('J3:    A    ->    B                     ', SrcPosition(1, 33), [], []),
 ])
 def test_mass_action(code: str, pos: SrcPosition, text_comps: List[str], snippet_comps: List[str]):
     antfile = AntFile('', code)

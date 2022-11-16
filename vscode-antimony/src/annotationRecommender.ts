@@ -25,6 +25,14 @@ export async function singleStepInputRec(context: ExtensionContext, line: number
             cancellable: true
         }, (progress, token) => {
             return commands.executeCommand('antimony.recommender', lineStr, charStr, uri).then(async (result) => {
+                recommendations = result;
+                if (recommendations.error) {
+                    vscode.window
+                    .showErrorMessage(
+                        recommendations.error,
+                    )
+                    return;
+                } 
                 input.onQueryResults(result);
             });
         })
@@ -34,7 +42,13 @@ export async function singleStepInputRec(context: ExtensionContext, line: number
 
 	vscode.commands.executeCommand('antimony.recommender', lineStr, charStr, uri).then(async (result) => {
         recommendations = result;
-
+        if (recommendations.error) {
+            vscode.window
+            .showErrorMessage(
+                recommendations.error,
+            )
+            return;
+        } 
         annotations = recommendations.annotations;
        
         for (let i = 0; i < annotations.length; i++) {

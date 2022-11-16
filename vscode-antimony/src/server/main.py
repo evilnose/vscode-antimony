@@ -14,7 +14,7 @@ sys.path.append(os.path.join(EXTENSION_ROOT, "server", "stibium"))
 
 from stibium.parse import AntimonyParser
 from stibium.api import AntCompletion, AntCompletionKind
-from stibium.types import Issue, IssueSeverity, SrcPosition
+from stibium.types import Issue, IssueSeverity, SrcPosition, SymbolType
 from stibium.symbols import QName, Symbol, SymbolTable
 
 from stibium.analysis import AntTreeAnalyzer, get_qname_at_position
@@ -276,9 +276,18 @@ def recommend(ls: LanguageServer, args):
     uri = args[2]
     doc = server.workspace.get_document(uri)
     antfile_cache = get_antfile(doc)
-    recom = recommender.Recommender()
     position  = SrcPosition(int(line) + 1, int(character) + 1)
-    symbol = antfile_cache.symbols_at(position)[0][0]
+    symbols = antfile_cache.symbols_at(position)[0]
+    if not symbols:
+        return {
+            'error': "Did not select a symbol"
+        }
+    symbol = symbols[0]
+    if symbol.type != SymbolType.Species:
+        return {
+            'error': "Did not select species"
+        }
+    recom = recommender.Recommender()
     display_name = symbol.display_name
     if display_name is not None:
         annotations = recom.getSpeciesAnnotation(pred_str=display_name.replace("\"", ""))

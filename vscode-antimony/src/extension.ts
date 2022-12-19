@@ -11,10 +11,7 @@ import { annotationMultiStepInput } from './annotationInput';
 import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
-import * as os from 'os';
 import * as fs from 'fs';
-import { TextDecoder } from 'util';
-import { TextDocument } from 'vscode';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -72,16 +69,6 @@ function updateDecorations() {
 			activeEditor.setDecorations(annDecorationType, annotated);
 		});
 	}
-}
-
-function promptToSaveTempFile() {
-	const result = vscode.window.showInformationMessage(
-	  'Do you want to save the changes to the temp file?',
-	  'Save',
-	  'Discard'
-	);
-  
-	return result;
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -209,11 +196,6 @@ export async function activate(context: vscode.ExtensionContext) {
 					if (result.error) {
 						vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
 					} else {
-						// Create options for the temporary file
-						const tempFileOptions = {
-							language: 'antimony', // Set the language of the file
-							content: result.ant_str // Set the initial content of the file
-						};
 						const sbmlFileName = path.basename(event.fileName, '.xml');
 						const tempPath = path.dirname(event.uri.fsPath);
 						var tempFileName = `~$temp-${sbmlFileName}.ant`;

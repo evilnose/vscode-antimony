@@ -13,6 +13,8 @@ import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
 import * as os from 'os';
 import * as fs from 'fs';
+import { TextDecoder } from 'util';
+import { TextDocument } from 'vscode';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -72,16 +74,8 @@ function updateDecorations() {
 	}
 }
 
-export function watchTempFile(tempFilePath: string) {
-	fs.watch(tempFilePath, (eventType, filename) => {
-	  if (eventType === 'rename') {
-		vscode.window.showInformationMessage('Temp file deleted');
-	  }
-	});
-}
-
-export async function promptToSaveTempFile() {
-	const result = await vscode.window.showInformationMessage(
+function promptToSaveTempFile() {
+	const result = vscode.window.showInformationMessage(
 	  'Do you want to save the changes to the temp file?',
 	  'Save',
 	  'Discard'
@@ -207,14 +201,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	}, null, context.subscriptions);
 
 	// when user opens XML
-	vscode.workspace.onDidOpenTextDocument(async event => {
-		const fileNameSplit = event.fileName.split(".");
-		if (fileNameSplit[fileNameSplit.length - 1] === 'xml') {
-			console.log("succeed in filename");
+	vscode.workspace.onDidOpenTextDocument(event => {
+		if (path.extname(event.fileName) === '.xml') {
 			// check if the file is sbml, opens up a new file
 			vscode.commands.executeCommand('antimony.sbmlFileToAntStr', event)
 				.then(async (result: any) => {
-					vscode.window.showInformationMessage("sbml to ant");
 					if (result.error) {
 						vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
 					} else {
@@ -223,38 +214,61 @@ export async function activate(context: vscode.ExtensionContext) {
 							language: 'antimony', // Set the language of the file
 							content: result.ant_str // Set the initial content of the file
 						};
-						const sbmlFileName = fileNameSplit[fileNameSplit.length - 2].split('/').pop();
-						const tempPath = os.tmpdir();
-						const tempFileName = `temp-${sbmlFileName}.ant`;
-						const tempFilePath = path.join(tempPath, tempFileName);
-						fs.writeFileSync(tempFilePath, result.ant_str, { encoding: 'utf8' });
+						const sbmlFileName = path.basename(event.fileName, '.xml');
+						const tempPath = path.dirname(event.uri.fsPath);
+						var tempFileName = `~$temp-${sbmlFileName}.ant`;
+						var tempFilePath = path.join(tempPath, tempFileName);
+						var counter = 1;
+						while (fs.existsSync(tempFilePath)) {
+							tempFileName = `~$temp-${sbmlFileName} (${counter}).ant`;
+							var tempFilePath = path.join(tempPath, tempFileName);
+							counter++;
+						}
+						fs.writeFile(tempFilePath, result.ant_str, (error) => {
+							if (error) {
+							  console.error(error);
+							} else {
+							  console.log('The file was saved to ' + tempFilePath);
+							}
+						  });
 						// Create the temporary file and open it in the editor
 						const tempFile = vscode.workspace.openTextDocument(tempFilePath).then((doc) => {
 							vscode.window.showTextDocument(doc, { preview: false });
 						});
-						watchTempFile(tempFilePath);
-						const onCloseTempFile = async (file) => {
-							vscode.window.showInformationMessage('filename: ' + file.fileName + ", temp:" + tempFileName);
-							if (file.fileName === tempFileName) {
-								const saveTempFile = await promptToSaveTempFile();
-								if (saveTempFile === 'Save') {
-									const tempFileText = file.getText();
-									vscode.commands.executeCommand('antimony,antStrToSBMLStr', tempFileText)
-										.then(async (result: any) => {
-											if (result.error) {
-												vscode.window.showErrorMessage(`Error while converting: ${result.error}`);
-												const tempFile = vscode.workspace.openTextDocument(tempFileOptions);
-											} else {
-												vscode.window.showInformationMessage(`Edit saved to: ${event.fileName}`);
-											}
+						vscode.workspace.onDidCloseTextDocument((closedDoc) => {
+							const fileName = path.basename(closedDoc.fileName, '.git');
+							const pathName = path.dirname(closedDoc.fileName);
+							const fullPath = path.join(pathName, fileName);
+							const pattern = /^~\$temp-(.+?)(\s\([0-9]+\))?.ant/;
+							if (pattern.test(fileName)) {
+								vscode.window.showInformationMessage('Do you want to save the changes to the original SBML file?\n Warning: edits will be lost if not saved!', 'Save', 'Discard')
+								.then((choice) => {
+									if (choice === 'Save') {
+										vscode.workspace.openTextDocument(fullPath).then((doc) => {
+											vscode.commands.executeCommand('antimony.antStrToSBMLStr', doc.getText())
+											.then(async (result: any) => {
+												if (result.error) {
+													vscode.window.showErrorMessage(`Error while converting: ${result.error}`);
+												} else {
+													const match = pattern.exec(fileName)[1];
+													const sbmlFilePath = path.join(pathName, match + '.xml');
+													fs.writeFile(sbmlFilePath, result.sbml_str, (error) => {
+														if (error) {
+														  console.error(error);
+														} else {
+														  console.log('The file was saved to ' + tempFilePath);
+														}
+													});
+												}
+											});
 										});
-								}
-								fs.unlinkSync(tempFilePath);
+										fs.unlink(fullPath, (error) => {});
+									} else {
+										fs.unlink(fullPath, (error) => {});
+									}
+								});
 							}
-						};
-						// Listen for the 'onDidCloseTextDocument' event
-						// This function is not called when temp file is closed, only called when normal file closed
-						vscode.workspace.onDidCloseTextDocument(onCloseTempFile);
+						});
 					}
 				});
 			}

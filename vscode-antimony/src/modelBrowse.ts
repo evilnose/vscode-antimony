@@ -3,7 +3,7 @@ import { sleep } from './utils/utils';
 import { ProgressLocation } from 'vscode'
 import * as vscode from 'vscode'
 
-export async function modelSearchInput(context: ExtensionContext, initialEntity: string = null, selectedType: string = null) {
+export async function modelSearchInput(context: ExtensionContext, initialEntity: string = null) {
     var models;
 
     interface State {
@@ -17,32 +17,44 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 
     async function collectInputs() {
         const state = {initialEntity} as Partial<State>;
-        await MultiStepInput.run(input => searchModel(input, state));
+        await MultiStepInput.run(input => inputQuery(input, state));
         return state as State;
     }
 
-    const title = 'Browse Models'
+    const title = 'Browse Biomodels';
 
-    async function searchModel(input: MultiStepInput, state: Partial<State>) {
+    async function inputQuery(input: MultiStepInput, state: Partial<State>) {
         const pick = await input.showQuickPick({
             title,
             step: 1,
-            totalSteps: 2,
-            placeholder: 'Enter a model ID or a phrase to browse',
-            items: models,
-            activeItem: state.database,
+            totalSteps: 1,
+            placeholder: 'Enter query',
+            items: [],
+            activeItem: null,
             shouldResume: shouldResume,
-            onInputChanged: null,
+            onInputChanged: (value) => onQueryUpdated(value, input),
         });
-        state.database = pick
-        console.log(pick)
-        queryModel(state.database);
+        state.entity = pick;
     }
 
-    async function queryModel(stateModel) {
-        vscode.commands.executeCommand('antimony.searchmodel', stateModel).then(async (result) =>{
-            
-        });
+    async function onQueryUpdated(query: string, input: MultiStepInput) {
+        await sleep(666);
+        if (input.current && input.current.step === 2 && input.instanceOfQuickPick(input.current)) {
+            if (input.current.value !== query) {
+                return;
+            }
+        } else {
+            return;
+        }
+        window.withProgress({
+			location: ProgressLocation.Notification,
+			title: "Searching for biomodels...",
+			cancellable: true
+		}, (progress, token) => {
+            return commands.executeCommand('antimony.searchmodel', query).then(async (result) => {
+                await input.onQueryResults(result);
+            });
+        })
     }
 
     function shouldResume() {
@@ -202,7 +214,7 @@ export class MultiStepInput {
 
                 if (this.current.value === result.query) {
                     if (result.items.length == 0) {
-                        window.showInformationMessage("Annotation not found")
+                        window.showInformationMessage("Biomodel not found")
                     }
                     this.current.items = result.items.map((item) => {
                         item['label'] = item['name'];

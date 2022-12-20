@@ -483,7 +483,7 @@ async function browseBioModels(context: vscode.ExtensionContext, args: any[]) {
 		return;
 	}
 	await client.onReady();
-	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 	
 	// not await null, change it after adding a function to parse search input
 	await new Promise<void>((resolve, reject) => {

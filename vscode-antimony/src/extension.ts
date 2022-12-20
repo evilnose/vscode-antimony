@@ -490,7 +490,6 @@ async function browseBioModels(context: vscode.ExtensionContext, args: any[]) {
 		modelSearchInput(context); 
 		resolve()
     });
-
 }
 
 // ****** helper functions ******

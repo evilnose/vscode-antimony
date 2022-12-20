@@ -1,7 +1,5 @@
 {
     "python.analysis.extraPaths": [
-        "./vscode-antimony/pythonFiles/lib/python",
-        "./vscode-antimony/src/server/stibium",
-        "./vscode-antimony/src/server/bioservices_server"
+        "./vscode-antimony/pythonFiles/lib/python"
     ]
 }

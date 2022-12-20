@@ -310,11 +310,12 @@ def recommend(ls: LanguageServer, args):
         'annotations': ret
     }
 
-#@server.thread
-#@server.command('antimony.searchmodel')
-#def search_model(ls: LanguageServer, args):
-#    search_res = args[0]
-#    return None
+@server.thread()
+@server.command('antimony.searchmodel')
+def search_model(ls: LanguageServer, args):
+    search_res = args[0]
+    
+    return None
 
 #### Hover for displaying information ####
 @server.feature(HOVER)

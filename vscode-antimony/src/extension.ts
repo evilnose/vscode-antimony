@@ -11,6 +11,7 @@ import { annotationMultiStepInput } from './annotationInput';
 import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
+import { modelSearchInput } from './modelBrowse';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -139,6 +140,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.startAntimonyWebview',
 			(...args: any[]) => startAntimonyWebview(context, args)));
+	
+	// browse biomodels
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.browseBiomodels',
+			(...args: any[]) => browseBioModels(context, args)));
 
 	// language config for CodeLens
 	const docSelector = {
@@ -466,6 +472,25 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 		rateLawSingleStepInput(context, lineNum, selectedText); 
 		resolve()
     });
+}
+
+// search for biomodels
+async function browseBioModels(context: vscode.ExtensionContext, args: any[]) {
+	// wait till client is ready, or the Python server might not have started yet.
+	// note: this is necessary for any command that might use the Python language server.
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup")
+	
+	// not await null, change it after adding a function to parse search input
+	await new Promise<void>((resolve, reject) => {
+		modelSearchInput(context); 
+		resolve()
+    });
+
 }
 
 // ****** helper functions ******

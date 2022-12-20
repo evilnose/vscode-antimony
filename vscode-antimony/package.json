@@ -31,6 +31,7 @@
 		"onCommand:antimony.convertSBMLToAntimony",
 		"onCommand:antimony.startSBMLWebview",
 		"onCommand:antimony.startAntimonyWebview",
+		"onCommand:antimony.browseBiomodels",
 		"onCustomEditor:antimony.sbmlEditor",
 		"onCustomEditor:antimony.antimonyEditor"
 	],
@@ -123,6 +124,10 @@
 				"title": "Convert to Antimony"
 			},
 			{
+				"command": "antimony.browseBiomodels",
+				"title": "Browse Biomodels"
+			},
+			{
 				"command": "antimony.startSBMLWebview",
 				"title": "preview SBML",
 				"icon": "docs/images/sbml_color.png"
@@ -189,6 +194,12 @@
 					"title": "Convert to Antimony",
 					"group": "1_modification",
 					"when": "editorLangId == xml"
+				},
+				{
+					"command": "antimony.browseBiomodels",
+					"title": "Browse Biomodels",
+					"group": "1_modification",
+					"when": "editorLangId == antimony"
 				}
 			],
 			"editor/title": [

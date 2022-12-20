@@ -36,6 +36,7 @@ import threading
 import time
 from AMAS import recommender, species_annotation
 from bioservices import ChEBI
+import requests
 
 # TODO remove this for production
 logging.basicConfig(filename='vscode-antimony-dep.log', filemode='w', level=logging.DEBUG)
@@ -308,6 +309,12 @@ def recommend(ls: LanguageServer, args):
     return {
         'annotations': ret
     }
+
+#@server.thread
+#@server.command('antimony.searchmodel')
+#def search_model(ls: LanguageServer, args):
+#    search_res = args[0]
+#    return None
 
 #### Hover for displaying information ####
 @server.feature(HOVER)

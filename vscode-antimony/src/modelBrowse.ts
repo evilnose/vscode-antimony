@@ -3,14 +3,14 @@ import { sleep } from './utils/utils';
 import { ProgressLocation } from 'vscode'
 import * as vscode from 'vscode'
 
-export async function modelSearchInput(context: ExtensionContext, initialEntity: string = null) {
+export async function modelSearchInput(context: ExtensionContext, initialEntity: string = null, selectedType: string = null) {
     var models;
 
     interface State {
         title: string;
         step: number;
         totalSteps: number;
-        database: QuickPickItem;
+        model: QuickPickItem;
         entity: QuickPickItem;
         initialEntity: string;
     }
@@ -27,12 +27,27 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
         const pick = await input.showQuickPick({
             title,
             step: 1,
-            totalSteps: 1,
-            placeholder: 'Enter query',
+            totalSteps: 2,
+            placeholder: 'Enter query for model',
             items: [],
             activeItem: null,
             shouldResume: shouldResume,
             onInputChanged: (value) => onQueryUpdated(value, input),
+        });
+        state.model = pick;
+        return (input: MultiStepInput) => pickBiomodel(input, state);
+    }
+
+    async function pickBiomodel(input: MultiStepInput, state: Partial<State>) {
+        const pick = await input.showQuickPick({
+            title,
+            step: 2,
+            totalSteps: 2,
+            placeholder: 'Pick a biomodel',
+            items: models,
+            activeItem: state.model,
+            shouldResume: shouldResume,
+            onInputChanged: null,
         });
         state.entity = pick;
     }
@@ -52,6 +67,10 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 			cancellable: true
 		}, (progress, token) => {
             return commands.executeCommand('antimony.searchmodel', query).then(async (result) => {
+                models = result;
+                for (let i = 0; i < models.length; i++) {
+                    models.push({modelURL: models[i], index: i}); 
+                }
                 await input.onQueryResults(result);
             });
         })
@@ -63,6 +82,9 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
             // noop
         });
     }
+
+    const state = await collectInputs();
+
 }
 
 

@@ -4,7 +4,8 @@ import { ProgressLocation } from 'vscode'
 import * as vscode from 'vscode'
 
 export async function modelSearchInput(context: ExtensionContext, initialEntity: string = null, selectedType: string = null) {
-    var models;
+    let models = [];
+    var modelList;
 
     interface State {
         title: string;
@@ -67,9 +68,9 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 			cancellable: true
 		}, (progress, token) => {
             return commands.executeCommand('antimony.searchmodel', query).then(async (result) => {
-                models = result;
-                for (let i = 0; i < models.length; i++) {
-                    models.push({modelURL: models[i], index: i}); 
+                modelList = result;
+                for (let i = 0; i < modelList.length; i++) {
+                    models.push({modelURL: modelList[i], index: i});
                 }
                 await input.onQueryResults(result);
             });

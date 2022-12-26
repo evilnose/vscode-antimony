@@ -313,9 +313,16 @@ def recommend(ls: LanguageServer, args):
 @server.thread()
 @server.command('antimony.searchmodel')
 def search_model(ls: LanguageServer, args):
+    model_list = []
     search_res = args[0]
-    
-    return None
+    search_url = ("https://www.ebi.ac.uk/biomodels/search?query={search}&format=json").format(
+        search=search_res
+    )
+    response = requests.get(search_url)
+    models = response.json()
+    for model in models['models']:
+        model_list.append(model['url'])
+    return model_list
 
 #### Hover for displaying information ####
 @server.feature(HOVER)

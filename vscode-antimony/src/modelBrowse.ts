@@ -54,7 +54,7 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 
     async function onQueryUpdated(query: string, input: MultiStepInput) {
         await sleep(666);
-        if (input.current && input.current.step === 2 && input.instanceOfQuickPick(input.current)) {
+        if (input.current && input.current.step === 1 && input.instanceOfQuickPick(input.current)) {
             if (input.current.value !== query) {
                 return;
             }

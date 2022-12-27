@@ -1,4 +1,4 @@
-import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, commands, QuickPick } from 'vscode';
+import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, commands, QuickPick, InputBox } from 'vscode';
 import { sleep } from './utils/utils';
 import { ProgressLocation } from 'vscode'
 import * as vscode from 'vscode'
@@ -13,7 +13,7 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
         totalSteps: number;
         model: QuickPickItem;
         entity: QuickPickItem;
-        initialEntity: string;
+        enteredModel: string;
     }
 
     async function collectInputs() {
@@ -25,21 +25,32 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
     const title = 'Browse Biomodels';
 
     async function inputQuery(input: MultiStepInput, state: Partial<State>) {
-        const pick = await input.showQuickPick({
+        const pick = await input.showInputBox({
             title,
             step: 1,
             totalSteps: 2,
-            placeholder: 'Enter query for model',
-            items: [],
-            activeItem: null,
+            prompt: 'Enter query for model',
+            value: "",
             shouldResume: shouldResume,
-            onInputChanged: (value) => onQueryUpdated(value, input),
+            validate: validateModelIsNotEmpty
         });
-        state.model = pick;
+        // state.model = await input.showQuickPick({
+        //     title,
+        //     step: 1,
+        //     totalSteps: 2,
+        //     placeholder: 'Enter query for model',
+        //     items: [],
+        //     activeItem: null,
+        //     shouldResume: shouldResume,
+        //     onInputChanged: (value) => onQueryUpdated(value, input),
+        // });
+        state.enteredModel = pick
+        await onQueryUpdated(pick, input);
         return (input: MultiStepInput) => pickBiomodel(input, state);
     }
 
     async function pickBiomodel(input: MultiStepInput, state: Partial<State>) {
+        console.log(models)
         const pick = await input.showQuickPick({
             title,
             step: 2,
@@ -54,28 +65,26 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
     }
 
     async function onQueryUpdated(query: string, input: MultiStepInput) {
-        await sleep(666);
-        if (input.current && input.current.step === 1 && input.instanceOfQuickPick(input.current)) {
-            if (input.current.value !== query) {
-                return;
-            }
-        } else {
-            return;
-        }
         window.withProgress({
 			location: ProgressLocation.Notification,
 			title: "Searching for biomodels...",
 			cancellable: true
 		}, (progress, token) => {
-            return commands.executeCommand('antimony.searchmodel', query).then(async (result) => {
+            return commands.executeCommand('antimony.searchModel', query).then(async (result) => {
                 modelList = result;
                 for (let i = 0; i < modelList.length; i++) {
                     models.push({modelURL: modelList[i], index: i});
                 }
+                console.log("this is the model name: " + query)
                 await input.onQueryResults(result);
             });
         })
     }
+
+    async function validateModelIsNotEmpty(name: string) {
+		await new Promise(resolve => setTimeout(resolve, 500));
+		return name === '' ? 'Query is empty' : undefined;
+	}
 
     function shouldResume() {
         // Could show a notification with the option to resume.

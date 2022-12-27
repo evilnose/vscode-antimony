@@ -311,7 +311,7 @@ def recommend(ls: LanguageServer, args):
     }
 
 @server.thread()
-@server.command('antimony.searchmodel')
+@server.command('antimony.searchModel')
 def search_model(ls: LanguageServer, args):
     model_list = []
     search_res = args[0]

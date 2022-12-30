@@ -74,6 +74,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
 	// start the language server
 	await startLanguageServer(context);
+
 	vscode.workspace.onDidChangeConfiguration(async (e) => {
 		// restart the language server using the new Python interpreter, if the related
 		// setting was changed
@@ -94,8 +95,12 @@ export async function activate(context: vscode.ExtensionContext) {
 				client = null;
 			}
 			await startLanguageServer(context);
+			await createVirtualEnv();
 		}, 3000);
+
 	});
+
+	await createVirtualEnv();
 
 	// create annotations
 	context.subscriptions.push(
@@ -522,6 +527,35 @@ async function startLanguageServer(context: vscode.ExtensionContext) {
 	// Start the client. This will also launch the server
 	const clientDisposable = client.start();
 	context.subscriptions.push(clientDisposable);
+}
+
+// setup virtual environment
+async function createVirtualEnv () {
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+
+    await vscode.commands.executeCommand('antimony.virtuEnv').then(async (result) => {
+        console.log(result)
+        const evExists = result;
+        if (evExists === false) {
+            // asking permissions
+            vscode.window.showInformationMessage('To install dependencies so the extension works properly, allow installation of virtual environment', ...['Yes', 'No'])
+            .then(() => {
+                // installing virtual env
+                // const parentDir = context.asAbsolutePath(path.join(''));
+                // if (err) {
+                //     vscode.window.showErrorMessage(err);
+                // }
+				console.log("Created Virtual Env")
+            });
+        }
+    });
+	console.log("Ran createVirtualEnv Method")
 }
 
 // getting python interpretor

@@ -260,6 +260,23 @@ def get_rate_law_dict(ls: LanguageServer, args):
     return reader.relevant_rate_laws
 
 @server.thread()
+@server.command('antimony.virtuEnv')
+def check_for_virtual_env(ls: LanguageServer, args):
+    '''
+    determines if the system already has a virtual environment created
+    '''
+    boolean = False
+    if os.getenv('VIRTUAL_ENV'):
+        print(f'Python Executable: {sys.executable}')
+        print(f'Python Version: {sys.version}')
+        print(f'Virtualenv: {os.getenv("VIRTUAL_ENV")}')
+        boolean = True
+        return boolean
+    print('No virtual env found')
+    boolean = False
+    return boolean
+
+@server.thread()
 @server.command('antimony.recommender')
 def recommend(ls: LanguageServer, args):
     '''

@@ -530,7 +530,7 @@ async function startLanguageServer(context: vscode.ExtensionContext) {
 }
 
 // setup virtual environment
-async function createVirtualEnv () {
+async function createVirtualEnv() {
 	if (!client) {
 		utils.pythonInterpreterError();
 		return;
@@ -539,19 +539,22 @@ async function createVirtualEnv () {
 
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
-    await vscode.commands.executeCommand('antimony.virtuEnv').then(async (result) => {
+    await vscode.commands.executeCommand('antimony.findVirtualEnv').then(async (result) => {
         console.log(result)
         const evExists = result;
         if (evExists === false) {
             // asking permissions
             vscode.window.showInformationMessage('To install dependencies so the extension works properly, allow installation of virtual environment', ...['Yes', 'No'])
-            .then(() => {
+            .then(async selection => {
                 // installing virtual env
-                // const parentDir = context.asAbsolutePath(path.join(''));
-                // if (err) {
-                //     vscode.window.showErrorMessage(err);
-                // }
-				console.log("Created Virtual Env")
+				if (selection === 'Yes') {
+					await vscode.commands.executeCommand('antimony.createVirtualEnv').then(async (result) => {
+						vscode.window.showInformationMessage('Virtual Environment Finished Installing')
+					});
+					console.log("Created Virtual Env")
+				} else if (selection === 'No') {
+					vscode.window.showInformationMessage('The extension will now assume you already have a virtual environment installed for Antimony')
+				}
             });
         }
     });

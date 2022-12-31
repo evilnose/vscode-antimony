@@ -4,6 +4,7 @@ Author: Gary Geng, Steve Ma
 import os
 import sys
 import logging
+import subprocess
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(EXTENSION_ROOT, "..", "pythonFiles", "lib", "python"))
@@ -260,21 +261,27 @@ def get_rate_law_dict(ls: LanguageServer, args):
     return reader.relevant_rate_laws
 
 @server.thread()
-@server.command('antimony.virtuEnv')
+@server.command('antimony.findVirtualEnv')
 def check_for_virtual_env(ls: LanguageServer, args):
     '''
     determines if the system already has a virtual environment created
     '''
     boolean = False
-    if os.getenv('VIRTUAL_ENV'):
+    if os.getenv('vscode_antimony_virtual_env') or sys.prefix != sys.base_prefix:
         print(f'Python Executable: {sys.executable}')
         print(f'Python Version: {sys.version}')
-        print(f'Virtualenv: {os.getenv("VIRTUAL_ENV")}')
+        print(f'Virtualenv: {os.getenv("vscode_antimony_virtual_env")}')
+        print(sys.prefix)
         boolean = True
         return boolean
     print('No virtual env found')
     boolean = False
     return boolean
+
+@server.thread()
+@server.command('antimony.createVirtualEnv')
+def call_or_activate_virtual_env(ls: LanguageServer, args):
+    subprocess.run([os.path.abspath(os.getcwd())+'/virtualEnvPython.sh'])
 
 @server.thread()
 @server.command('antimony.recommender')

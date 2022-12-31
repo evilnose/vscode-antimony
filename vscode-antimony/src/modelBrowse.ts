@@ -30,7 +30,7 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
             step: 1,
             totalSteps: 2,
             prompt: 'Enter query for model',
-            value: "",
+            value: state.enteredModel || "",
             shouldResume: shouldResume,
             validate: validateModelIsNotEmpty
         });
@@ -45,11 +45,11 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
         //     onInputChanged: (value) => onQueryUpdated(value, input),
         // });
         state.enteredModel = pick
-        await onQueryUpdated(pick, input);
         return (input: MultiStepInput) => pickBiomodel(input, state);
     }
 
     async function pickBiomodel(input: MultiStepInput, state: Partial<State>) {
+        await onQueryUpdated(state.enteredModel, input);
         console.log(models)
         const pick = await input.showQuickPick({
             title,
@@ -71,18 +71,19 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 			cancellable: true
 		}, (progress, token) => {
             return commands.executeCommand('antimony.searchModel', query).then(async (result) => {
-                modelList = result;
-                for (let i = 0; i < modelList.length; i++) {
-                    models.push({modelURL: modelList[i], index: i});
-                }
-                console.log("this is the model name: " + query)
+                // modelList = result;
+                // for (let i = 0; i < modelList.length; i++) {
+                //     models.push({modelURL: modelList[i], index: i});
+                // }
+                // console.log("this is the model name: " + query)
+                console.log(result)
                 await input.onQueryResults(result);
             });
         })
     }
 
     async function validateModelIsNotEmpty(name: string) {
-		await new Promise(resolve => setTimeout(resolve, 500));
+		await new Promise(resolve => setTimeout(resolve, 100));
 		return name === '' ? 'Query is empty' : undefined;
 	}
 

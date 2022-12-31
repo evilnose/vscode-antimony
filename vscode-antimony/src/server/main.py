@@ -281,7 +281,7 @@ def check_for_virtual_env(ls: LanguageServer, args):
 @server.thread()
 @server.command('antimony.createVirtualEnv')
 def call_or_activate_virtual_env(ls: LanguageServer, args):
-    subprocess.run([os.path.abspath(os.getcwd())+'/virtualEnvPython.sh'])
+    subprocess.run(['./virtualEnvPython.sh'])
 
 @server.thread()
 @server.command('antimony.recommender')

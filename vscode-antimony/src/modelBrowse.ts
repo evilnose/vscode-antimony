@@ -1,11 +1,8 @@
 import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, commands, QuickPick, InputBox } from 'vscode';
 import { sleep } from './utils/utils';
 import { ProgressLocation } from 'vscode'
-import * as vscode from 'vscode'
 
 export async function modelSearchInput(context: ExtensionContext, initialEntity: string = null, selectedType: string = null) {
-    let models = [];
-    var modelList;
 
     interface State {
         title: string;
@@ -23,35 +20,6 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
     }
 
     const title = 'Browse Biomodels';
-
-    // async function inputQuery(input: MultiStepInput, state: Partial<State>) {
-    //     const pick = await input.showInputBox({
-    //         title,
-    //         step: 1,
-    //         totalSteps: 2,
-    //         prompt: 'Enter query for model',
-    //         value: state.enteredModel || "",
-    //         shouldResume: shouldResume,
-    //         validate: validateModelIsNotEmpty
-    //     });
-    //     state.model = await input.showQuickPick({
-    //         title,
-    //         step: 1,
-    //         totalSteps: 2,
-    //         placeholder: 'Enter query for model',
-    //         items: [],
-    //         activeItem: null,
-    //         shouldResume: shouldResume,
-    //         onInputChanged: (value) => onQueryUpdated(value, input),
-    //     });
-    //     state.enteredModel = pick
-    //     await onQueryUpdated(state.enteredModel, input);
-    //     await new Promise(resolve => setTimeout(resolve, 100)).then(() => {
-    //         onQueryUpdated(state.enteredModel, input)
-    //     })
-    //     console.log("going to the next step")
-    //     return (input: MultiStepInput) => pickBiomodel(input, state);
-    // }
 
     async function pickBiomodel(input: MultiStepInput, state: Partial<State>) {
         const pick = await input.showQuickPick({
@@ -82,12 +50,7 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 			cancellable: true
 		}, (progress, token) => {
             return commands.executeCommand('antimony.searchModel', query).then(async (result) => {
-                modelList = result;
-                for (let i = 0; i < modelList.length; i++) {
-                    models.push(modelList[i]);
-                }
-                console.log("this is the model name: " + query)
-                await input.onQueryResults(models);
+                await input.onQueryResults(result);
             });
         })
     }
@@ -258,8 +221,11 @@ export class MultiStepInput {
                 if (result.length == 0) {
                     window.showInformationMessage("Biomodel not found")
                 }
-                this.current.items = result
-                console.log(this.current.items)
+                this.current.items = result.map((item) => {
+                    item['label'] = item['name'];
+                    item['detail'] = item['url'];
+                    return item;
+                });
             }
         }
     }

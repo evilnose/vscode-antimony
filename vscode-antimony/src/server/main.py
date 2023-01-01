@@ -321,7 +321,7 @@ def search_model(ls: LanguageServer, args):
     response = requests.get(search_url)
     models = response.json()
     for model in models['models']:
-        model_list.append(model['url'])
+        model_list.append({'name': model['name'], 'url': model['url']})
     return model_list
 
 #### Hover for displaying information ####

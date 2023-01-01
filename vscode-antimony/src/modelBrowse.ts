@@ -13,79 +13,89 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
         totalSteps: number;
         model: QuickPickItem;
         entity: QuickPickItem;
-        enteredModel: string;
+        initialEntity: string;
     }
 
     async function collectInputs() {
         const state = {initialEntity} as Partial<State>;
-        await MultiStepInput.run(input => inputQuery(input, state));
+        await MultiStepInput.run(input => pickBiomodel(input, state));
         return state as State;
     }
 
     const title = 'Browse Biomodels';
 
-    async function inputQuery(input: MultiStepInput, state: Partial<State>) {
-        const pick = await input.showInputBox({
-            title,
-            step: 1,
-            totalSteps: 2,
-            prompt: 'Enter query for model',
-            value: state.enteredModel || "",
-            shouldResume: shouldResume,
-            validate: validateModelIsNotEmpty
-        });
-        // state.model = await input.showQuickPick({
-        //     title,
-        //     step: 1,
-        //     totalSteps: 2,
-        //     placeholder: 'Enter query for model',
-        //     items: [],
-        //     activeItem: null,
-        //     shouldResume: shouldResume,
-        //     onInputChanged: (value) => onQueryUpdated(value, input),
-        // });
-        state.enteredModel = pick
-        return (input: MultiStepInput) => pickBiomodel(input, state);
-    }
+    // async function inputQuery(input: MultiStepInput, state: Partial<State>) {
+    //     const pick = await input.showInputBox({
+    //         title,
+    //         step: 1,
+    //         totalSteps: 2,
+    //         prompt: 'Enter query for model',
+    //         value: state.enteredModel || "",
+    //         shouldResume: shouldResume,
+    //         validate: validateModelIsNotEmpty
+    //     });
+    //     state.model = await input.showQuickPick({
+    //         title,
+    //         step: 1,
+    //         totalSteps: 2,
+    //         placeholder: 'Enter query for model',
+    //         items: [],
+    //         activeItem: null,
+    //         shouldResume: shouldResume,
+    //         onInputChanged: (value) => onQueryUpdated(value, input),
+    //     });
+    //     state.enteredModel = pick
+    //     await onQueryUpdated(state.enteredModel, input);
+    //     await new Promise(resolve => setTimeout(resolve, 100)).then(() => {
+    //         onQueryUpdated(state.enteredModel, input)
+    //     })
+    //     console.log("going to the next step")
+    //     return (input: MultiStepInput) => pickBiomodel(input, state);
+    // }
 
     async function pickBiomodel(input: MultiStepInput, state: Partial<State>) {
-        await onQueryUpdated(state.enteredModel, input);
-        console.log(models)
         const pick = await input.showQuickPick({
             title,
-            step: 2,
-            totalSteps: 2,
+            step: 1,
+            totalSteps: 1,
             placeholder: 'Pick a biomodel',
-            items: models,
-            activeItem: state.model,
+            items: [],
+            activeItem: null,
             shouldResume: shouldResume,
-            onInputChanged: null,
+            onInputChanged: (value) => onQueryUpdated(value, input),
         });
         state.entity = pick;
     }
 
     async function onQueryUpdated(query: string, input: MultiStepInput) {
+        await sleep(500);
+        if (input.current && input.instanceOfQuickPick(input.current)) {
+            if (input.current.value !== query) {
+                return;
+            }
+        } else {
+            return;
+        }
         window.withProgress({
 			location: ProgressLocation.Notification,
 			title: "Searching for biomodels...",
 			cancellable: true
 		}, (progress, token) => {
             return commands.executeCommand('antimony.searchModel', query).then(async (result) => {
-                // modelList = result;
-                // for (let i = 0; i < modelList.length; i++) {
-                //     models.push({modelURL: modelList[i], index: i});
-                // }
-                // console.log("this is the model name: " + query)
-                console.log(result)
-                await input.onQueryResults(result);
+                modelList = result;
+                for (let i = 0; i < modelList.length; i++) {
+                    models.push(modelList[i]);
+                }
+                console.log("this is the model name: " + query)
+                await input.onQueryResults(models);
             });
         })
     }
 
-    async function validateModelIsNotEmpty(name: string) {
-		await new Promise(resolve => setTimeout(resolve, 100));
-		return name === '' ? 'Query is empty' : undefined;
-	}
+    // async function validateModelIsNotEmpty(name: string) {
+	// 	await new Promise(resolve => setTimeout(resolve, 100));
+	// 	return name === '' ? 'Query is empty' : undefined;
+	// }
 
     function shouldResume() {
         // Could show a notification with the option to resume.
@@ -230,7 +240,7 @@ export class MultiStepInput {
     }
 
     async onQueryResults(result) {
-        if (this.current && this.current.step === 2) {
+        if (this.current) {
             if (this.instanceOfQuickPick(this.current)) {
                 if (result.error) {
                     this.current.items = [];
@@ -244,19 +254,12 @@ export class MultiStepInput {
                     window.showErrorMessage(`Could not perform query: ${result.error}`).then(() => console.log('finished'));
                     return;
                 }
-
-                if (this.current.value === result.query) {
-                    if (result.items.length == 0) {
-                        window.showInformationMessage("Biomodel not found")
-                    }
-                    this.current.items = result.items.map((item) => {
-                        item['label'] = item['name'];
-                        item['detail'] = item['detail'];
-                        item['description'] = 'description';
-                        item['alwaysShow'] = true;
-                        return item;
-                    });
+                
+                if (result.length == 0) {
+                    window.showInformationMessage("Biomodel not found")
                 }
+                this.current.items = result
+                console.log(this.current.items)
             }
         }
     }

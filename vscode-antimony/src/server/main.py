@@ -37,6 +37,7 @@ import threading
 import time
 from AMAS import recommender, species_annotation
 from bioservices import ChEBI
+import requests
 
 # TODO remove this for production
 logging.basicConfig(filename='vscode-antimony-dep.log', filemode='w', level=logging.DEBUG)
@@ -281,7 +282,7 @@ def check_for_virtual_env(ls: LanguageServer, args):
 @server.thread()
 @server.command('antimony.createVirtualEnv')
 def call_or_activate_virtual_env(ls: LanguageServer, args):
-    subprocess.run(['./virtualEnvPython.sh'])
+    subprocess.run(['/Users/evaliu/Downloads/vscode-antimony/vscode-antimony/virtualEnvPython.sh'])
 
 @server.thread()
 @server.command('antimony.recommender')
@@ -332,6 +333,20 @@ def recommend(ls: LanguageServer, args):
     return {
         'annotations': ret
     }
+
+@server.thread()
+@server.command('antimony.searchModel')
+def search_model(ls: LanguageServer, args):
+    model_list = []
+    search_res = args[0]
+    search_url = ("https://www.ebi.ac.uk/biomodels/search?query={search}&format=json").format(
+        search=search_res
+    )
+    response = requests.get(search_url)
+    models = response.json()
+    for model in models['models']:
+        model_list.append(model['url'])
+    return model_list
 
 #### Hover for displaying information ####
 @server.feature(HOVER)

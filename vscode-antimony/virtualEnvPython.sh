@@ -1,5 +1,4 @@
-#!/bin/bash
-cd "$(dirname "$0")"
+#!/usr/bin/env bash
 # Logical conditions:
 # 0. If not already in virtualenv:
 # 0.1. If virtualenv already exists activate it,
@@ -15,10 +14,11 @@ cd "$(dirname "$0")"
 # $ ve python3.9 ./.venv-diff
 ve() {
     local py=${1:-python3.9}
-    local venv="${2:-./.venv}"
+    local venv="${2:-./.venv}_vscode_antimony_virtual_env"
 
     local bin="${venv}/bin/activate"
 
+    echo "running install virtual env"
     # If not already in virtualenv
     # $VIRTUAL_ENV is being set from $venv/bin/activate script
 	  if [ -z "${VIRTUAL_ENV}" ]; then
@@ -37,3 +37,5 @@ ve() {
         echo "Already in a virtual environment!"
     fi
 }
+
+ve "$@"

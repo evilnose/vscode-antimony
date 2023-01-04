@@ -13,6 +13,10 @@ vscode-antimony/out
 vscode-antimony/.lark-cache
 vscode-antimony/*.prof
 __pycache__/
+vscode-antimony/env
+vscode-antimony/.venv
+env
+.venv
 
 # for ols
 !vscode-antimony/pythonFiles

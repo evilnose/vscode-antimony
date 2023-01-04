@@ -169,7 +169,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			timeout = setTimeout(updateDecorations, 500);
 		} else {
 			updateDecorations();
-			console.log("Decorations are updated");
 		}
 	}
 
@@ -540,7 +539,6 @@ async function createVirtualEnv() {
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
     await vscode.commands.executeCommand('antimony.findVirtualEnv').then(async (result) => {
-        console.log(result)
         const evExists = result;
         if (evExists === false) {
             // asking permissions
@@ -549,9 +547,8 @@ async function createVirtualEnv() {
                 // installing virtual env
 				if (selection === 'Yes') {
 					await vscode.commands.executeCommand('antimony.createVirtualEnv').then(async (result) => {
-						vscode.window.showInformationMessage('Virtual Environment Finished Installing')
+						// vscode.window.showInformationMessage('Virtual Environment Finished Installing')
 					});
-					console.log("Created Virtual Env")
 				} else if (selection === 'No') {
 					vscode.window.showInformationMessage('The extension will now assume you already have a virtual environment installed for Antimony')
 				}

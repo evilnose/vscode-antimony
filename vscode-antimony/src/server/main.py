@@ -267,22 +267,24 @@ def check_for_virtual_env(ls: LanguageServer, args):
     '''
     determines if the system already has a virtual environment created
     '''
-    boolean = False
-    if os.getenv('vscode_antimony_virtual_env') or sys.prefix != sys.base_prefix:
-        print(f'Python Executable: {sys.executable}')
-        print(f'Python Version: {sys.version}')
-        print(f'Virtualenv: {os.getenv("vscode_antimony_virtual_env")}')
-        print(sys.prefix)
-        boolean = True
-        return boolean
-    print('No virtual env found')
-    boolean = False
-    return boolean
+    for i in os.environ:
+        vscode_logger.info(i)
+    if os.getenv('env') or sys.prefix != sys.base_prefix:
+        vscode_logger.info(f'Python Executable: {sys.executable}')
+        vscode_logger.info(f'Python Version: {sys.version}')
+        vscode_logger.info(f'Virtualenv: {os.getenv("venv_vscode_antimony_virtual_env")}')
+        vscode_logger.info(sys.prefix)
+        return True
+    vscode_logger.info('No virtual env found')
+    return False
 
 @server.thread()
 @server.command('antimony.createVirtualEnv')
 def call_or_activate_virtual_env(ls: LanguageServer, args):
-    subprocess.run(['/Users/evaliu/Downloads/vscode-antimony/vscode-antimony/virtualEnvPython.sh'])
+    EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    return_subprocess = subprocess.run([EXTENSION_ROOT + "/virtualEnvPython.sh"], capture_output=True).returncode
+    vscode_logger.info("subprocess.run return value: ")
+    vscode_logger.info(return_subprocess)
 
 @server.thread()
 @server.command('antimony.recommender')

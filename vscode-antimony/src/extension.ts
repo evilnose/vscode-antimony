@@ -12,6 +12,7 @@ import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
 import * as fs from 'fs';
+import * as os from 'os';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -30,6 +31,9 @@ const annDecorationType = vscode.window.createTextEditorDecorationType({
 let annotatedVariableIndicatorOn: boolean | null = null;
 
 let activeEditor = vscode.window.activeTextEditor;
+
+// RoundTripping SBML to Antimony
+let roundTripping: boolean | null = null;
 
 // change the annotation decoration of non-annotated variables
 function updateDecorations() {
@@ -73,6 +77,7 @@ function updateDecorations() {
 
 export async function activate(context: vscode.ExtensionContext) {
 	annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
+	roundTripping = vscode.workspace.getConfiguration('vscode-antimony').get('openSBMLAsAntimony');
 	// start the language server
 	await startLanguageServer(context);
 	vscode.workspace.onDidChangeConfiguration(async (e) => {
@@ -187,75 +192,102 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	}, null, context.subscriptions);
 
+	const sbmlFileNameToPath = new Map();
+
 	// when user opens XML
-	vscode.workspace.onDidOpenTextDocument(event => {
-		if (path.extname(event.fileName) === '.xml') {
-			// check if the file is sbml, opens up a new file
-			vscode.commands.executeCommand('antimony.sbmlFileToAntStr', event)
-				.then(async (result: any) => {
-					if (result.error) {
-						vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
-					} else {
-						const sbmlFileName = path.basename(event.fileName, '.xml');
-						const tempPath = path.dirname(event.uri.fsPath);
-						var tempFileName = `~$temp-${sbmlFileName}.ant`;
-						var tempFilePath = path.join(tempPath, tempFileName);
-						var counter = 1;
-						while (fs.existsSync(tempFilePath)) {
-							tempFileName = `~$temp-${sbmlFileName} (${counter}).ant`;
-							var tempFilePath = path.join(tempPath, tempFileName);
-							counter++;
+	if (roundTripping) {
+		vscode.workspace.onDidOpenTextDocument(async event => {
+			if (path.extname(event.fileName) === '.xml') {
+				// check if the file is sbml, opens up a new file
+				await vscode.window.showTextDocument(event, { preview: true, preserveFocus: false });
+  				await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+				vscode.commands.executeCommand('antimony.sbmlFileToAntStr', event)
+					.then(async (result: any) => {
+						if (result.error) {
+							vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
+						} else {
+							const sbmlFileName = path.basename(event.fileName, '.xml');
+							const tempDir = os.tmpdir();
+							var tempFileName = `${sbmlFileName}.ant`;
+							var tempFilePath = path.join(tempDir, tempFileName);
+							sbmlFileNameToPath[tempFileName] = path.dirname(event.fileName);
+							fs.writeFile(tempFilePath, result.ant_str, (error) => {
+								if (error) {
+								  console.error(error);
+								} else {
+								  console.log('The file was saved to ' + tempFilePath);
+								}
+							  });
+							// Create the temporary file and open it in the editor
+							const tempFile = vscode.workspace.openTextDocument(tempFilePath).then((doc) => {
+								vscode.window.showTextDocument(doc, { preview: false });
+							});
+							
 						}
-						fs.writeFile(tempFilePath, result.ant_str, (error) => {
-							if (error) {
-							  console.error(error);
-							} else {
-							  console.log('The file was saved to ' + tempFilePath);
-							}
-						  });
-						// Create the temporary file and open it in the editor
-						const tempFile = vscode.workspace.openTextDocument(tempFilePath).then((doc) => {
-							vscode.window.showTextDocument(doc, { preview: false });
+					});
+				}
+			});
+	
+		vscode.workspace.onDidCloseTextDocument((closedDoc) => {
+			const fileName = path.basename(closedDoc.fileName, '.git');
+			const pathName = path.dirname(closedDoc.fileName);
+			const fullPath = path.join(pathName, fileName);
+			const pattern = /^(.+?).ant/;
+			if (pattern.test(fileName) && pathName === os.tmpdir()) {
+				vscode.window.showInformationMessage('Do you want to save the changes to the original SBML file?\n Warning: edits will be lost if not saved!', 'Save', 'Discard')
+				.then((choice) => {
+					if (choice === 'Save') {
+						vscode.workspace.openTextDocument(fullPath).then((doc) => {
+							vscode.commands.executeCommand('antimony.antStrToSBMLStr', doc.getText())
+							.then(async (result: any) => {
+								if (result.error) {
+									vscode.window.showErrorMessage(`Error while converting: ${result.error}`);
+								} else {
+									const match = pattern.exec(fileName)[1];
+									const sbmlFilePath = path.join(sbmlFileNameToPath[fileName], match + '.xml');
+									fs.writeFile(sbmlFilePath, result.sbml_str, (error) => {
+										if (error) {
+											console.error(error);
+										}
+									});
+								}
+							});
 						});
-						vscode.workspace.onDidCloseTextDocument((closedDoc) => {
-							const fileName = path.basename(closedDoc.fileName, '.git');
-							const pathName = path.dirname(closedDoc.fileName);
-							const fullPath = path.join(pathName, fileName);
-							const pattern = /^~\$temp-(.+?)(\s\([0-9]+\))?.ant/;
-							if (pattern.test(fileName)) {
-								vscode.window.showInformationMessage('Do you want to save the changes to the original SBML file?\n Warning: edits will be lost if not saved!', 'Save', 'Discard')
-								.then((choice) => {
-									if (choice === 'Save') {
-										vscode.workspace.openTextDocument(fullPath).then((doc) => {
-											vscode.commands.executeCommand('antimony.antStrToSBMLStr', doc.getText())
-											.then(async (result: any) => {
-												if (result.error) {
-													vscode.window.showErrorMessage(`Error while converting: ${result.error}`);
-												} else {
-													const match = pattern.exec(fileName)[1];
-													const sbmlFilePath = path.join(pathName, match + '.xml');
-													fs.writeFile(sbmlFilePath, result.sbml_str, (error) => {
-														if (error) {
-														  console.error(error);
-														} else {
-														  console.log('The file was saved to ' + tempFilePath);
-														}
-													});
-												}
-											});
-										});
-										fs.unlink(fullPath, (error) => {});
-									} else {
-										fs.unlink(fullPath, (error) => {});
-									}
-								});
-							}
-						});
+						fs.unlink(fullPath, (error) => {});
+					} else {
+						fs.unlink(fullPath, (error) => {});
 					}
 				});
 			}
 		});
+	
+		vscode.workspace.onDidSaveTextDocument((savedDoc) => {
+			const fileName = path.basename(savedDoc.fileName, '.git');
+			const pathName = path.dirname(savedDoc.fileName);
+			const fullPath = path.join(pathName, fileName);
+			const pattern = /^(.+?).ant/;
+			if (pattern.test(fileName) && pathName === os.tmpdir()) {
+				vscode.workspace.openTextDocument(fullPath).then((doc) => {
+					vscode.commands.executeCommand('antimony.antStrToSBMLStr', doc.getText())
+					.then(async (result: any) => {
+						if (result.error) {
+							vscode.window.showErrorMessage(`Error while converting: ${result.error}`);
+						} else {
+							const match = pattern.exec(fileName)[1];
+							const sbmlFilePath = path.join(sbmlFileNameToPath[fileName], match + '.xml');
+							fs.writeFile(sbmlFilePath, result.sbml_str, (error) => {
+								if (error) {
+									console.error(error);
+								}
+							});
+							vscode.window.showInformationMessage(`Edit saved to: ${sbmlFilePath}`);
+						}
+					});
+				});
+			}
+		});
 	}
+}
 
 async function startSBMLWebview(context: vscode.ExtensionContext, args: any[]) {
 	if (!client) {
@@ -454,12 +486,12 @@ export function deactivate(): Thenable<void> | undefined {
 	return client.stop();
 }
 /** Prompts user to reload editor window in order for configuration change to take effect. */
-function promptToReloadWindow() {
+function promptToReloadWindow(message: string) {
 	const action = 'Reload';
   
 	vscode.window
 	  .showInformationMessage(
-		`Reload window in order for visual indication change in Antimony to take effect.`,
+		message,
 		action
 	  )
 	  .then(selectedAction => {
@@ -500,14 +532,21 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 	annotatedVariableIndicatorOn = true;
 	vscode.workspace.getConfiguration('vscode-antimony').update('annotatedVariableIndicatorOn', true, true);
 
-	promptToReloadWindow();
+	promptToReloadWindow(`Reload window for visual indication change in Antimony to take effect.`);
 }
 
 vscode.workspace.onDidChangeConfiguration(async (e) => {
 	if (!e.affectsConfiguration('vscode-antimony.highlightColor')) {
 		return;
 	}
-	promptToReloadWindow();
+	promptToReloadWindow(`Reload window for visual indication change in Antimony to take effect.`);
+});
+
+vscode.workspace.onDidChangeConfiguration(async (e) => {
+	if (!e.affectsConfiguration('vscode-antimony.openSBMLAsAntimony')) {
+		return;
+	}
+	promptToReloadWindow(`Reload window for Open SBML As Antimony change to take effect.`);
 });
 
 // insert rate law

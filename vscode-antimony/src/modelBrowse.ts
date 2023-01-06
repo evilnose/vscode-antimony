@@ -67,7 +67,7 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 		}, (progress, token) => {
             return commands.executeCommand('antimony.getModel', query).then(async (result) => {
                 console.log("it was successful!")
-                filePath = path.normalize(newPath + "\\" + result)
+                filePath = path.normalize(newPath + "\\" + result["filename"])
                 console.log(filePath)
             });
         })

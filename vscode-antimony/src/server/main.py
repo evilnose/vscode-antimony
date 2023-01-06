@@ -343,15 +343,18 @@ def search_model(ls: LanguageServer, args):
 @server.command('antimony.getModel')
 def get_model(ls: LanguageServer, args):
     model_id = args[0]
-    # given_temp_file = args[1]
-    # cur_path = os.path.dirname(args[1])
     model_download_url = ("https://www.ebi.ac.uk/biomodels/search/download?models={model}").format(
         model=model_id
     )
     response = requests.get(model_download_url, stream=True)
     extract = zipfile.ZipFile(io.BytesIO(response.content))
-    extract.extractall()
-    return extract.namelist()[0]
+    data = io.TextIOWrapper(extract.open(extract.namelist()[0]), encoding="utf-8", newline="").read()
+    extract.close()
+    vscode_logger.info(data)
+    return {
+        "filename": extract.namelist()[0],
+        "data": data
+    }
 
 #### Hover for displaying information ####
 @server.feature(HOVER)

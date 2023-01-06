@@ -37,6 +37,8 @@ import time
 from AMAS import recommender, species_annotation
 from bioservices import ChEBI
 import requests
+import zipfile
+import io
 
 # TODO remove this for production
 logging.basicConfig(filename='vscode-antimony-dep.log', filemode='w', level=logging.DEBUG)
@@ -315,14 +317,41 @@ def recommend(ls: LanguageServer, args):
 def search_model(ls: LanguageServer, args):
     model_list = []
     search_res = args[0]
+    if search_res.isdigit():
+        new_res = "BIOMD"
+        for _ in range(10 - len(search_res)):
+            new_res += "0"
+        new_res += search_res
+        search_url = ("https://www.ebi.ac.uk/biomodels/search?query={search}&format=json").format(
+            search=new_res
+        )
+        response = requests.get(search_url)
+        models = response.json()
+        for model in models['models']:
+            model_list.append({'name': model['name'], 'url': model['url'], 'id': model['id']})
+
     search_url = ("https://www.ebi.ac.uk/biomodels/search?query={search}&format=json").format(
         search=search_res
     )
     response = requests.get(search_url)
     models = response.json()
     for model in models['models']:
-        model_list.append({'name': model['name'], 'url': model['url']})
+        model_list.append({'name': model['name'], 'url': model['url'], 'id': model['id']})
     return model_list
+
+@server.thread()
+@server.command('antimony.getModel')
+def get_model(ls: LanguageServer, args):
+    model_id = args[0]
+    # given_temp_file = args[1]
+    # cur_path = os.path.dirname(args[1])
+    model_download_url = ("https://www.ebi.ac.uk/biomodels/search/download?models={model}").format(
+        model=model_id
+    )
+    response = requests.get(model_download_url, stream=True)
+    extract = zipfile.ZipFile(io.BytesIO(response.content))
+    extract.extractall()
+    return extract.namelist()[0]
 
 #### Hover for displaying information ####
 @server.feature(HOVER)

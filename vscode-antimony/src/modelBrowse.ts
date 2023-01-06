@@ -1,9 +1,11 @@
 import { QuickPickItem, window, Disposable, QuickInputButton, QuickInput, ExtensionContext, QuickInputButtons, commands, QuickPick, InputBox } from 'vscode';
 import { sleep } from './utils/utils';
 import { ProgressLocation } from 'vscode'
+import * as vscode from 'vscode'
+import * as path from 'path'
 
 export async function modelSearchInput(context: ExtensionContext, initialEntity: string = null, selectedType: string = null) {
-
+    var filePath;
     interface State {
         title: string;
         step: number;
@@ -33,6 +35,7 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
             onInputChanged: (value) => onQueryUpdated(value, input),
         });
         state.entity = pick;
+        await onQueryConfirmed(state.entity['id'], input);
     }
 
     async function onQueryUpdated(query: string, input: MultiStepInput) {
@@ -55,10 +58,20 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
         })
     }
 
-    // async function validateModelIsNotEmpty(name: string) {
-	// 	await new Promise(resolve => setTimeout(resolve, 100));
-	// 	return name === '' ? 'Query is empty' : undefined;
-	// }
+    async function onQueryConfirmed(query: string, input: MultiStepInput) {
+        const newPath = vscode.workspace.workspaceFolders[0].uri.fsPath
+        window.withProgress({
+			location: ProgressLocation.Notification,
+			title: "Grabbing biomodel...",
+			cancellable: true
+		}, (progress, token) => {
+            return commands.executeCommand('antimony.getModel', query).then(async (result) => {
+                console.log("it was successful!")
+                filePath = path.normalize(newPath + "\\" + result)
+                console.log(filePath)
+            });
+        })
+    }
 
     function shouldResume() {
         // Could show a notification with the option to resume.
@@ -222,7 +235,7 @@ export class MultiStepInput {
                     window.showInformationMessage("Biomodel not found")
                 }
                 this.current.items = result.map((item) => {
-                    item['label'] = item['name'];
+                    item['label'] = item['name'] + " (" + item['id'] + ")";
                     item['detail'] = item['url'];
                     return item;
                 });

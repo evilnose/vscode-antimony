@@ -6,12 +6,13 @@
 # 1. If already in virtualenv: just give info
 #
 # Usage:
-# Without arguments it will create virtualenv named `.venv` with `python3.8` version
+# Without arguments it will create virtualenv named `.venv_vscode_antimony_virtual_env` with `python3.9` version
 # $ ve
 # or for a specific python version
 # $ ve python3.9
 # or for a specific python version and environment name;
 # $ ve python3.9 ./.venv-diff
+
 ve() {
     local py=${1:-python3.9}
     local venv="${2:-./.venv}_vscode_antimony_virtual_env"
@@ -21,16 +22,15 @@ ve() {
     echo "running install virtual env"
     # If not already in virtualenv
     # $VIRTUAL_ENV is being set from $venv/bin/activate script
-	  if [ -z "${VIRTUAL_ENV}" ]; then
+    if [ -z "${VIRTUAL_ENV}" ]; then
         if [ ! -d ${venv} ]; then
             echo "Creating and activating virtual environment ${venv}"
             ${py} -m venv env ${venv} --system-site-package
             echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
-            source ${bin}
             echo "Upgrading pip"
             ${py} -m pip install --upgrade pip
         else
-            echo "Virtual environment ${venv} already exists, activating..."
+            echo "Virtual environment ${venv} already exists, activating..."            
             source ${bin}
         fi
     else

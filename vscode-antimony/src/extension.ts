@@ -540,6 +540,7 @@ async function createVirtualEnv() {
 
     await vscode.commands.executeCommand('antimony.findVirtualEnv').then(async (result) => {
         const evExists = result;
+		console.log(evExists)
         if (evExists === false) {
             // asking permissions
             vscode.window.showInformationMessage('To install dependencies so the extension works properly, allow installation of virtual environment', ...['Yes', 'No'])

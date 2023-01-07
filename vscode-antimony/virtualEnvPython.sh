@@ -29,6 +29,8 @@ ve() {
             echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
             echo "Upgrading pip"
             ${py} -m pip install --upgrade pip
+            python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \
+                --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
         else
             echo "Virtual environment ${venv} already exists, activating..."            
             source ${bin}

@@ -289,7 +289,7 @@ def call_or_activate_virtual_env(ls: LanguageServer, args):
 
     subprocess.run([EXTENSION_ROOT + "/virtualEnvPython.sh; source " + EXTENSION_ROOT + "/.venv_vscode_antimony_virtual_env/bin/activate"], capture_output=True, shell=True, executable='/bin/bash')
 
-    os.environ['ANTIMONY_VIRTUAL_ENV'] = './.venv_vscode_antimony_virtual_env/bin/activate'
+    os.environ['ANTIMONY_VIRTUAL_ENV'] = EXTENSION_ROOT + '/.venv_vscode_antimony_virtual_env/bin/activate'
     # cmd = '. .venv_vscode_antimony_virtual_env/bin/activate'
     # subprocess.call(cmd, shell=True, executable='/bin/bash')
     # vscode_logger.info(return_subprocess.returncode)

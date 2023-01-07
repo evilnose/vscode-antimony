@@ -548,7 +548,7 @@ async function createVirtualEnv() {
                 // installing virtual env
 				if (selection === 'Yes') {
 					await vscode.commands.executeCommand('antimony.createVirtualEnv').then(async (result) => {
-						vscode.window.showInformationMessage('Virtual Environment Finished Installing. To activate, run "source ./.venv_vscode_antimony_virtual_env/bin/activate" in a terminal. To open a terminal, click "terminal" in the top left horizontal menu and click "New Terminal".')
+						vscode.window.showInformationMessage('Installation Finished. [IMPORTANT] TO ACTIVATE, run "source ./.venv_vscode_antimony_virtual_env/bin/activate" in a terminal. To open a terminal, click "terminal" in the top left horizontal menu and click "New Terminal".')
 					});
 				} else if (selection === 'No') {
 					vscode.window.showInformationMessage('The extension will now assume you already have a virtual environment installed for Antimony')

@@ -72,6 +72,7 @@ function updateDecorations() {
 
 export async function activate(context: vscode.ExtensionContext) {
 	annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
+	await createVirtualEnv();
 	// start the language server
 	await startLanguageServer(context);
 
@@ -530,12 +531,6 @@ async function startLanguageServer(context: vscode.ExtensionContext) {
 
 // setup virtual environment
 async function createVirtualEnv() {
-	if (!client) {
-		utils.pythonInterpreterError();
-		return;
-	}
-	await client.onReady();
-
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
     await vscode.commands.executeCommand('antimony.findVirtualEnv').then(async (result) => {

@@ -548,7 +548,7 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 				if (selection === 'Yes') {
 					await vscode.commands.executeCommand('antimony.createVirtualEnv').then(async (result) => {
 						let virtualEnvPath = result;
-						vscode.workspace.getConfiguration('vscode-antimony').update('Python Interpreter', virtualEnvPath, true);
+						vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', virtualEnvPath, true);
 						vscode.window.showInformationMessage('Installation Finished. [IMPORTANT] RUN "source ./.venv_vscode_antimony_virtual_env/bin/activate" in a terminal to activate Virtual Environment. To open a terminal, click "terminal" in the top left horizontal menu and click "New Terminal".')
 					});
 				} else if (selection === 'No') {

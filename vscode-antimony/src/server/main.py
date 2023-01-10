@@ -270,10 +270,10 @@ def check_for_virtual_env(ls: LanguageServer, args):
     for i in os.environ:
         vscode_logger.info(i)
         if i == "ANTIMONY_VIRTUAL_ENV":
-            vscode_logger.info(f'Python Executable: {sys.executable}')
-            vscode_logger.info(f'Python Version: {sys.version}')
-            vscode_logger.info(f'Virtualenv: {os.getenv("venv_vscode_antimony_virtual_env")}')
-            vscode_logger.info(sys.prefix)
+            # vscode_logger.info(f'Python Executable: {sys.executable}')
+            # vscode_logger.info(f'Python Version: {sys.version}')
+            # vscode_logger.info(f'Virtualenv: {os.getenv("venv_vscode_antimony_virtual_env")}')
+            # vscode_logger.info(sys.prefix)
             if sys.prefix != sys.base_prefix:
                 return True
             else:

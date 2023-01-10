@@ -547,9 +547,9 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
                 // installing virtual env
 				if (selection === 'Yes') {
 					await vscode.commands.executeCommand('antimony.createVirtualEnv').then(async (result) => {
-						let virtualEnvPath = result;
-						vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', virtualEnvPath, true);
-						vscode.window.showInformationMessage('Installation Finished. [IMPORTANT] RUN "source ./.venv_vscode_antimony_virtual_env/bin/activate" in a terminal to activate Virtual Environment. To open a terminal, click "terminal" in the top left horizontal menu and click "New Terminal".')
+						let virtualEnvPath = vscode.workspace.workspaceFolders[0].uri.path;
+						vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', virtualEnvPath + "/.venv_vscode_antimony_virtual_env/bin/python3.9", true);
+						vscode.window.showInformationMessage('Installation Finished.')
 					});
 				} else if (selection === 'No') {
 					vscode.window.showInformationMessage('The extension will now assume you already have a virtual environment installed for Antimony')

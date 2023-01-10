@@ -12,6 +12,7 @@ import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
 import { exec } from 'child_process';
+import { callbackify } from 'util';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -87,15 +88,17 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 	.then(async selection => {
 		// installing virtual env
 		if (selection === 'Yes') {
-			await exec('vscode-antimony/src/virtualEnvPython.sh', (err, stdout, stdrr) => {
-				console.log(stdout)
+			let {PythonShell} = require('python-shell')
+			var current_path_to_dir = path.join(__dirname, '..');
+			var current_path_to_script = path.join(__dirname, '..', 'src', 'server', 'run_shell.py');
+			console.log(current_path_to_script)
+			PythonShell.run(current_path_to_script, null, await function (err) {
 				if (err) {
-					var current_path_to_dir = path.join(__dirname, '..', 'src', 'virtualEnvPython.sh');
 					vscode.window.showInformationMessage('Installation Error. Try again. Error Message "' + err + '."')
-					vscode.window.showInformationMessage(current_path_to_dir)
 					createVirtualEnv(context);
+					throw err;
 				} else {
-					vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', map.get(".venv_vscode_antimony_virtual_env") + "/.venv_vscode_antimony_virtual_env/bin/python3.9", true);
+					// vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', vscode.workspace.workspaceFolders[0].uri.path + "/.venv_vscode_antimony_virtual_env/bin/python3.9", true);
 					vscode.window.showInformationMessage('Installation Finished. DO NOT delete the VENV and ENV folders. They are crucial for the extension to work.')
 				}
 			});

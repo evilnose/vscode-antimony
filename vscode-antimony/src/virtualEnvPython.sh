@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# chmod +x ./virtualEnvPython.sh && mv ./virtualEnvPython.sh $HOME/.local/bin
+chmod a+x virtualEnvPython.sh
 
 # Logical conditions:
 # 0. If not already in virtualenv:

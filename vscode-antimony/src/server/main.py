@@ -262,34 +262,6 @@ def get_rate_law_dict(ls: LanguageServer, args):
     return reader.relevant_rate_laws
 
 @server.thread()
-@server.command('antimony.findVirtualEnv')
-def check_for_virtual_env(ls: LanguageServer, args):
-    '''
-    determines if the system already has a virtual environment created
-    '''
-    for i in os.environ:
-        vscode_logger.info(i)
-        if i == "ANTIMONY_VIRTUAL_ENV":
-            # vscode_logger.info(f'Python Executable: {sys.executable}')
-            # vscode_logger.info(f'Python Version: {sys.version}')
-            # vscode_logger.info(f'Virtualenv: {os.getenv("venv_vscode_antimony_virtual_env")}')
-            # vscode_logger.info(sys.prefix)
-            if sys.prefix != sys.base_prefix:
-                return True
-            else:
-                vscode_logger.info('Virtual env not activated')
-                return False
-    vscode_logger.info('No virtual env found')
-    return False
-
-@server.thread()
-@server.command('antimony.createVirtualEnv')
-def call_or_activate_virtual_env(ls: LanguageServer, args):
-    EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    subprocess.run([EXTENSION_ROOT + "/virtualEnvPython.sh"], capture_output=True)
-    os.environ['ANTIMONY_VIRTUAL_ENV'] = EXTENSION_ROOT + '/.venv_vscode_antimony_virtual_env/bin/activate'
-
-@server.thread()
 @server.command('antimony.recommender')
 def recommend(ls: LanguageServer, args):
     '''

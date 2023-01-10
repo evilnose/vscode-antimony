@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+chmod +x ./virtualEnvPython.sh && mv ./virtualEnvPython.sh $HOME/.local/bin
+
 # Logical conditions:
 # 0. If not already in virtualenv:
 # 0.1. If virtualenv already exists activate it,
@@ -27,6 +30,7 @@ ve() {
             echo "Creating and activating virtual environment ${venv}"
             ${py} -m venv env ${venv} --system-site-package
             echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
+            source ${bin}
             echo "Upgrading pip"
             ${py} -m pip install --upgrade pip
             python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \

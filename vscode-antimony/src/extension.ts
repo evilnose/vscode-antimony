@@ -13,6 +13,7 @@ import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
 import * as fs from 'fs';
 import * as os from 'os';
+import { TextDocument } from 'vscode';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -75,7 +76,40 @@ function updateDecorations() {
 	}
 }
 
+async function triggerSBMLEditor(event: TextDocument, sbmlFileNameToPath: Map<any, any>) {
+	if (path.extname(event.fileName) === '.xml') {
+		// check if the file is sbml, opens up a new file
+		await vscode.window.showTextDocument(event, { preview: true, preserveFocus: false });
+		  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+		vscode.commands.executeCommand('antimony.sbmlFileToAntStr', event)
+			.then(async (result: any) => {
+				if (result.error) {
+					vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
+				} else {
+					const sbmlFileName = path.basename(event.fileName, '.xml');
+					const tempDir = os.tmpdir();
+					var tempFileName = `${sbmlFileName}.ant`;
+					var tempFilePath = path.join(tempDir, tempFileName);
+					sbmlFileNameToPath[tempFileName] = path.dirname(event.fileName);
+					fs.writeFile(tempFilePath, result.ant_str, (error) => {
+						if (error) {
+						  console.error(error);
+						} else {
+						  console.log('The file was saved to ' + tempFilePath);
+						}
+					  });
+					// Create the temporary file and open it in the editor
+					const tempFile = vscode.workspace.openTextDocument(tempFilePath).then((doc) => {
+						vscode.window.showTextDocument(doc, { preview: false });
+					});
+					
+				}
+			});
+		}
+}
+
 export async function activate(context: vscode.ExtensionContext) {
+	vscode.window.showInformationMessage("extension activated!");
 	annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
 	roundTripping = vscode.workspace.getConfiguration('vscode-antimony').get('openSBMLAsAntimony');
 	// start the language server
@@ -197,36 +231,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	// when user opens XML
 	if (roundTripping) {
 		vscode.workspace.onDidOpenTextDocument(async event => {
-			if (path.extname(event.fileName) === '.xml') {
-				// check if the file is sbml, opens up a new file
-				await vscode.window.showTextDocument(event, { preview: true, preserveFocus: false });
-  				await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-				vscode.commands.executeCommand('antimony.sbmlFileToAntStr', event)
-					.then(async (result: any) => {
-						if (result.error) {
-							vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
-						} else {
-							const sbmlFileName = path.basename(event.fileName, '.xml');
-							const tempDir = os.tmpdir();
-							var tempFileName = `${sbmlFileName}.ant`;
-							var tempFilePath = path.join(tempDir, tempFileName);
-							sbmlFileNameToPath[tempFileName] = path.dirname(event.fileName);
-							fs.writeFile(tempFilePath, result.ant_str, (error) => {
-								if (error) {
-								  console.error(error);
-								} else {
-								  console.log('The file was saved to ' + tempFilePath);
-								}
-							  });
-							// Create the temporary file and open it in the editor
-							const tempFile = vscode.workspace.openTextDocument(tempFilePath).then((doc) => {
-								vscode.window.showTextDocument(doc, { preview: false });
-							});
-							
-						}
-					});
-				}
-			});
+			triggerSBMLEditor(event, sbmlFileNameToPath);
+		});
 	
 		vscode.workspace.onDidCloseTextDocument((closedDoc) => {
 			const fileName = path.basename(closedDoc.fileName, '.git');
@@ -286,6 +292,10 @@ export async function activate(context: vscode.ExtensionContext) {
 				});
 			}
 		});
+	}
+
+	if (path.extname(vscode.window.activeTextEditor.document.fileName) === '.xml' && roundTripping) {
+		triggerSBMLEditor(vscode.window.activeTextEditor.document, sbmlFileNameToPath);
 	}
 }
 

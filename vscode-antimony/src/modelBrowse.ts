@@ -6,6 +6,7 @@ import * as path from 'path'
 
 export async function modelSearchInput(context: ExtensionContext, initialEntity: string = null, selectedType: string = null) {
     var filePath;
+    var xmlData;
     interface State {
         title: string;
         step: number;
@@ -60,6 +61,7 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 
     async function onQueryConfirmed(query: string, input: MultiStepInput) {
         const newPath = vscode.workspace.workspaceFolders[0].uri.fsPath
+        var fileName;
         window.withProgress({
 			location: ProgressLocation.Notification,
 			title: "Grabbing biomodel...",
@@ -68,9 +70,15 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
             return commands.executeCommand('antimony.getModel', query).then(async (result) => {
                 console.log("it was successful!")
                 filePath = path.normalize(newPath + "\\" + result["filename"])
+                xmlData = result["data"]
+                fileName = result["filename"]
+                console.log(xmlData)
                 console.log(filePath)
             });
         })
+        vscode.commands.executeCommand('antimony.sbmlStrToAntStr', xmlData).then(async (result) => {
+            path.basename(fileName)
+        });
     }
 
     function shouldResume() {

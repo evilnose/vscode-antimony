@@ -17,30 +17,84 @@
 # $ ve python3.9 ./.venv-diff
 
 ve() {
-    local py=${1:-python3.9}
-    local venv="${2:-./.venv}_vscode_antimony_virtual_env"
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        local py=${1:-python3.9}
+        local venv="${2:-./.venv}_vscode_antimony_virtual_env"
 
-    local bin="${venv}/bin/activate"
+        local bin="${venv}/bin/activate"
 
-    echo "running install virtual env"
-    # If not already in virtualenv
-    # $VIRTUAL_ENV is being set from $venv/bin/activate script
-    if [ -z "${VIRTUAL_ENV}" ]; then
-        if [ ! -d ${venv} ]; then
-            echo "Creating and activating virtual environment ${venv}"
-            ${py} -m venv env ${venv} --system-site-package
-            echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
-            source ${bin}
-            echo "Upgrading pip"
-            ${py} -m pip install --upgrade pip
-            python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \
-                --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
+        echo "running install virtual env"
+        # If not already in virtualenv
+        # $VIRTUAL_ENV is being set from $venv/bin/activate script
+        if [ -z "${VIRTUAL_ENV}" ]; then
+            if [ ! -d ${venv} ]; then
+                echo "Creating and activating virtual environment ${venv}"
+                ${py} -m venv env ${venv} --system-site-package
+                echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
+                source ${bin}
+                echo "Upgrading pip"
+                ${py} -m pip install --upgrade pip
+                python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \
+                    --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
+            else
+                echo "Virtual environment ${venv} already exists, activating..."            
+                source ${bin}
+            fi
         else
-            echo "Virtual environment ${venv} already exists, activating..."            
-            source ${bin}
+            echo "Already in a virtual environment!"
+        fi
+    elif [[ "$OSTYPE" == "win64" ]]; then
+        local py=${1:-python3.9}
+        local venv="${2:-./.venv}_vscode_antimony_virtual_env"
+
+        local bin="${venv}/bin/activate"
+
+        echo "running install virtual env"
+        # If not already in virtualenv
+        # $VIRTUAL_ENV is being set from $venv/bin/activate script
+        if [ -z "${VIRTUAL_ENV}" ]; then
+            if [ ! -d ${venv} ]; then
+                echo "Creating and activating virtual environment ${venv}"
+                ${py} -m venv env ${venv} --system-site-package
+                echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
+                source ${bin}
+                echo "Upgrading pip"
+                ${py} -m pip install --upgrade pip
+                python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \
+                    --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
+            else
+                echo "Virtual environment ${venv} already exists, activating..."            
+                source ${bin}
+            fi
+        else
+            echo "Already in a virtual environment!"
         fi
     else
-        echo "Already in a virtual environment!"
+        local py=${1:-python3.9}
+        local venv="${2:-./.venv}_vscode_antimony_virtual_env"
+
+        local bin="${venv}/bin/activate"
+
+        echo "running install virtual env"
+        # If not already in virtualenv
+        # $VIRTUAL_ENV is being set from $venv/bin/activate script
+        if [ -z "${VIRTUAL_ENV}" ]; then
+            if [ ! -d ${venv} ]; then
+                echo "Creating and activating virtual environment ${venv}"
+                ${py} -m venv env ${venv} --system-site-package
+                echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
+                source ${bin}
+                echo "Upgrading pip"
+                ${py} -m pip install --upgrade pip
+                python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \
+                    --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
+            else
+                echo "Virtual environment ${venv} already exists, activating..."            
+                source ${bin}
+            fi
+        else
+            echo "Already in a virtual environment!"
+        fi
     fi
 }
 

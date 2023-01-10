@@ -99,6 +99,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	});
 
+	await createVirtualEnv(context);
+
 	// create annotations
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.createAnnotationDialog',
@@ -473,7 +475,6 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 
 // starting language server
 async function startLanguageServer(context: vscode.ExtensionContext) {
-	createVirtualEnv(context);
 	pythonInterpreter = getPythonInterpreter();
 	// verify the interpreter
 	const error = await verifyInterpreter(pythonInterpreter);
@@ -533,7 +534,7 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 		return;
 	}
 	await client.onReady();
-	
+
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 
     await vscode.commands.executeCommand('antimony.findVirtualEnv').then(async (result) => {

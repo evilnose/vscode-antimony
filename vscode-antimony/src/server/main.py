@@ -128,10 +128,12 @@ def sbml_str_to_ant_str(ls: LanguageServer, args):
     antimony.freeAll()
     ant = antimony.loadSBMLString(sbml)
     if ant < 0:
+        vscode_logger.info("SBML conversion failed")
         return {
             'error': 'Antimony -  {}'.format(antimony.getLastError())
         }
     ant_str = antimony.getAntimonyString(None)
+    vscode_logger.info("SBML conversion passed")
     return ant_str
 
 @server.thread()

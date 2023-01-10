@@ -3,6 +3,8 @@ import { sleep } from './utils/utils';
 import { ProgressLocation } from 'vscode'
 import * as vscode from 'vscode'
 import * as path from 'path'
+import * as fs from 'fs';
+import * as os from 'os';
 
 export async function modelSearchInput(context: ExtensionContext, initialEntity: string = null, selectedType: string = null) {
     var filePath;
@@ -61,7 +63,7 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 
     async function onQueryConfirmed(query: string, input: MultiStepInput) {
         const newPath = vscode.workspace.workspaceFolders[0].uri.fsPath
-        var fileName;
+        var xmlName;
         window.withProgress({
 			location: ProgressLocation.Notification,
 			title: "Grabbing biomodel...",
@@ -71,13 +73,29 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
                 console.log("it was successful!")
                 filePath = path.normalize(newPath + "\\" + result["filename"])
                 xmlData = result["data"]
-                fileName = result["filename"]
-                console.log(xmlData)
-                console.log(filePath)
+                xmlName = result["filename"]
+                await processFile(xmlName)
             });
         })
-        vscode.commands.executeCommand('antimony.sbmlStrToAntStr', xmlData).then(async (result) => {
-            path.basename(fileName)
+        
+    }
+
+    async function processFile(xmlName: string) {
+        vscode.commands.executeCommand('antimony.sbmlStrToAntStr', xmlData).then(async (result: any) => {
+            const fileName = path.basename(xmlName, ".xml")
+            const tempDir = os.tmpdir()
+            var tempFile = `${fileName}.ant`
+            var tempPath = path.join(tempDir, tempFile)
+            fs.writeFile(tempPath, String(result), (error) => {
+                if (error) {
+                    console.log(error)
+                } else {
+                    console.log("Written to file")
+                }
+            });
+            const curFile = vscode.workspace.openTextDocument(tempPath).then((doc) => {
+                vscode.window.showTextDocument(doc, { preview: false });
+            });
         });
     }
 

@@ -97,10 +97,11 @@ async function triggerSBMLEditor(event: TextDocument, sbmlFileNameToPath: Map<an
 						} else {
 						  console.log('The file was saved to ' + tempFilePath);
 						}
-					  });
+					});
 					// Create the temporary file and open it in the editor
 					const tempFile = vscode.workspace.openTextDocument(tempFilePath).then((doc) => {
 						vscode.window.showTextDocument(doc, { preview: false });
+						vscode.window.showInformationMessage("Opened " + sbmlFileName + ".xml as Antimony.");
 					});
 					
 				}
@@ -109,7 +110,6 @@ async function triggerSBMLEditor(event: TextDocument, sbmlFileNameToPath: Map<an
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-	vscode.window.showInformationMessage("extension activated!");
 	annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
 	roundTripping = vscode.workspace.getConfiguration('vscode-antimony').get('openSBMLAsAntimony');
 	// start the language server

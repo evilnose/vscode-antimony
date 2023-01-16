@@ -76,6 +76,8 @@ ANNOT_KEYWORD: "identity"
     | "isPropertyOf"
     | "hasTaxon"
     | "taxon"
+    | "model_entity_is"
+    | "origin"
 
 
 declaration : decl_modifiers decl_item ("," decl_item)*

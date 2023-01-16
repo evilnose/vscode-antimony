@@ -77,15 +77,15 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
                 await processFile(xmlName)
             });
         })
-        
     }
 
     async function processFile(xmlName: string) {
+        var tempPath
         vscode.commands.executeCommand('antimony.sbmlStrToAntStr', xmlData).then(async (result: any) => {
             const fileName = path.basename(xmlName, ".xml")
             const tempDir = os.tmpdir()
             var tempFile = `${fileName}.ant`
-            var tempPath = path.join(tempDir, tempFile)
+            tempPath = path.join(tempDir, tempFile)
             fs.writeFile(tempPath, String(result), (error) => {
                 if (error) {
                     console.log(error)

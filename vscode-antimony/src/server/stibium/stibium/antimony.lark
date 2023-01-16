@@ -50,6 +50,7 @@ apostrophe : "'"
 rate_rule : NAME apostrophe "=" sum
 
 annotation : var_name ANNOT_KEYWORD ESCAPED_STRING
+    | var_name ANNOT_KEYWORD ESCAPED_STRING (",\n" ESCAPED_STRING)*
 ANNOT_KEYWORD: "identity"
     | "hasPart"
     | "biological_entity_is"

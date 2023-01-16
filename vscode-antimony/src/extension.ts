@@ -80,31 +80,30 @@ async function triggerSBMLEditor(event: TextDocument, sbmlFileNameToPath: Map<an
 	if (path.extname(event.fileName) === '.xml') {
 		// check if the file is sbml, opens up a new file
 		await vscode.window.showTextDocument(event, { preview: true, preserveFocus: false });
-		  await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-		vscode.commands.executeCommand('antimony.sbmlFileToAntStr', event)
-			.then(async (result: any) => {
-				if (result.error) {
-					vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
-				} else {
-					const sbmlFileName = path.basename(event.fileName, '.xml');
-					const tempDir = os.tmpdir();
-					var tempFileName = `${sbmlFileName}.ant`;
-					var tempFilePath = path.join(tempDir, tempFileName);
-					sbmlFileNameToPath[tempFileName] = path.dirname(event.fileName);
-					fs.writeFile(tempFilePath, result.ant_str, (error) => {
-						if (error) {
-						  console.error(error);
-						} else {
-						  console.log('The file was saved to ' + tempFilePath);
-						}
-					});
-					// Create the temporary file and open it in the editor
-					const tempFile = vscode.workspace.openTextDocument(tempFilePath).then((doc) => {
-						vscode.window.showTextDocument(doc, { preview: false });
-						vscode.window.showInformationMessage("Opened " + sbmlFileName + ".xml as Antimony.");
-					});
-					
-				}
+		await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+		vscode.commands.executeCommand('antimony.sbmlFileToAntStr', event).then(async (result: any) => {
+			if (result.error) {
+				vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
+			} else {
+				const sbmlFileName = path.basename(event.fileName, '.xml');
+				const tempDir = os.tmpdir();
+				var tempFileName = `${sbmlFileName}.ant`;
+				var tempFilePath = path.join(tempDir, tempFileName);
+				sbmlFileNameToPath[tempFileName] = path.dirname(event.fileName);
+				fs.writeFile(tempFilePath, result.ant_str, (error) => {
+					if (error) {
+						console.error(error);
+					} else {
+						console.log('The file was saved to ' + tempFilePath);
+					}
+				});
+				// Create the temporary file and open it in the editor
+				const tempFile = vscode.workspace.openTextDocument(tempFilePath).then((doc) => {
+					vscode.window.showTextDocument(doc, { preview: false });
+					vscode.window.showInformationMessage("Opened " + sbmlFileName + ".xml as Antimony.");
+				});
+				
+			}
 			});
 		}
 }
@@ -234,39 +233,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			triggerSBMLEditor(event, sbmlFileNameToPath);
 		});
 	
-		vscode.workspace.onDidCloseTextDocument((closedDoc) => {
-			const fileName = path.basename(closedDoc.fileName, '.git');
-			const pathName = path.dirname(closedDoc.fileName);
-			const fullPath = path.join(pathName, fileName);
-			const pattern = /^(.+?).ant/;
-			if (pattern.test(fileName) && pathName === os.tmpdir()) {
-				vscode.window.showInformationMessage('Do you want to save the changes to the original SBML file?\n Warning: edits will be lost if not saved!', 'Save', 'Discard')
-				.then((choice) => {
-					if (choice === 'Save') {
-						vscode.workspace.openTextDocument(fullPath).then((doc) => {
-							vscode.commands.executeCommand('antimony.antStrToSBMLStr', doc.getText())
-							.then(async (result: any) => {
-								if (result.error) {
-									vscode.window.showErrorMessage(`Error while converting: ${result.error}`);
-								} else {
-									const match = pattern.exec(fileName)[1];
-									const sbmlFilePath = path.join(sbmlFileNameToPath[fileName], match + '.xml');
-									fs.writeFile(sbmlFilePath, result.sbml_str, (error) => {
-										if (error) {
-											console.error(error);
-										}
-									});
-								}
-							});
-						});
-						fs.unlink(fullPath, (error) => {});
-					} else {
-						fs.unlink(fullPath, (error) => {});
-					}
-				});
-			}
-		});
-	
 		vscode.workspace.onDidSaveTextDocument((savedDoc) => {
 			const fileName = path.basename(savedDoc.fileName, '.git');
 			const pathName = path.dirname(savedDoc.fileName);
@@ -286,7 +252,7 @@ export async function activate(context: vscode.ExtensionContext) {
 									console.error(error);
 								}
 							});
-							vscode.window.showInformationMessage(`Edit saved to: ${sbmlFilePath}`);
+							vscode.window.showInformationMessage(`Edit saved to: ${match}.xml`);
 						}
 					});
 				});

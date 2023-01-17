@@ -725,25 +725,8 @@ class Declaration(TrunkNode):
 
 # TODO All below
 @dataclass
-class MultilineAnnot(TrunkNode):
-    children: Tuple[StringLiteral]
-
-    def get_annot(self):
-        return self.children[0].get_str()
-
-@dataclass
-class AnnotationList(TrunkNode):
-    children: List[MultilineAnnot]
-
-    def get_annot_list(self):
-        ret = list()
-        for annot in self.children:
-            ret.append(annot.get_annot())
-        return ret
-
-@dataclass
 class Annotation(TrunkNode):
-    children: Tuple[VarName, Keyword, StringLiteral, Optional[AnnotationList]]
+    children: Tuple[VarName, Keyword, StringLiteral]
 
     def get_var_name(self):
         return self.children[0]
@@ -754,16 +737,9 @@ class Annotation(TrunkNode):
     def get_keyword(self):
         return self.children[1].text
 
-    def get_uris(self):
-        annots = list()
-        if len(self.children) == 4:
-            vscode_logger.info("we're inside")
-            annots = self.children[3].get_annot_list()
-        annots.append(self.children[2].get_str())
-        vscode_logger.info("this is the annots: ")
-        vscode_logger.info(annots)
-        return annots
-
+    def get_uri(self):
+        return self.children[2].get_str()
+    
 @dataclass
 class Sboterm(TrunkNode):
     children: Tuple[VarName, Keyword, Operator, Number]

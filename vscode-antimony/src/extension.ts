@@ -76,9 +76,9 @@ function updateDecorations() {
 async function createVirtualEnv(context: vscode.ExtensionContext) {
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 	// asking permissions
-	if (fs.existsSync("/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9")) {
-		if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== "/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9") {
-			vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', "/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9", true);
+	if (fs.existsSync(path.normalize("/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"))) {
+		if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== path.normalize("/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9")) {
+			vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize("/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
 			vscode.window.showInformationMessage('Virtual environment exists, it is activated now.')
 		}
 	} else {
@@ -94,7 +94,7 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 						throw err;
 					} else {
 						console.log(stdout)
-						vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', "/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9", true);
+						vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize("/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
 						vscode.window.showInformationMessage('Installation finished and activated.')
 					}
 				});

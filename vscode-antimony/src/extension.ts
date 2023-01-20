@@ -99,7 +99,7 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 					}
 				});
 			} else if (selection === 'No') {
-				vscode.window.showInformationMessage('It is assumed you already have a virtual environment installed for Antimony')
+				vscode.window.showInformationMessage('The default python interpreter will be used.')
 			}
 		});
 	}

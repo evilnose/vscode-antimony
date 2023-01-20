@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as utils from './utils/utils';
 import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs';
 import {
 	LanguageClient,
 	LanguageClientOptions,
@@ -11,8 +13,6 @@ import { annotationMultiStepInput } from './annotationInput';
 import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
-import { exec } from 'child_process';
-import { callbackify } from 'util';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -74,39 +74,35 @@ function updateDecorations() {
 
 // setup virtual environment
 async function createVirtualEnv(context: vscode.ExtensionContext) {
-	let map = new Map<string, string>();
-	for (let i = 0; i < vscode.workspace.workspaceFolders.length; i++) {
-		map.set(vscode.workspace.workspaceFolders[i].name, vscode.workspace.workspaceFolders[i].uri.path)
-	}
-	if(map.has(".venv_vscode_antimony_virtual_env") && map.has("env")) {
-		vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', map.get(".venv_vscode_antimony_virtual_env") + "/.venv_vscode_antimony_virtual_env/bin/python3.9", true);
-		vscode.window.showInformationMessage('It is assumed you already have a virtual environment installed for Antimony')
-	}
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
 	// asking permissions
-	vscode.window.showInformationMessage('To install dependencies so the extension works properly, allow installation of virtual environment', ...['Yes', 'No'])
-	.then(async selection => {
-		// installing virtual env
-		if (selection === 'Yes') {
-			let {PythonShell} = require('python-shell')
-			var current_path_to_dir = path.join(__dirname, '..');
-			var current_path_to_script = path.join(__dirname, '..', 'src', 'server', 'run_shell.py');
-			console.log(current_path_to_script)
-			PythonShell.run(current_path_to_script, null, await function (err) {
-				if (err) {
-					vscode.window.showInformationMessage('Installation Error. Try again. Error Message "' + err + '."')
-					createVirtualEnv(context);
-					throw err;
-				} else {
-					// vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', vscode.workspace.workspaceFolders[0].uri.path + "/.venv_vscode_antimony_virtual_env/bin/python3.9", true);
-					vscode.window.showInformationMessage('Installation Finished. DO NOT delete the VENV and ENV folders. They are crucial for the extension to work.')
-				}
-			});
-		} else if (selection === 'No') {
-			vscode.window.showInformationMessage('It is assumed you already have a virtual environment installed for Antimony')
+	if (fs.existsSync("/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9")) {
+		if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== "/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9") {
+			vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', "/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9", true);
+			vscode.window.showInformationMessage('Virtual environment exists, it is activated now.')
 		}
-	});
-	console.log("Ran createVirtualEnv Method")
+	} else {
+		vscode.window.showInformationMessage('To install dependencies so the extension works properly, allow installation of virtual environment', ...['Yes', 'No'])
+		.then(async selection => {
+			// installing virtual env
+			if (selection === 'Yes') {
+				var current_path_to_tsscript = path.join(__dirname, '..', 'src', 'runshell.ts');
+				var shell = require('shelljs');
+				shell.exec('npx ts-node ' + current_path_to_tsscript, (err, stdout, stderr) => {
+					if (err) {
+						vscode.window.showInformationMessage('Installation Error. Try again. Error Message "' + err + '."')
+						throw err;
+					} else {
+						console.log(stdout)
+						vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', "/Users/" + os.userInfo().username + "/[venv_vscode_antimony_virtual_env]/bin/python3.9", true);
+						vscode.window.showInformationMessage('Installation finished and activated.')
+					}
+				});
+			} else if (selection === 'No') {
+				vscode.window.showInformationMessage('It is assumed you already have a virtual environment installed for Antimony')
+			}
+		});
+	}
 }
 
 export async function activate(context: vscode.ExtensionContext) {

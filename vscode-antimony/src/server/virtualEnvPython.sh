@@ -18,7 +18,7 @@ echo "script runs"
 
 ve() {
     local py=${1:-python3.9}
-    local venv="${2:-./.venv}_vscode_antimony_virtual_env"
+    local venv="venv_vscode_antimony_virtual_env"
 
     local bin="${venv}/bin/activate"
 
@@ -28,18 +28,20 @@ ve() {
     if [ -z "${VIRTUAL_ENV}" ]; then
         if [ ! -d ${venv} ]; then
             echo "Creating and activating virtual environment ${venv}"
-            ${py} -m venv env ${venv} --system-site-package
+            # chmod u+x /env
+            virtualenv ~/[${venv}]
+            source ~/[${venv}]/bin/activate
+            sudo -u $USER ${py} -m venv ${venv} --system-site-package
             echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
             source ${bin}
             echo "Upgrading pip"
             ${py} -m pip install --upgrade pip
             python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
         else
-            echo "Virtual environment ${venv} already exists, activating..."            
-            source ${bin}
+            return "Virtual environment ${venv} already exists, activating..."
         fi
     else
-        echo "Already in a virtual environment!"
+        return "Already in a virtual environment!"
     fi
 }
 

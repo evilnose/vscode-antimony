@@ -106,8 +106,18 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 						} else if (os.platform().toString() == 'win32' || os.platform().toString() == 'win64') {
 							vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
 						}
-						console.log(stdout)
-						vscode.window.showInformationMessage('Installation finished and activated.')
+						const action = 'Reload';
+  
+						vscode.window
+						  .showInformationMessage(
+							`Installation finished. Reload to activate.`,
+							action
+						  )
+						  .then(selectedAction => {
+							  if (selectedAction === action) {
+								vscode.commands.executeCommand('workbench.action.reloadWindow');
+							  }
+						  });
 					}
 				});
 			} else if (selection === 'No') {

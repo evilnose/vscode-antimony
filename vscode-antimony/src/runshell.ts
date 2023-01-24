@@ -18,5 +18,5 @@ if (os.platform().toString() == 'darwin' || os.platform().toString() == 'linux')
     var path_to_win_shell = path.join(__dirname, 'server');
     // shell.exec('cd ~')
     shell.cd(path_to_win_shell)
-    shell.exec('./' + path_to_win_shell)
+    shell.exec(path_to_win_shell)
 }

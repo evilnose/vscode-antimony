@@ -13,10 +13,8 @@ vscode-antimony/out
 vscode-antimony/.lark-cache
 vscode-antimony/*.prof
 __pycache__/
-examples/BioModels/env
 examples/BioModels/.venv_vscode_antimony_virtual_env
-vscode-antimony/.venv_vscode_antimony_virtual_env
-vscode-antimony/env
+vscode-antimony/server/.venv_vscode_antimony_virtual_env
 
 # for ols
 !vscode-antimony/pythonFiles

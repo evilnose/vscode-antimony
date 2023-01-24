@@ -93,7 +93,7 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 		.then(async selection => {
 			// installing virtual env
 			if (selection === 'Yes') {
-				vscode.window.showInformationMessage('Installation may take a few minutes. A pop up will display when finished.')
+				vscode.window.showInformationMessage('Installation may take a few minutes. A pop up will display when finished. Please do not close VSCode during this time.')
 				var current_path_to_tsscript = path.join(__dirname, '..', 'src', 'runshell.ts');
 				var shell = require('shelljs');
 				shell.exec('npx ts-node ' + current_path_to_tsscript, (err, stdout, stderr) => {

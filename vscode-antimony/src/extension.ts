@@ -75,10 +75,16 @@ function updateDecorations() {
 // setup virtual environment
 async function createVirtualEnv(context: vscode.ExtensionContext) {
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+	var path_to_venv_win = path.join(__dirname, '..', 'src', 'server', 'venv_vscode_antimony_virtual_env', 'Scripts', 'python.exe');
 	// asking permissions
-	if (fs.existsSync(path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"))) {
+	if ((os.platform().toString() == 'darwin' || os.platform().toString() == 'linux') && fs.existsSync(path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"))) {
 		if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9")) {
 			vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
+			vscode.window.showInformationMessage('Virtual environment exists, it is activated now.')
+		}
+	} else if ((os.platform().toString() == 'win32' || os.platform().toString() == 'win64') && fs.existsSync(path.normalize(path_to_venv_win))) {
+		if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== path.normalize(path_to_venv_win)) {
+			vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
 			vscode.window.showInformationMessage('Virtual environment exists, it is activated now.')
 		}
 	} else {
@@ -93,8 +99,12 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 						vscode.window.showInformationMessage('Installation Error. Try again. Error Message "' + err + '."')
 						throw err;
 					} else {
+						if (os.platform().toString() == 'darwin' || os.platform().toString() == 'linux') {
+							vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
+						} else if (os.platform().toString() == 'win32' || os.platform().toString() == 'win64') {
+							vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
+						}
 						console.log(stdout)
-						// vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
 						vscode.window.showInformationMessage('Installation finished and activated.')
 					}
 				});

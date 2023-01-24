@@ -18,10 +18,11 @@ if "%VIRTUAL_ENV%"=="" (
         echo Creating and activating virtual environment %venv%
         py -m venv %venv% --system-site-package
         echo set "PYTHON=%py%" >> %bin%
+        echo %bin%
         call %bin%
         echo Upgrading pip
         py -m pip install --upgrade pip
-        py -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python --no-cache-dir --upgrade -r ./all-requirements.txt
+        py -m pip --disable-pip-version-check install -t ./venv_vscode_antimony_virtual_env/Lib/site-packages --no-cache-dir --upgrade -r ./all-requirements.txt
     ) else (
         echo Virtual environment %venv% already exists, activating...
         call %bin%

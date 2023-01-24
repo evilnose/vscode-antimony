@@ -13,6 +13,7 @@ import { annotationMultiStepInput } from './annotationInput';
 import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
+import { ProgressLocation } from 'vscode';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -92,6 +93,7 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 		.then(async selection => {
 			// installing virtual env
 			if (selection === 'Yes') {
+				vscode.window.showInformationMessage('Installation may take a few minutes. A pop up will display when finished.')
 				var current_path_to_tsscript = path.join(__dirname, '..', 'src', 'runshell.ts');
 				var shell = require('shelljs');
 				shell.exec('npx ts-node ' + current_path_to_tsscript, (err, stdout, stderr) => {

@@ -94,7 +94,7 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 						throw err;
 					} else {
 						console.log(stdout)
-						vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
+						// vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
 						vscode.window.showInformationMessage('Installation finished and activated.')
 					}
 				});

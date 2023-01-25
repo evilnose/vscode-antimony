@@ -119,7 +119,7 @@
         "keywords": {
             "patterns": [
                 {
-                    "match": "\\b(?:identity|biological_entity_is|hasPart|part|isPartOf|parthood|isVersionOf|hypernym|hasVersion|version|isHomologTo|homolog|isDescribedBy|description|isEncodedBy|encoder|encodes|encodement|occursIn|container|hasProperty|property|isPropertyOf|propertyBearer|hasTaxon|taxon|sboTerm)\\b",
+                    "match": "\\b(?:identity|biological_entity_is|hasPart|part|isPartOf|parthood|isVersionOf|hypernym|hasVersion|version|isHomologTo|homolog|isDescribedBy|description|isEncodedBy|encoder|encodes|encodement|occursIn|container|hasProperty|property|isPropertyOf|propertyBearer|hasTaxon|taxon|sboTerm|model_entity_is|origin)\\b",
                     "name": "type.annotation"
                 },
                 {

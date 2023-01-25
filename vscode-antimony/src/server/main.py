@@ -133,7 +133,6 @@ def sbml_str_to_ant_str(ls: LanguageServer, args):
             'error': 'Antimony -  {}'.format(antimony.getLastError())
         }
     ant_str = antimony.getAntimonyString(None)
-    vscode_logger.info("SBML conversion passed")
     return ant_str
 
 @server.thread()
@@ -352,7 +351,6 @@ def get_model(ls: LanguageServer, args):
     extract = zipfile.ZipFile(io.BytesIO(response.content))
     data = io.TextIOWrapper(extract.open(extract.namelist()[0]), encoding="utf-8", newline="").read()
     extract.close()
-    vscode_logger.info(data)
     return {
         "filename": extract.namelist()[0],
         "data": data

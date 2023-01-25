@@ -263,6 +263,7 @@ export class MultiStepInput {
                 this.current.items = result.map((item) => {
                     item['label'] = item['name'] + " (" + item['id'] + ")";
                     item['detail'] = item['url'];
+                    item['alwaysShow'] = true;
                     return item;
                 });
             }

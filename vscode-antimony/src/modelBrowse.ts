@@ -7,7 +7,6 @@ import * as fs from 'fs';
 import * as os from 'os';
 
 export async function modelSearchInput(context: ExtensionContext, initialEntity: string = null, selectedType: string = null) {
-    var filePath;
     var xmlData;
     interface State {
         title: string;
@@ -62,7 +61,6 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
     }
 
     async function onQueryConfirmed(query: string, input: MultiStepInput) {
-        const newPath = vscode.workspace.workspaceFolders[0].uri.fsPath
         var xmlName;
         window.withProgress({
 			location: ProgressLocation.Notification,
@@ -71,7 +69,6 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 		}, (progress, token) => {
             return commands.executeCommand('antimony.getModel', query).then(async (result) => {
                 console.log("it was successful!")
-                filePath = path.normalize(newPath + "\\" + result["filename"])
                 xmlData = result["data"]
                 xmlName = result["filename"]
                 await processFile(xmlName)

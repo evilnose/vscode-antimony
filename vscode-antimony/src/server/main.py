@@ -323,15 +323,14 @@ def search_model(ls: LanguageServer, args):
         for _ in range(10 - len(search_res)):
             new_res += "0"
         new_res += search_res
-        search_url = ("https://www.ebi.ac.uk/biomodels/search?query={search}&format=json").format(
+        search_url = ("https://www.ebi.ac.uk/biomodels/search?query={search}&numResults=5000&format=json").format(
             search=new_res
         )
         response = requests.get(search_url)
         models = response.json()
         for model in models['models']:
             model_list.append({'name': model['name'], 'url': model['url'], 'id': model['id']})
-
-    search_url = ("https://www.ebi.ac.uk/biomodels/search?query={search}&format=json").format(
+    search_url = ("https://www.ebi.ac.uk/biomodels/search?query={search}&numResults=5000&format=json").format(
         search=search_res
     )
     response = requests.get(search_url)

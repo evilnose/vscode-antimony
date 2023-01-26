@@ -101,10 +101,12 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 						vscode.window.showInformationMessage('Installation Error. Try again. Error Message "' + err + '."')
 						throw err;
 					} else {
-						if (os.platform().toString() == 'darwin' || os.platform().toString() == 'linux') {
+						if (os.platform().toString() == 'darwin') {
 							vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
 						} else if (os.platform().toString() == 'win32' || os.platform().toString() == 'win64') {
 							vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
+						} else if (os.platform().toString() == 'linux') {
+							vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
 						}
 						const action = 'Reload';
   

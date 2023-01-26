@@ -7,7 +7,7 @@
 # 1. If already in virtualenv: just give info
 #
 # Usage:
-# Without arguments it will create virtualenv named `.venv_vscode_antimony_virtual_env` with `python3.9` version
+# Without arguments it will create virtualenv named `.venv_vscode_antimony_virtual_env` with `python3` version
 # $ ve
 # or for a specific python version
 # $ ve python3.9
@@ -17,7 +17,7 @@
 echo "script runs"
 
 ve() {
-    local py=${1:-python3.9}
+    local py=${1:-python3}
     local venv="venv_vscode_antimony_virtual_env"
 
     local bin="${venv}/bin/activate"
@@ -27,18 +27,20 @@ ve() {
     # $VIRTUAL_ENV is being set from $venv/bin/activate script
     if [ -z "${VIRTUAL_ENV}" ]; then
         if [ ! -d ${venv} ]; then
-            sudo apt install python3 -y
+            sudo apt-get install python3-venv -y
             echo "Creating and activating virtual environment ${venv}"
-            sudo -u $USER ${py} -m venv ${venv} --system-site-package
+            python3 -m venv ${venv} --system-site-packages
             echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
             echo "Upgrading pip"
-            python3 -m pip install --upgrade pip
-            python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
+            source ${bin}
+            pip install --upgrade pip
+            pip --disable-pip-version-check install -t ./pythonFiles/lib/python --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
         else
-            return "Virtual environment ${venv} already exists, activating..."
+            echo "Virtual environment ${venv} already exists, activating..."
+            source ${bin}
         fi
     else
-        return "Already in a virtual environment!"
+        echo "Already in a virtual environment!"
     fi
 }
 

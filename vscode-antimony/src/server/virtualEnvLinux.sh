@@ -27,6 +27,7 @@ ve() {
     # $VIRTUAL_ENV is being set from $venv/bin/activate script
     if [ -z "${VIRTUAL_ENV}" ]; then
         if [ ! -d ${venv} ]; then
+            sudo apt install python3 -y
             echo "Creating and activating virtual environment ${venv}"
             sudo -u $USER ${py} -m venv ${venv} --system-site-package
             echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv

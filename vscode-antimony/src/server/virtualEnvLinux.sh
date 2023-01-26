@@ -31,7 +31,7 @@ ve() {
             sudo -u $USER ${py} -m venv ${venv} --system-site-package
             echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
             echo "Upgrading pip"
-            ${py} -m pip install --upgrade pip
+            sudo -H pip3 install --upgrade pip
             python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
         else
             return "Virtual environment ${venv} already exists, activating..."

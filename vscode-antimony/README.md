@@ -16,7 +16,27 @@ The Antimony extension pack includes two extensions: [Antimony](https://marketpl
 ## Features
 The extension provides many convenient features for developing biological models with the Antimony language in tellurium. The current release focuses on the areas below.
 
-### 1. Syntax recognition and highlights
+### 1. SBML to Antimony Conversion and Editing
+
+<p align=center>
+<img src="docs/images/roundTrippingDemo.png" width=75%>
+<br/>
+</p>
+
+When an SBML file is opened, the editor will automatically convert the SBML file to the Antimony format. User can edit the Antimony file, and save the changes made to the Antimony model back to the original SBML file.
+⚠️ Note: this feature can be disabled in settings
+
+<p align=center>
+<img src="docs/images/roundTrippingDiagram.png" width=75%>
+<br/>
+<em>(Diagram of workflow)</em>
+</p>
+
+### 2. Model Browsing
+
+
+
+### 3. Syntax recognition and highlights
 
 <p align=center>
 <img src="docs/images/syntax_highlights.png" width=75%>
@@ -26,7 +46,7 @@ The extension provides many convenient features for developing biological models
 
 ⚠️ Note: the default syntax highlighting for Antimony is provided by a separate extension [Antimony Syntax](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony-syntax), and is also available in the [Antimony Extension Pack](https://marketplace.visualstudio.com/items?itemName=stevem.antimony-extension-pack) 
 
-### 2. Automatic annotation creation with database recommendation
+### 4. Automatic annotation creation with database recommendation
 The extension can recognize different types of variables, and recommend databases base on the [OMEX metadata specification](https://doi.org/10.1515/jib-2021-0020).
 
 <p align=center>
@@ -35,7 +55,7 @@ The extension can recognize different types of variables, and recommend database
 <em>(Creating an annotation of species BLL through the ChEBI database)</em>
 </p>
 
-### 3. Hover messages 
+### 5. Hover messages 
 
 <p align=center>
 <img src="docs/images/hover.gif" width=75%>
@@ -43,7 +63,7 @@ The extension can recognize different types of variables, and recommend database
 <em>(Hovering over species to look up information)</em>
 </p>
 
-### 4. Code navigation
+### 6. Code navigation
 
 <p align=center>
 <img src="docs/images/nav.gif" width=75%>
@@ -51,7 +71,7 @@ The extension can recognize different types of variables, and recommend database
 <em>(Navigating to the definition code)</em>
 </p>
 
-### 5. Error detection
+### 7. Error detection
 The extension supports various warning and error detections to help modelers debug their model during development. Our design principle for whether an issue should be a warning or an error entirely depends on the logic of tellurium. Our extension will mark the subject as an error if tellurium throws an error while rendering the model, with a red underline. An example would be calling a function that does not exist (usually due to a typo, which is extremely common during development. Read more in my [thesis](https://drive.google.com/file/d/1FutuOYgq9Jd_AHqp_z4f2joDavVIURuz/view?usp=sharing)).
 
 <p align=center>
@@ -70,7 +90,7 @@ On the other hand, certain issues are not errors in tellurium, but we thought it
 
 The extension supports a wide range of errors and warnings, and we plan to support more in the upcoming releases. Read more in [issues](https://github.com/sys-bio/vscode-antimony/issues).
 
-### 6. Converter between Antimony and SBML
+### 8. Converter between Antimony and SBML
 
 <p align=center>
 <img src="docs/images/converter_SBML.gif" width=75%>
@@ -78,7 +98,7 @@ The extension supports a wide range of errors and warnings, and we plan to suppo
 <em>(Exporting Antimony file in SBML format)</em>
 </p>
 
-### 7. Antimony/SBML preview
+### 9. Antimony/SBML preview
 
 <p align=center>
 <img src="docs/images/preview.gif" width=75%>
@@ -86,7 +106,7 @@ The extension supports a wide range of errors and warnings, and we plan to suppo
 <em>(Previewing Antimony file as SBML)</em>
 </p>
 
-### 8. Automatic creation of rate laws
+### 10. Automatic creation of rate laws
 
 <p align=center>
 <img src="docs/images/rate_law.gif" width=75%>
@@ -94,7 +114,7 @@ The extension supports a wide range of errors and warnings, and we plan to suppo
 <em>(Creating a rate law on a reversible reaction)</em>
 </p>
 
-### 9. Annotation recommender for species
+### 11. Annotation recommender for species
 
 <p align=center>
 <img src="docs/images/recommender.gif" width=75%>
@@ -133,3 +153,7 @@ I have an open issue for [manually curating models](https://github.com/sys-bio/v
 * Automatic creation of rate laws.
 * Annotation recommender for species.
 
+### 0.2.4
+* Automatic virtual environment installation
+* SBML to Antimony Conversion and Editing
+* Model Browsing

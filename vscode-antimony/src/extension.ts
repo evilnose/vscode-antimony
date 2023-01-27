@@ -13,7 +13,7 @@ import { annotationMultiStepInput } from './annotationInput';
 import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
-import { ProgressLocation } from 'vscode';
+var shell = require('shelljs');
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -73,10 +73,11 @@ function updateDecorations() {
 	}
 }
 
+var current_path_to_tsscript = path.join(__dirname, '..', 'src', 'runshell.ts');
+var path_to_venv_win = path.join(__dirname, '..', 'src', 'server', 'venv_vscode_antimony_virtual_env', 'Scripts', 'python.exe');
 // setup virtual environment
 async function createVirtualEnv(context: vscode.ExtensionContext) {
 	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
-	var path_to_venv_win = path.join(__dirname, '..', 'src', 'server', 'venv_vscode_antimony_virtual_env', 'Scripts', 'python.exe');
 	// asking permissions
 	if ((os.platform().toString() == 'darwin' || os.platform().toString() == 'linux') && fs.existsSync(path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"))) {
 		if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9")) {
@@ -93,40 +94,44 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 		.then(async selection => {
 			// installing virtual env
 			if (selection === 'Yes') {
-				vscode.window.showInformationMessage('Installation may take a few minutes. A pop up will display when finished. Please do not close VSCode during this time.')
-				var current_path_to_tsscript = path.join(__dirname, '..', 'src', 'runshell.ts');
-				var shell = require('shelljs');
-				shell.exec('npx ts-node ' + current_path_to_tsscript, (err, stdout, stderr) => {
-					if (err) {
-						vscode.window.showInformationMessage('Installation Error. Try again. Error Message "' + err + '."')
-						throw err;
-					} else {
-						if (os.platform().toString() == 'darwin') {
-							vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
-						} else if (os.platform().toString() == 'win32' || os.platform().toString() == 'win64') {
-							vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
-						} else if (os.platform().toString() == 'linux') {
-							vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
-						}
-						const action = 'Reload';
-  
-						vscode.window
-						  .showInformationMessage(
-							`Installation finished. Reload to activate.`,
-							action
-						  )
-						  .then(selectedAction => {
-							  if (selectedAction === action) {
-								vscode.commands.executeCommand('workbench.action.reloadWindow');
-							  }
-						  });
-					}
-				});
+				fixVirtualEnv()
 			} else if (selection === 'No') {
 				vscode.window.showInformationMessage('The default python interpreter will be used.')
 			}
 		});
 	}
+}
+
+// setup virtual environment
+async function fixVirtualEnv() {
+	vscode.window.showInformationMessage('Installation may take a few minutes. A pop up will display when finished. Please do not close VSCode during this time.')
+	var current_path_to_tsscript = path.join(__dirname, '..', 'src', 'runshell.ts');
+	shell.exec('npx ts-node ' + current_path_to_tsscript, (err, stdout, stderr) => {
+		if (err) {
+			vscode.window.showInformationMessage('Installation Error. Try again. Error Message "' + err + '."')
+			throw err;
+		} else {
+			if (os.platform().toString() == 'darwin') {
+				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
+			} else if (os.platform().toString() == 'win32' || os.platform().toString() == 'win64') {
+				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
+			} else if (os.platform().toString() == 'linux') {
+				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
+			}
+			const action = 'Reload';
+
+			vscode.window
+			.showInformationMessage(
+				`Installation finished. Reload to activate.`,
+				action
+			)
+			.then(selectedAction => {
+				if (selectedAction === action) {
+					vscode.commands.executeCommand('workbench.action.reloadWindow');
+				}
+			});
+		}
+	});
 }
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -202,6 +207,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.startAntimonyWebview',
 			(...args: any[]) => startAntimonyWebview(context, args)));
+
+	// fix virtual env
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.fixVirtualEnv',
+			(...args: any[]) => fixVirtualEnv()));
 
 	// language config for CodeLens
 	const docSelector = {

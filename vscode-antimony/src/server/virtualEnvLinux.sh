@@ -25,20 +25,14 @@ ve() {
     echo "running install virtual env"
     # If not already in virtualenv
     # $VIRTUAL_ENV is being set from $venv/bin/activate script
-    if [ -z "${VIRTUAL_ENV}" ]; then
-        if [ ! -d ${venv} ]; then
-            apt install python3.9-venv
-            echo "Creating and activating virtual environment ${venv}"
-            python3 -m venv ${venv} --system-site-packages
-            echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
-            echo "Upgrading pip"
-            apt-get install python3-pip
-            pip install --upgrade pip
-            python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \ --no-cache-dir --upgrade -r ./all-requirements.txt && success=1        else
-        fi
-    else
-        echo "Already in a virtual environment!"
-    fi
+    apt install python3.9-venv
+    echo "Creating and activating virtual environment ${venv}"
+    python3 -m venv ${venv} --system-site-packages
+    echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
+    echo "Upgrading pip"
+    apt-get install python3-pip
+    pip install --upgrade pip
+    python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \ --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
 }
 
 ve "$@"

@@ -32,7 +32,8 @@
 		"onCommand:antimony.startSBMLWebview",
 		"onCommand:antimony.startAntimonyWebview",
 		"onCustomEditor:antimony.sbmlEditor",
-		"onCustomEditor:antimony.antimonyEditor"
+		"onCustomEditor:antimony.antimonyEditor",
+		"onCustomEditor:antimony.fixVirtualEnv"
 	],
 	"main": "./dist/extension.js",
 	"bugs": {
@@ -82,13 +83,13 @@
 						"type": "boolean",
 						"default": "true",
 						"scope": "machine",
-						"description": "Turn Visual Indications (Colored Highlights) of Annotated Variables On or Off."
+						"description": "Turn visual indications (colored highlights) of annotated variables on or off."
 					},
 					"vscode-antimony.highlightColor": {
 						"type": "string",
 						"default": "indigo",
 						"scope": "machine",
-						"description": "Set Visual Indications (Colored Highlights) to a Preferred Color (e.g. red, orange, yellow, green, blue, indigo)"
+						"description": "Set visual indications (colored cighlights) to a preferred color (e.g. red, orange, yellow, green, blue, indigo)."
 					}
 				}
 			}
@@ -131,6 +132,10 @@
 				"command": "antimony.startAntimonyWebview",
 				"title": "preview Antimony",
 				"icon": "docs/images/logo.png"
+			},
+			{
+				"command": "antimony.fixVirtualEnv",
+				"title": "Fix Virtual Environment"
 			}
 		],
 		"languages": [
@@ -189,6 +194,12 @@
 					"title": "Convert to Antimony",
 					"group": "1_modification",
 					"when": "editorLangId == xml"
+				},
+				{
+					"command": "antimony.fixVirtualEnv",
+					"title": "Fix Virtual Environment",
+					"group": "1_modification",
+					"when": "editorLangId == antimony"
 				}
 			],
 			"editor/title": [

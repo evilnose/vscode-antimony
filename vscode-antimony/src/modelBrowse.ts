@@ -68,7 +68,6 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
 			cancellable: true
 		}, (progress, token) => {
             return commands.executeCommand('antimony.getModel', query).then(async (result) => {
-                console.log("it was successful!")
                 xmlData = result["data"]
                 xmlName = result["filename"]
                 await processFile(xmlName)
@@ -86,8 +85,6 @@ export async function modelSearchInput(context: ExtensionContext, initialEntity:
             fs.writeFile(tempPath, String(result), (error) => {
                 if (error) {
                     console.log(error)
-                } else {
-                    console.log("Written to file")
                 }
             });
             const curFile = vscode.workspace.openTextDocument(tempPath).then((doc) => {
@@ -250,7 +247,7 @@ export class MultiStepInput {
                         return;
                     }
                     this.lastErrorMillis = curMillis;
-                    window.showErrorMessage(`Could not perform query: ${result.error}`).then(() => console.log('finished'));
+                    window.showErrorMessage(`Could not perform query: ${result.error}`);
                     return;
                 }
                 

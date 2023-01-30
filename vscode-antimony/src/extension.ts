@@ -489,7 +489,7 @@ async function browseBioModels(context: vscode.ExtensionContext, args: any[]) {
 	await new Promise<void>((resolve, reject) => {
 		modelSearchInput(context); 
 		resolve()
-    });
+	});
 }
 
 // ****** helper functions ******

@@ -25,12 +25,12 @@ ve() {
     echo "running install virtual env"
     # If not already in virtualenv
     # $VIRTUAL_ENV is being set from $venv/bin/activate script
-    apt install python3.9-venv
+    sudo apt install python3.9-venv
     echo "Creating and activating virtual environment ${venv}"
     python3 -m venv ${venv} --system-site-packages
     echo "export PYTHON=${py}" >> ${bin}    # overwrite ${python} on .zshenv
     echo "Upgrading pip"
-    apt-get install python3-pip
+    sudo apt-get install python3-pip
     pip install --upgrade pip
     python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \ --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
 }

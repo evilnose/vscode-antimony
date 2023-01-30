@@ -32,7 +32,7 @@ ve() {
     echo "Upgrading pip"
     sudo apt-get install python3-pip
     pip install --upgrade pip
-    python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python \ --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
+    python3 -m pip --disable-pip-version-check install -t ./pythonFiles/lib/python --no-cache-dir --upgrade -r ./all-requirements.txt && success=1
 }
 
 ve "$@"

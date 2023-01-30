@@ -122,7 +122,7 @@ async function fixVirtualEnv() {
 			} else if (os.platform().toString() == 'win32' || os.platform().toString() == 'win64') {
 				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
 			} else if (os.platform().toString() == 'linux') {
-				vscode.window.showInformationMessage('Run sudo ' + current_path_to_shell_script + ' in the vscode terminal to install the virtual env and necessary dependencies on your device. You can find the "Terminal" button on the top most left menu. Then, press "New Terminal" and run the command mentioned.')
+				vscode.window.showInformationMessage('Run "sudo ' + current_path_to_shell_script + '" in the vscode terminal to install the virtual env and necessary dependencies on your device. You can find the "Terminal" button on the top most left menu. Then, press "New Terminal" and run the command mentioned.')
 				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
 			}
 			const action = 'Reload';

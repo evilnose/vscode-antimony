@@ -111,6 +111,7 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 async function fixVirtualEnv() {
 	vscode.window.showInformationMessage('Installation may take a few minutes. A pop up will display when finished. Please do not close VSCode during this time.')
 	var current_path_to_tsscript = path.join(__dirname, '..', 'src', 'runshell.ts');
+	var current_path_to_shell_script = path.join(__dirname, '..', 'src', 'virtualEnvLinux.sh')
 	shell.exec('npx ts-node ' + current_path_to_tsscript, (err, stdout, stderr) => {
 		if (err) {
 			vscode.window.showInformationMessage('Installation Error. Try again. Error Message "' + err + '."')
@@ -121,7 +122,7 @@ async function fixVirtualEnv() {
 			} else if (os.platform().toString() == 'win32' || os.platform().toString() == 'win64') {
 				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
 			} else if (os.platform().toString() == 'linux') {
-				vscode.window.showInformationMessage('Run sudo ' + current_path_to_tsscript + ' in the vscode terminal to install the virtual env and necessary dependencies on your device. You can find the "Terminal" button on the top most left menu. Then, press "New Terminal" and run the command mentioned.')
+				vscode.window.showInformationMessage('Run sudo ' + current_path_to_shell_script + ' in the vscode terminal to install the virtual env and necessary dependencies on your device. You can find the "Terminal" button on the top most left menu. Then, press "New Terminal" and run the command mentioned.')
 				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
 			}
 			const action = 'Reload';

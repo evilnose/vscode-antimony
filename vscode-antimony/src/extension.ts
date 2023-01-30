@@ -119,25 +119,37 @@ async function fixVirtualEnv() {
 		} else {
 			if (os.platform().toString() == 'darwin') {
 				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
+				const action = 'Reload';
+
+				vscode.window
+				.showInformationMessage(
+					`Installation finished. Reload to activate.`,
+					action
+				)
+				.then(selectedAction => {
+					if (selectedAction === action) {
+						vscode.commands.executeCommand('workbench.action.reloadWindow');
+					}
+				});
 			} else if (os.platform().toString() == 'win32' || os.platform().toString() == 'win64') {
 				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
-			} else if (os.platform().toString() == 'linux') {
-				vscode.window.showInformationMessage('Run "bash ' + current_path_to_shell_script + '" in the vscode terminal to install the virtual env and necessary dependencies on your device. You can find the "Terminal" button on the top most left menu. Then, press "New Terminal" and run the command mentioned.')
-				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
-				return;
-			}
-			const action = 'Reload';
+				const action = 'Reload';
 
-			vscode.window
-			.showInformationMessage(
-				`Installation finished. Reload to activate.`,
-				action
-			)
-			.then(selectedAction => {
-				if (selectedAction === action) {
-					vscode.commands.executeCommand('workbench.action.reloadWindow');
-				}
-			});
+				vscode.window
+				.showInformationMessage(
+					`Installation finished. Reload to activate.`,
+					action
+				)
+				.then(selectedAction => {
+					if (selectedAction === action) {
+						vscode.commands.executeCommand('workbench.action.reloadWindow');
+					}
+				});
+			} 
+			// else if (os.platform().toString() == 'linux') {
+			// 	vscode.window.showInformationMessage('Run "bash ' + current_path_to_shell_script + '" in the vscode terminal to install the virtual env and necessary dependencies on your device. You can find the "Terminal" button on the top most left menu. Then, press "New Terminal" and run the command mentioned.')
+			// 	vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
+			// }
 		}
 	});
 }

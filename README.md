@@ -1,6 +1,6 @@
 # Antimony for Visual Studio Code
 
-[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
+[![MIT License](https://img.shields.io/github/license/sys-bio/vscode-antimony)](https://github.com/sys-bio/vscode-antimony/blob/master/LICENSE)
 
 #### [Repository](https://github.com/sys-bio/vscode-antimony/tree/master/vscode-antimony)&nbsp;&nbsp;|&nbsp;&nbsp;[Issues](https://github.com/sys-bio/vscode-antimony/issues)&nbsp;&nbsp;|&nbsp;&nbsp;[Code Examples](https://github.com/sys-bio/vscode-antimony/tree/master/examples)&nbsp;&nbsp;|&nbsp;&nbsp;[Antimony Reference](https://tellurium.readthedocs.io/en/latest/antimony.html)&nbsp;&nbsp;|&nbsp;&nbsp;[tellurium](https://tellurium.readthedocs.io/en/latest/index.html)&nbsp;&nbsp;|&nbsp;&nbsp;[Marketplace Link](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony)&nbsp;&nbsp;|&nbsp;&nbsp;[Marketplace Link for Extension Pack](https://marketplace.visualstudio.com/items?itemName=stevem.antimony-extension-pack)
 
@@ -15,8 +15,9 @@ The Antimony extension pack includes two extensions: [Antimony](https://marketpl
 Once you have installed the extension pack and opened an antimony file, a pop up on the right hand corner will request permissions
 for the extension to create a virtual environment and install the necessary dependencies in your device, the python interpreter will be automatically
 updated with the path to the virtual environment. If no is pressed, the default python interpreter will be used. Below is the gif for the instructions. <br/>
-<img src="" width=75%>
+<img src="vscode-antimony/docs/images/installation.gif" width=75%>
 If you have an error with the installation, you can right click on the ant file and press "fix virtual environment" to recreate the virtual environment and reinstall necessary dependencies.
+<img src="vscode-antimony/docs/images/fix.gif" width=75%>
 
 ## Features
 The extension provides many convenient features for developing biological models with the Antimony language in tellurium. The current release focuses on the areas below.

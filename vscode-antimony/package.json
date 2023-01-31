@@ -22,15 +22,19 @@
 	],
 	"activationEvents": [
 		"onLanguage:antimony",
+		"onLanguage:xml",
 		"onCommand:antimony.createAnnotationDialog",
 		"onCommand:antimony.recommendAnnotationDialog",
 		"onCommand:antimony.insertRateLaw",
 		"onCommand:antimony.switchIndicationOn",
 		"onCommand:antimony.switchIndicationOff",
+		"antimony.openSBMLAsAntimonyOn",
+		"antimony.openSBMLAsAntimonyOff",
 		"onCommand:antimony.convertAntimonyToSBML",
 		"onCommand:antimony.convertSBMLToAntimony",
 		"onCommand:antimony.startSBMLWebview",
 		"onCommand:antimony.startAntimonyWebview",
+		"onCommand:antimony.browseBiomodels",
 		"onCustomEditor:antimony.sbmlEditor",
 		"onCustomEditor:antimony.antimonyEditor",
 		"onCustomEditor:antimony.fixVirtualEnv"
@@ -85,6 +89,12 @@
 						"scope": "machine",
 						"description": "Turn visual indications (colored highlights) of annotated variables on or off."
 					},
+					"vscode-antimony.openSBMLAsAntimony": {
+						"type": "boolean",
+						"default": "true",
+						"scope": "machine",
+						"description": "When editing SBML files, opens up up antimony version automatically."
+					},
 					"vscode-antimony.highlightColor": {
 						"type": "string",
 						"default": "indigo",
@@ -116,12 +126,24 @@
 				"title": "Turn Annotated Variable Indications Off"
 			},
 			{
+				"command": "antimony.openSBMLAsAntimonyOn",
+				"title": "Open SBML As Antimony On"
+			},
+			{
+				"command": "antimony.openSBMLAsAntimonyOff",
+				"title": "Open SBML As Antimony Off"
+			},
+			{
 				"command": "antimony.convertAntimonyToSBML",
 				"title": "Convert to SBML"
 			},
 			{
 				"command": "antimony.convertSBMLToAntimony",
 				"title": "Convert to Antimony"
+			},
+			{
+				"command": "antimony.browseBiomodels",
+				"title": "Browse Biomodels"
 			},
 			{
 				"command": "antimony.startSBMLWebview",
@@ -184,6 +206,18 @@
 					"when": "config.vscode-antimony.annotatedVariableIndicatorOn == true"
 				},
 				{
+					"command": "antimony.openSBMLAsAntimonyOn",
+					"title": "SBML Opens As Antimony On",
+					"group": "1_modification",
+					"when": "config.vscode-antimony.openSBMLAsAntimony == true"
+				},
+				{
+					"command": "antimony.openSBMLAsAntimonyOff",
+					"title": "SBML Opens As Antimony Off",
+					"group": "1_modification",
+					"when": "config.vscode-antimony.openSBMLAsAntimony == false"
+				},
+				{
 					"command": "antimony.convertAntimonyToSBML",
 					"title": "Convert to SBML",
 					"group": "1_modification",
@@ -198,6 +232,12 @@
 				{
 					"command": "antimony.fixVirtualEnv",
 					"title": "Fix Virtual Environment",
+          "group": "1_modification",
+					"when": "editorLangId == antimony"
+        },
+        {
+					"command": "antimony.browseBiomodels",
+					"title": "Browse Biomodels",
 					"group": "1_modification",
 					"when": "editorLangId == antimony"
 				}

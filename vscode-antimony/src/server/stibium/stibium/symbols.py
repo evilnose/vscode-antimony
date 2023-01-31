@@ -336,6 +336,7 @@ class FuncSymbol(Symbol):
             parameters):
         Symbol.__init__(self, name, typ, type_name)
         self.parameters = parameters
+        self.type = SymbolType.Function
 
 class MModelSymbol(Symbol):
     '''
@@ -347,6 +348,7 @@ class MModelSymbol(Symbol):
             parameters):
         Symbol.__init__(self, name, typ, type_name)
         self.parameters = parameters
+        self.type = SymbolType.ModularModel
 
 # TODO allow the same scope and name to map to multiple symbols, since antimony allows
 # models and variables to have the same name

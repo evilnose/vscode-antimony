@@ -14,6 +14,10 @@ import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
 var shell = require('shelljs');
+import { modelSearchInput } from './modelBrowse';
+import * as fs from 'fs';
+import * as os from 'os';
+import { TextDocument } from 'vscode';
 
 let client: LanguageClient | null = null;
 let pythonInterpreter: string | null = null;
@@ -32,6 +36,9 @@ const annDecorationType = vscode.window.createTextEditorDecorationType({
 let annotatedVariableIndicatorOn: boolean | null = null;
 
 let activeEditor = vscode.window.activeTextEditor;
+
+// RoundTripping SBML to Antimony
+let roundTripping: boolean | null = null;
 
 // change the annotation decoration of non-annotated variables
 function updateDecorations() {
@@ -154,9 +161,43 @@ async function fixVirtualEnv() {
 	});
 }
 
+async function triggerSBMLEditor(event: TextDocument, sbmlFileNameToPath: Map<any, any>) {
+	if (path.extname(event.fileName) === '.xml') {
+		// check if the file is sbml, opens up a new file
+		await vscode.window.showTextDocument(event, { preview: true, preserveFocus: false });
+		await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+		vscode.commands.executeCommand('antimony.sbmlFileToAntStr', event).then(async (result: any) => {
+			if (result.error) {
+				vscode.window.showErrorMessage(`Error while converting: ${result.error}`)
+			} else {
+				const sbmlFileName = path.basename(event.fileName, '.xml');
+				const tempDir = os.tmpdir();
+				var tempFileName = `${sbmlFileName}.ant`;
+				var tempFilePath = path.join(tempDir, tempFileName);
+				sbmlFileNameToPath[tempFileName] = path.dirname(event.fileName);
+				fs.writeFile(tempFilePath, result.ant_str, (error) => {
+					if (error) {
+						console.error(error);
+					} else {
+						console.log('The file was saved to ' + tempFilePath);
+					}
+				});
+				// Create the temporary file and open it in the editor
+				const tempFile = vscode.workspace.openTextDocument(tempFilePath).then((doc) => {
+					vscode.window.showTextDocument(doc, { preview: false });
+					vscode.window.showInformationMessage("Opened " + sbmlFileName + ".xml as Antimony.");
+				});
+				
+			}
+			});
+		}
+}
+
 export async function activate(context: vscode.ExtensionContext) {
 	annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
 	await createVirtualEnv(context);
+
+	roundTripping = vscode.workspace.getConfiguration('vscode-antimony').get('openSBMLAsAntimony');
 
 	// start the language server
 	await startLanguageServer(context);
@@ -227,6 +268,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.startAntimonyWebview',
 			(...args: any[]) => startAntimonyWebview(context, args)));
+	
+	// browse biomodels
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.browseBiomodels',
+			(...args: any[]) => browseBioModels(context, args)));
 
 	// fix virtual env
 	context.subscriptions.push(
@@ -277,6 +323,45 @@ export async function activate(context: vscode.ExtensionContext) {
 			triggerUpdateDecorations(true);
 		}
 	}, null, context.subscriptions);
+
+	const sbmlFileNameToPath = new Map();
+
+	// when user opens XML
+	if (roundTripping) {
+		vscode.workspace.onDidOpenTextDocument(async event => {
+			triggerSBMLEditor(event, sbmlFileNameToPath);
+		});
+	
+		vscode.workspace.onDidSaveTextDocument((savedDoc) => {
+			const fileName = path.basename(savedDoc.fileName, '.git');
+			const pathName = path.dirname(savedDoc.fileName);
+			const fullPath = path.join(pathName, fileName);
+			const pattern = /^(.+?).ant/;
+			if (pattern.test(fileName) && pathName === os.tmpdir()) {
+				vscode.workspace.openTextDocument(fullPath).then((doc) => {
+					vscode.commands.executeCommand('antimony.antStrToSBMLStr', doc.getText())
+					.then(async (result: any) => {
+						if (result.error) {
+							vscode.window.showErrorMessage(`Error while converting: ${result.error}`);
+						} else {
+							const match = pattern.exec(fileName)[1];
+							const sbmlFilePath = path.join(sbmlFileNameToPath[fileName], match + '.xml');
+							fs.writeFile(sbmlFilePath, result.sbml_str, (error) => {
+								if (error) {
+									console.error(error);
+								}
+							});
+							vscode.window.showInformationMessage(`Edit saved to: ${match}.xml`);
+						}
+					});
+				});
+			}
+		});
+	}
+
+	if (path.extname(vscode.window.activeTextEditor.document.fileName) === '.xml' && roundTripping) {
+		triggerSBMLEditor(vscode.window.activeTextEditor.document, sbmlFileNameToPath);
+	}
 }
 
 async function startSBMLWebview(context: vscode.ExtensionContext, args: any[]) {
@@ -476,12 +561,12 @@ export function deactivate(): Thenable<void> | undefined {
 	return client.stop();
 }
 /** Prompts user to reload editor window in order for configuration change to take effect. */
-function promptToReloadWindow() {
+function promptToReloadWindow(message: string) {
 	const action = 'Reload';
   
 	vscode.window
 	  .showInformationMessage(
-		`Reload window in order for visual indication change in Antimony to take effect.`,
+		message,
 		action
 	  )
 	  .then(selectedAction => {
@@ -522,14 +607,21 @@ async function switchIndicationOn(context: vscode.ExtensionContext, args: any[])
 	annotatedVariableIndicatorOn = true;
 	vscode.workspace.getConfiguration('vscode-antimony').update('annotatedVariableIndicatorOn', true, true);
 
-	promptToReloadWindow();
+	promptToReloadWindow(`Reload window for visual indication change in Antimony to take effect.`);
 }
 
 vscode.workspace.onDidChangeConfiguration(async (e) => {
 	if (!e.affectsConfiguration('vscode-antimony.highlightColor')) {
 		return;
 	}
-	promptToReloadWindow();
+	promptToReloadWindow(`Reload window for visual indication change in Antimony to take effect.`);
+});
+
+vscode.workspace.onDidChangeConfiguration(async (e) => {
+	if (!e.affectsConfiguration('vscode-antimony.openSBMLAsAntimony')) {
+		return;
+	}
+	promptToReloadWindow(`Reload window for Open SBML As Antimony change to take effect.`);
 });
 
 // insert rate law
@@ -558,6 +650,24 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 		rateLawSingleStepInput(context, lineNum, selectedText); 
 		resolve()
     });
+}
+
+// search for biomodels
+async function browseBioModels(context: vscode.ExtensionContext, args: any[]) {
+	// wait till client is ready, or the Python server might not have started yet.
+	// note: this is necessary for any command that might use the Python language server.
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+	
+	// not await null, change it after adding a function to parse search input
+	await new Promise<void>((resolve, reject) => {
+		modelSearchInput(context); 
+		resolve()
+	});
 }
 
 // ****** helper functions ******

@@ -599,10 +599,10 @@ class AntTreeAnalyzer:
         # species or compartments? I'm not sure. If that's the case though, we'll need union types.
         qname = QName(scope, name)
         if insert:
-            self.import_table.insert(qname, SymbolType.Parameter)
+            self.import_table.insert(qname, SymbolType.Unknown)
             self.import_table.insert_annotation(qname, annotation)
         else:
-            self.table.insert(qname, SymbolType.Parameter)
+            self.table.insert(qname, SymbolType.Unknown)
             self.table.insert_annotation(qname, annotation)
     
     def pre_handle_import(self, scope: AbstractScope, imp: Import):

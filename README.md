@@ -43,7 +43,7 @@ When an SBML file is opened, the editor will automatically convert the SBML file
 <em>(Diagram of workflow)</em>
 </p>
 
-### 2. Model Browsing
+### 2. Browsing Biomodels
 The extension allows a user to browse for different biomodels from the [BioModels database](https://www.ebi.ac.uk/biomodels/search?query=*%3A*). The user can query for models with a string or a model number. The chosen model will be displayed in Antimony, which can be saved as SBML or Antimony.
 
 <p align=center>
@@ -172,4 +172,4 @@ I have an open issue for [manually curating models](https://github.com/sys-bio/v
 ### 0.2.4
 * Automatic virtual environment installation
 * SBML to Antimony Conversion and Editing
-* Model Browsing
+* Browsing Biomodels

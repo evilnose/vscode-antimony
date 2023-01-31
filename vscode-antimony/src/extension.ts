@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as utils from './utils/utils';
 import * as path from 'path';
+import * as os from 'os';
+import * as fs from 'fs';
 import {
 	LanguageClient,
 	LanguageClientOptions,
@@ -11,8 +13,8 @@ import { annotationMultiStepInput } from './annotationInput';
 import { rateLawSingleStepInput } from './rateLawInput';
 import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
-import * as fs from 'fs';
-import * as os from 'os';
+var shell = require('shelljs');
+import { modelSearchInput } from './modelBrowse';
 import { TextDocument } from 'vscode';
 
 let client: LanguageClient | null = null;
@@ -76,6 +78,87 @@ function updateDecorations() {
 	}
 }
 
+var current_path_to_tsscript = path.join(__dirname, '..', 'src', 'runshell.ts');
+var path_to_venv_win = path.join(__dirname, '..', 'src', 'server', 'venv_vscode_antimony_virtual_env', 'Scripts', 'python.exe');
+// setup virtual environment
+async function createVirtualEnv(context: vscode.ExtensionContext) {
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+	// asking permissions
+	if ((os.platform().toString() == 'darwin') && fs.existsSync(path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"))) {
+		if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9")) {
+			vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
+			vscode.window.showInformationMessage('Virtual environment exists, it is activated now.')
+		}
+	} else if ((os.platform().toString() == 'win32' || os.platform().toString() == 'win64') && fs.existsSync(path.normalize(path_to_venv_win))) {
+		if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== path.normalize(path_to_venv_win)) {
+			vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
+			vscode.window.showInformationMessage('Virtual environment exists, it is activated now.')
+		}
+	// } else if (os.platform().toString() == 'linux' && fs.existsSync(path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"))) {
+	// 	if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9")) {
+	// 		vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
+	// 		vscode.window.showInformationMessage('Virtual environment exists, it is activated now.')
+	// 	}
+	} else {
+		vscode.window.showInformationMessage('To install dependencies so the extension works properly, allow installation of virtual environment', ...['Yes', 'No'])
+		.then(async selection => {
+			// installing virtual env
+			if (selection === 'Yes') {
+				fixVirtualEnv()
+			} else if (selection === 'No') {
+				vscode.window.showInformationMessage('The default python interpreter will be used.')
+			}
+		});
+	}
+}
+
+// setup virtual environment
+async function fixVirtualEnv() {
+	vscode.window.showInformationMessage('Installation may take a few minutes. A pop up will display when finished. Please do not close VSCode during this time.')
+	var current_path_to_tsscript = path.join(__dirname, '..', 'src', 'runshell.ts');
+	// var current_path_to_shell_script = path.join(__dirname, '..', 'src', 'server', 'virtualEnvLinux.sh')
+	shell.exec('npx ts-node ' + current_path_to_tsscript, (err, stdout, stderr) => {
+		if (err) {
+			vscode.window.showInformationMessage('Installation Error. Try again. Error Message "' + err + '."')
+			throw err;
+		} else {
+			if (os.platform().toString() == 'darwin') {
+				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/[venv_vscode_antimony_virtual_env]/bin/python3.9"), true);
+				const action = 'Reload';
+
+				vscode.window
+				.showInformationMessage(
+					`Installation finished. Reload to activate.`,
+					action
+				)
+				.then(selectedAction => {
+					if (selectedAction === action) {
+						vscode.commands.executeCommand('workbench.action.reloadWindow');
+					}
+				});
+			} else if (os.platform().toString() == 'win32' || os.platform().toString() == 'win64') {
+				vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
+				const action = 'Reload';
+
+				vscode.window
+				.showInformationMessage(
+					`Installation finished. Reload to activate.`,
+					action
+				)
+				.then(selectedAction => {
+					if (selectedAction === action) {
+						vscode.commands.executeCommand('workbench.action.reloadWindow');
+					}
+				});
+			} 
+			// else if (os.platform().toString() == 'linux') {
+			// 	vscode.window.showInformationMessage('Run "bash ' + current_path_to_shell_script + '" in the vscode terminal to install the virtual env and necessary dependencies on your device. You can find the "Terminal" button on the top most left menu. Then, press "New Terminal" and run the command mentioned.')
+			// 	vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
+			// }
+		}
+	});
+}
+
 async function triggerSBMLEditor(event: TextDocument, sbmlFileNameToPath: Map<any, any>) {
 	if (path.extname(event.fileName) === '.xml') {
 		// check if the file is sbml, opens up a new file
@@ -110,9 +193,13 @@ async function triggerSBMLEditor(event: TextDocument, sbmlFileNameToPath: Map<an
 
 export async function activate(context: vscode.ExtensionContext) {
 	annotatedVariableIndicatorOn = vscode.workspace.getConfiguration('vscode-antimony').get('annotatedVariableIndicatorOn');
+	await createVirtualEnv(context);
+
 	roundTripping = vscode.workspace.getConfiguration('vscode-antimony').get('openSBMLAsAntimony');
+
 	// start the language server
 	await startLanguageServer(context);
+
 	vscode.workspace.onDidChangeConfiguration(async (e) => {
 		// restart the language server using the new Python interpreter, if the related
 		// setting was changed
@@ -134,6 +221,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 			await startLanguageServer(context);
 		}, 3000);
+
 	});
 
 	// create annotations
@@ -178,6 +266,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('antimony.startAntimonyWebview',
 			(...args: any[]) => startAntimonyWebview(context, args)));
+	
+	// browse biomodels
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.browseBiomodels',
+			(...args: any[]) => browseBioModels(context, args)));
+
+	// fix virtual env
+	context.subscriptions.push(
+		vscode.commands.registerCommand('antimony.fixVirtualEnv',
+			(...args: any[]) => fixVirtualEnv()));
 
 	// language config for CodeLens
 	const docSelector = {
@@ -203,7 +301,6 @@ export async function activate(context: vscode.ExtensionContext) {
 			timeout = setTimeout(updateDecorations, 500);
 		} else {
 			updateDecorations();
-			console.log("Decorations are updated");
 		}
 	}
 
@@ -551,6 +648,24 @@ async function insertRateLawDialog(context: vscode.ExtensionContext, args: any[]
 		rateLawSingleStepInput(context, lineNum, selectedText); 
 		resolve()
     });
+}
+
+// search for biomodels
+async function browseBioModels(context: vscode.ExtensionContext, args: any[]) {
+	// wait till client is ready, or the Python server might not have started yet.
+	// note: this is necessary for any command that might use the Python language server.
+	if (!client) {
+		utils.pythonInterpreterError();
+		return;
+	}
+	await client.onReady();
+	await vscode.commands.executeCommand("workbench.action.focusActiveEditorGroup");
+	
+	// not await null, change it after adding a function to parse search input
+	await new Promise<void>((resolve, reject) => {
+		modelSearchInput(context); 
+		resolve()
+	});
 }
 
 // ****** helper functions ******

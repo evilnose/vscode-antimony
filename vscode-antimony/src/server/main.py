@@ -4,7 +4,6 @@ Author: Gary Geng, Steve Ma
 import os
 import sys
 import logging
-import subprocess
 
 EXTENSION_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(EXTENSION_ROOT, "..", "pythonFiles", "lib", "python"))

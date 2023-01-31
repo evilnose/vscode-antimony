@@ -11,7 +11,12 @@ The currently available version 0.2 is a public beta version developed by [Longx
 Please note that the current release does not support the complete Antimony grammar. While most grammar has been supported, more will be included in future releases.
 
 ## Installation
-The Antimony extension pack includes two extensions: [Antimony](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony) and [Antimony Syntax](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony-syntax) for the color scheme. The [Antimony Extension Pack](https://marketplace.visualstudio.com/items?itemName=stevem.antimony-extension-pack) is also available on the Visual Studio Code Marketplace. We recommend installing the extension pack directly so you have full access to all of the features. For installation, simply download the extension pack from the Visual Studio Code Marketplace and install.
+The Antimony extension pack includes two extensions: [Antimony](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony) and [Antimony Syntax](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony-syntax) for the color scheme. The [Antimony Extension Pack](https://marketplace.visualstudio.com/items?itemName=stevem.antimony-extension-pack) is also available on the Visual Studio Code Marketplace. We recommend installing the extension pack directly so you have full access to all of the features. For installation, download the extension pack from the Visual Studio Code Marketplace and install. <br/>
+Once you have installed the extension pack and opened an antimony file, a pop up on the right hand corner will request permissions
+for the extension to create a virtual environment and install the necessary dependencies in your device, the python interpreter will be automatically
+updated with the path to the virtual environment. If no is pressed, the default python interpreter will be used. Below is the gif for the instructions. <br/>
+<img src="" width=75%>
+If you have an error with the installation, you can right click on the ant file and press "fix virtual environment" to recreate the virtual environment and reinstall necessary dependencies.
 
 ## Features
 The extension provides many convenient features for developing biological models with the Antimony language in tellurium. The current release focuses on the areas below.

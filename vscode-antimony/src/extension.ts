@@ -89,11 +89,11 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 			vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(path_to_venv_win), true);
 			vscode.window.showInformationMessage('Virtual environment exists, it is activated now.')
 		}
-	} else if (os.platform().toString() == 'linux' && fs.existsSync(path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"))) {
-		if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9")) {
-			vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
-			vscode.window.showInformationMessage('Virtual environment exists, it is activated now.')
-		}
+	// } else if (os.platform().toString() == 'linux' && fs.existsSync(path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"))) {
+	// 	if (vscode.workspace.getConfiguration('vscode-antimony').get('pythonInterpreter') !== path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9")) {
+	// 		vscode.workspace.getConfiguration('vscode-antimony').update('pythonInterpreter', path.normalize(os.homedir() + "/venv_vscode_antimony_virtual_env/bin/python3.9"), true);
+	// 		vscode.window.showInformationMessage('Virtual environment exists, it is activated now.')
+	// 	}
 	} else {
 		vscode.window.showInformationMessage('To install dependencies so the extension works properly, allow installation of virtual environment', ...['Yes', 'No'])
 		.then(async selection => {
@@ -111,7 +111,7 @@ async function createVirtualEnv(context: vscode.ExtensionContext) {
 async function fixVirtualEnv() {
 	vscode.window.showInformationMessage('Installation may take a few minutes. A pop up will display when finished. Please do not close VSCode during this time.')
 	var current_path_to_tsscript = path.join(__dirname, '..', 'src', 'runshell.ts');
-	var current_path_to_shell_script = path.join(__dirname, '..', 'src', 'server', 'virtualEnvLinux.sh')
+	// var current_path_to_shell_script = path.join(__dirname, '..', 'src', 'server', 'virtualEnvLinux.sh')
 	shell.exec('npx ts-node ' + current_path_to_tsscript, (err, stdout, stderr) => {
 		if (err) {
 			vscode.window.showInformationMessage('Installation Error. Try again. Error Message "' + err + '."')

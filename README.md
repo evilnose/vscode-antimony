@@ -44,9 +44,13 @@ When an SBML file is opened, the editor will automatically convert the SBML file
 </p>
 
 ### 2. Model Browsing
+The extension allows a user to browse for different biomodels from the [BioModels database](https://www.ebi.ac.uk/biomodels/search?query=*%3A*). The user can query for models with a string or a model number. The chosen model will be displayed in Antimony, which can be saved as SBML or Antimony.
+
 <p align=center>
-
-
+<img src="vscode-antimony/docs/images/biomodelBrowsing.gif" width=75%>
+<br/>
+<em>(Biomodel Browsing with saving)</em>
+</p>
 
 ### 3. Syntax recognition and highlights
 

@@ -16,12 +16,12 @@ Once you have installed the extension pack and opened an antimony file, a pop up
 for the extension to create a virtual environment and install the necessary dependencies in your device, the python interpreter will be automatically
 updated with the path to the virtual environment. If no is pressed, the default python interpreter will be used. Below is the gif for the instructions. <br/>
 <p align=center>
-<img src="vscode-antimony/docs/images/installation.gif" width=75%>
+<img src="https://github.com/sys-bio/vscode-antimony/blob/readme0.2.4/docs/images/installation.gif" width=75%>
 <br/>
 </p>
 If you have an error with the installation, you can right click on the ant file and press "fix virtual environment" to recreate the virtual environment and reinstall necessary dependencies.
 <p align=center>
-<img src="vscode-antimony/docs/images/fix.gif" width=75%>
+<img src="https://github.com/sys-bio/vscode-antimony/blob/readme0.2.4/docs/images/fix.gif" width=75%>
 <br/>
 </p>
 

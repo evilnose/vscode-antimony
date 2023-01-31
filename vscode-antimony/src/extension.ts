@@ -15,8 +15,6 @@ import { SBMLEditorProvider } from './SBMLEditor';
 import { AntimonyEditorProvider } from './AntimonyEditor';
 var shell = require('shelljs');
 import { modelSearchInput } from './modelBrowse';
-import * as fs from 'fs';
-import * as os from 'os';
 import { TextDocument } from 'vscode';
 
 let client: LanguageClient | null = null;

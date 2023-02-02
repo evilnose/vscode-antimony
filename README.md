@@ -11,15 +11,18 @@ The currently available version 0.2 is a public beta version developed by [Longx
 Please note that the current release does not support the complete Antimony grammar. While most grammar has been supported, more will be included in future releases.
 
 ## Installation
-The Antimony extension pack includes two extensions: [Antimony](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony) and [Antimony Syntax](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony-syntax) for the color scheme. The [Antimony Extension Pack](https://marketplace.visualstudio.com/items?itemName=stevem.antimony-extension-pack) is also available on the Visual Studio Code Marketplace. We recommend installing the extension pack directly so you have full access to all of the features. For installation, download the extension pack from the Visual Studio Code Marketplace and install. <br/>
-Once you have installed the extension pack and opened an antimony file, a pop up on the right hand corner will request permissions
-for the extension to create a virtual environment and install the necessary dependencies in your device, the python interpreter will be automatically
-updated with the path to the virtual environment. If no is pressed, the default python interpreter will be used. Below is the gif for the instructions. <br/>
+The Antimony extension pack includes two extensions: [Antimony](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony) and [Antimony Syntax](https://marketplace.visualstudio.com/items?itemName=stevem.vscode-antimony-syntax) for the color scheme. The [Antimony Extension Pack](https://marketplace.visualstudio.com/items?itemName=stevem.antimony-extension-pack) is also available on the Visual Studio Code Marketplace. (We recommend installing the extension pack directly so you have full access to all of the features.) <br/>
+* For installation, download the extension pack from the Visual Studio Code Marketplace and install.
+* When an .ant file is opened for the first time, a pop up will show
+* Click yes to allow creation of virtual environment and installation of required dependencies <b> (Linux users will have to have python3, venv package and pip installed before clicking yes) <b\>
+* Click no to use your own default python interpreter
+<br/>
 <p align=center>
 <img src="vscode-antimony\docs\images\installation.gif" width=75%>
 <br/>
 </p>
-If you have an error with the installation, you can right click on the ant file and press "fix virtual environment" to recreate the virtual environment and reinstall necessary dependencies. <br/>
+* If there are errors, right click on the .ant file and press "Fix Virtual Environment"
+<br/>
 <p align=center>
 <img src="vscode-antimony\docs\images\fix.gif" width=75%>
 <br/>

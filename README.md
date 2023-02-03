@@ -41,7 +41,7 @@ When an SBML file is opened, the editor will automatically convert the SBML file
 ⚠️ Note: this feature can be disabled in settings
 
 <p align=center>
-<img src="vscode-antimony/docs/images/roundTrippingDiagram.png" width=75%>
+<img src="vscode-antimony/docs/images/roundTrippingDiagram.png" width=25%>
 <br/>
 <em>(Diagram of workflow)</em>
 </p>

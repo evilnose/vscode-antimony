@@ -18,13 +18,13 @@ The Antimony extension pack includes two extensions: [Antimony](https://marketpl
 * Click no to use your own default python interpreter.
 <br/>
 <p align=center>
-<img src="vscode-antimony\docs\images\installation.gif" width=75%>
+<img src="docs\images\installation.gif" width=75%>
 <br/>
 </p>
 * If there are errors, right click on the .ant file and press "Fix Virtual Environment".
 <br/>
 <p align=center>
-<img src="vscode-antimony\docs\images\fix.gif" width=75%>
+<img src="docs\images\fix.gif" width=75%>
 <br/>
 </p>
 

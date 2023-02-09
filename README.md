@@ -18,7 +18,7 @@ The Antimony extension pack includes two extensions: [Antimony](https://marketpl
 <img src="docs\images\Step2.png" width=75%>
 </p>
 
-* When an .ant file is opened for the first time, a pop up will show.
+* When an XML or Antimony model file is opened for the first time, a pop up will show.
 <p align=center>
 <img src="docs\images\Step3.png" width=75%>
 </p>

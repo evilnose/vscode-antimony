@@ -1,0 +1,3 @@
+species s = 2
+compartment c = 3
+s in c

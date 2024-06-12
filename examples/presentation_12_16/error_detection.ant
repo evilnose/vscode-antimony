@@ -1,0 +1,47 @@
+############ syntax error ############
+species s1 = 
+
+############ incompatible type ############
+species s2 = 2
+compartment s2 = 3
+
+species s3 = 2
+
+function s3(x, a, b, c)
+  a*x^2 + b*x + c
+end
+
+############ referencing undefined varaibles ############
+S + E -> SE; k1*k2*S*E - k2*ES;
+
+ES = 3
+model side_reaction(S, k1, ES)
+  J0: S + E -> SE; k1*k2*S*E - k2*ES;
+  E = 3;
+  SE = E+S;
+  k2 = 0.4;
+end
+
+############ unused parameters ############
+function some_function(x, a, b, c, unused)
+  a*x^2 + b*x + c
+end
+
+model some_model(S, k1, unused)
+  J0: S + E -> SE; k1*k2*S*E - k2;
+  E = 3;
+  SE = E+S;
+  k2 = 0.4;
+end
+
+############ overriding declarations ############
+J0: S + E -> SE; S * s3;
+J0: S + E -> SE; S * E;
+
+species s4 = 4 seconds
+species s4 = 2 seconds
+
+############ overriding function definition ############
+function some_function(x, a, b, c)
+  a*x^2 + b*x + c
+end

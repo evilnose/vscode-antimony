@@ -1,0 +1,17 @@
+############ species ############
+species s1 = 4
+s1 identity "http://identifiers.org/chebi/CHEBI:76"
+
+# species with units 
+unit micromole = 10e-6 mole / liter;
+species s2 = 4 micromole;
+species s3 = 4;
+s3 has micromole;
+
+# modular model: different scope 
+model side_reaction(S, k1)
+  J0: s1 + E + S -> SE; k1*k2*S*E - k2*2;
+  E = 3;
+  SE = E+S;
+  k2 = 0.4;
+end

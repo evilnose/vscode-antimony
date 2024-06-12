@@ -1,0 +1,10 @@
+model sub(S1):
+  species S1
+  S1 identity "ATP"
+end
+
+model container():
+  species a2
+  a2 identity "ATP"
+  A: sub(***)
+end

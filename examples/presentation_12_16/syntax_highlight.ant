@@ -1,0 +1,53 @@
+############ comments ############
+# testing single-line comments
+
+// testing single-line comments
+
+/* Testing multi-line comments
+testing multi-line comments */
+
+// TODO: testing double-slash TODO
+
+# TODO: testing number-sign TODO
+
+/* 
+TODO: testing multi-line TODO 
+*/
+
+############ species ############
+species s = 4
+species g
+
+############ compartments ############
+compartment c = 5
+compartment cytoplasm = 1.5, mitochondria = 2.6
+
+############ const ############
+const S33;
+
+############ var ############
+var species S4;
+
+############ reaction ############
+J0: S + E -> SE; S*E 
+
+############ function/model ############
+function quadratic(x, a, b, c)
+  a*x^2 + b*x + c
+end
+
+model side_reaction(S, k1)
+  J0: S + E -> SE; k1*k2*S*E - k2*2;
+  E = 3;
+  SE = E+S;
+  k2 = 0.4;
+end
+
+############ assignment rule ############
+Ptot := P1 + P2 + PE;
+
+############ Annotations ############
+s identity "http://identifiers.org/chebi/CHEBI:76"
+
+############ Units ############
+unit substance = 1e-6 mole;

@@ -1,0 +1,12 @@
+function quadratic(x, a, b, c)
+  a*x^2 + b*x + c
+end
+
+model quad1()
+  species s1 = 0
+  k1 = 0
+  k2 = 0
+  k3 = 0
+  unit substance = 1e-6 mole;
+  S4 = quadratic(s1, k1, k2, k3);
+end
